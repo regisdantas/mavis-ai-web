@@ -16,9 +16,8 @@ export const CardContainer = styled.div`
   padding: 0px;
   margin: 10px 0px 0px 0px;
 
-  background-color: #eee;
+  background-color: #757575;
   border-radius: 5px;
-  border-left: 3px dashed lightgray;
 
   div {
     margin-left: 10px;
@@ -26,6 +25,7 @@ export const CardContainer = styled.div`
   }
 
   .ContentContainer {
+    z-index: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -40,6 +40,23 @@ export const CardContainer = styled.div`
       display: flex;
       flex-direction: row;
       justify-content: space-between;
+      border-bottom: 1px solid #757575;
+      padding: 10px;
+      gap: 20px;
+
+      svg {
+        margin: 0;
+        cursor: pointer;
+        height: 18px;
+      }
+    }
+
+    .footer {
+      width: 100%;
+      height: 44px;
+      display: flex;
+      flex-direction: row;
+      justify-content: flex-end;
       border-bottom: 1px solid lightgray;
       padding: 10px;
       gap: 20px;
@@ -54,7 +71,7 @@ export const CardContainer = styled.div`
     .titleBox {
       height: 20px;
     }
-  
+
     .title {
       display: flex;
       align-items: flex-start;
@@ -65,7 +82,7 @@ export const CardContainer = styled.div`
 
     .title:empty::before {
       content: attr(data-placeholder);
-      color: lightgray;
+      color: #494949;
     }
 
     .title:focus {
@@ -73,15 +90,51 @@ export const CardContainer = styled.div`
     }
 
     .toolbox {
+      position: relative;
       width: auto;
       display: flex;
       flex-direction: row;
       justify-content: flex-end;
-      margin: 0px;
-      padding: 0px;
+      align-items: center;
+      margin: 0;
+      padding: 0;
       gap: 10px;
     }
-  
+
+    .footbox {
+      position: relative;
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+      margin: 0;
+      padding: 0;
+      gap: 10px;
+    }
+
+    .colorPicker {
+      position: absolute;
+      top: 28px;
+      right: 0;
+
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+
+      width: auto;
+
+      padding: 4px;
+
+      background: white;
+      border: 1px solid #323232;
+      border-radius: 6px;
+
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
+
+      z-index: 999999;
+    }
+
     select {
       -webkit-appearance: none;
       appearance: none;
@@ -384,5 +437,6 @@ export const CardContainer = styled.div`
     padding: 4px 10px 4px 10px;
     color: gray;
     align-items: flex-end;
+    z-index: 0;
   }
 `;

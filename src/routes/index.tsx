@@ -32,7 +32,7 @@ export const ProtectedRoute = ({ children }: IProtectedRouteProps) => {
 
 export const Router: React.FC = () => {
   return (
-    <React.Suspense fallback={"Loading..."}>
+    <React.Suspense fallback={""}>
       <Routes>
         <Route
           element={

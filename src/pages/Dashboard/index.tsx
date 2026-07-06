@@ -4,9 +4,11 @@ import {
   FloatingButton,
   DataContainer,
 } from "../../styles/global";
+import { IoMdAddCircleOutline } from "react-icons/io";
+
 import Card from "../../components/Card";
 import uuid from "react-uuid";
-import { EntryList, DateContainer, MenuBarContainer } from "./styles";
+import { EntryList, MenuContainer, MenuBarContainer, DateContainer, ActionsContainer} from "./styles";
 import { database } from "../../services/firebase";
 import {
   collection,
@@ -21,10 +23,13 @@ import {
 import { UserAuth } from "../../contexts/AuthContext";
 import { isJsonString } from "../../utils";
 import { useDashboard } from "../../contexts/DashboardContext";
-import {HeaderPortal} from "../../components/HeaderPortal";
+import { HeaderPortal } from "../../components/HeaderPortal";
 import userImg from "../../assets/user.png";
 import { FiArrowLeft, FiArrowRight } from "react-icons/fi";
 import { FiEye, FiEyeOff } from "react-icons/fi";
+import { IoMdArrowDropdown, IoMdArrowDropleft } from "react-icons/io";
+import { FiMenu } from "react-icons/fi";
+
 
 interface IEntry {
   uid: string;
@@ -36,6 +41,7 @@ interface IEntry {
 
 const Dashboard: React.FC = () => {
   const { selectedDate, setSelectedDate, showAll, setShowAll } = useDashboard();
+  const [collapsed, setCollapsed] = React.useState(false);
   const [entries, setEntries] = React.useState<IEntry[]>([]);
   const { user, logOut } = UserAuth();
   const startDate = new Date().toISOString().split("T")[0];
@@ -63,7 +69,7 @@ const Dashboard: React.FC = () => {
     setSelectedDate(event.target.value);
   };
 
-  async function handleAddNewEntry(event: React.FormEvent<HTMLButtonElement>) {
+  async function handleAddNewEntry(event: any) {
     const newEntry: IEntry = {
       uid: user.uid,
       id: uuid(),
@@ -162,11 +168,16 @@ const Dashboard: React.FC = () => {
     <BodyContainer>
       <HeaderPortal>
         {user !== null &&
-          user.displayName !== undefined &&
-          user.photoURL !== null &&
-          user.photoURL !== undefined ? (
+        user.displayName !== undefined &&
+        user.photoURL !== null &&
+        user.photoURL !== undefined ? (
+          <MenuContainer>
             <DateContainer>
-              <FiArrowLeft title="Previous day" size={36} onClick={() => handleDateIncDec(-1)} />
+              <FiMenu/>
+              <FiArrowLeft
+                title="Previous day"
+                onClick={() => handleDateIncDec(-1)}
+              />
               <input
                 title="Select date"
                 ref={dateRef}
@@ -174,15 +185,43 @@ const Dashboard: React.FC = () => {
                 defaultValue={startDate}
                 onChange={handleDateChanged}
               />
-              <FiArrowRight title="Next day" size={36} onClick={() => handleDateIncDec(1)} />
-              {showAll ? (
-                <FiEyeOff title="Show only selected day" size={36} onClick={() => setShowAll(false)} />
-              ) : (
-                <FiEye title="Show all notes" size={36} onClick={() => setShowAll(true)} />
-              ) }
+              <FiArrowRight
+                title="Next day"
+                onClick={() => handleDateIncDec(1)}
+              />
             </DateContainer>
-          ) : null}
-          {user !== null &&
+            <ActionsContainer>
+            {showAll ? (
+              <FiEyeOff
+                title="Show only selected day"
+                onClick={() => setShowAll(false)}
+              />
+            ) : (
+              <FiEye
+                title="Show all notes"
+                onClick={() => setShowAll(true)}
+              />
+            )}
+            {collapsed ? (
+              <IoMdArrowDropleft
+                title="Expand all notes"
+                onClick={() =>
+                  setCollapsed(false)
+                }
+              />
+            ) : (
+              <IoMdArrowDropdown
+                title="Collapse all notes"
+                onClick={() =>
+                  setCollapsed(true)
+                }
+              />
+            )}
+            <IoMdAddCircleOutline onClick={handleAddNewEntry} />
+            </ActionsContainer>
+          </MenuContainer>
+        ) : null}
+        {user !== null &&
         user.displayName !== undefined &&
         user.photoURL !== null &&
         user.photoURL !== undefined ? (
@@ -221,9 +260,6 @@ const Dashboard: React.FC = () => {
             );
           })}
         </EntryList>
-        <FloatingButton title="Add new note" color="#04d361" onClick={handleAddNewEntry}>
-          +
-        </FloatingButton>
       </DataContainer>
     </BodyContainer>
   );
