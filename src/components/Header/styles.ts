@@ -1,6 +1,7 @@
 import styled from "styled-components";
 
 export const HeaderContainer = styled.header`
+  z-index: 10;
   position: fixed;
   user-select: none;
   top: 0;
@@ -28,6 +29,8 @@ export const HeaderContainer = styled.header`
   }
 
   .titlebar .logo-title {
+    position: absolute;
+    left: 0;
     cursor: pointer;
     width: 100px;
     margin-left: 10px;
@@ -42,9 +45,9 @@ export const HeaderContainer = styled.header`
 
   .titlebar h1 {
     font-family: Holiday;
-    font-size: 36px;
-    font-weight: bolder;
     text-transform: lowercase;
+    font-size: 26px;
+    font-weight: bolder;
     margin-left: 10px;
     display: flex;
     flex-direction: row;
@@ -61,16 +64,16 @@ export const HeaderContainer = styled.header`
   .titlebar {
     display: flex;
     width: 100%;
-    height: 56px;
-    background: #04d361;
+    height: 40px;
+    background: #04d361;;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     flex-direction: row;
     margin: 0px;
     padding: 0px;
     img {
       width: auto;
-      height: 40px;
+      height: 30px;
       border-radius: 50%;
       margin-left: auto;
     }
@@ -83,7 +86,7 @@ export const HeaderContainer = styled.header`
   img {
     height: 56px;
     border-radius: 0%;
-    margin: 10px;
+    margin: 4px;
     margin-left: 30px;
   }
 `;

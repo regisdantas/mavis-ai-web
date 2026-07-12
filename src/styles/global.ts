@@ -54,9 +54,9 @@ a{
 export const BodyContainer = styled.div`
   width: 100%;
   height: 100%;
-  padding-top: 80px;
-  padding-bottom: 40px;
-  min-height: 90vh;
+  padding-top: 40px;
+  padding-bottom: 20px;
+  min-height: 95vh;
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -64,7 +64,7 @@ export const BodyContainer = styled.div`
 export const DataContainer = styled.div`
   width: 100%;
   height: 100%;
-  min-height: 90vh;
+  min-height: 95vh;
   padding: 10px;
   max-width: 990px;
   background: #e0e0e5;
@@ -97,14 +97,14 @@ export const AppContainer = styled.div`
     }
   }
   button {
-    background: #04d361;
+    background: #323232;
     justify-content: center;
     border: 0;
     color: #fff;
     font-weight: bold;
     transition: background-color 0.2s;
     &:hover {
-      background-color: ${shade(0.2, "#04d361")};
+      background-color: ${shade(0.2, "#323232")};
     }
   }
 `;
@@ -132,13 +132,25 @@ export const CustomButton = styled.button<CustomButtonProps>`
 
 export const FloatingButton = styled.button<CustomButtonProps>`
   position: fixed;
-  bottom: 40px;
+  top: 30px;
   right: calc(50% - 25px);
   display: block !important;
   width: 50px !important;
-  border-radius: 50% !important;
   height: 50px !important;
-  border: 3px solid #e0e0e5 !important;
+  border-radius: 50% !important;
+  border: 0 !important;
+
+  z-index: 10 !important;
+
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 8px 16px rgba(0, 0, 0, 0.4);
+
+  transition: background-color 0.2s ease, box-shadow 0.2s ease,
+    transform 0.2s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2), 0 12px 24px rgba(0, 0, 0, 0.4);
+  }
 
   svg {
     float: left;
@@ -149,6 +161,7 @@ export const FloatingButton = styled.button<CustomButtonProps>`
     props.color &&
     css`
       background-color: ${props.color} !important;
+
       &:hover {
         background-color: ${shade(0.2, props.color)} !important;
       }
