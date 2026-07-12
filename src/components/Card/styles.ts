@@ -6,7 +6,6 @@ export const Title = styled.h1`
 `;
 
 export const CardContainer = styled.div`
-  /* max-width: 400px; */
   width: 100%;
 
   display: flex;
