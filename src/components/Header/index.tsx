@@ -1,9 +1,9 @@
-import React from "react";
-import { HeaderContainer } from "./styles";
+import React from 'react'
+import { HeaderContainer } from './styles'
 
 interface IHeaderProps {
-  title?: string;
-  logo?: string;
+  title?: string
+  logo?: string
 }
 
 const Header: React.FC<IHeaderProps> = (props: IHeaderProps) => {
@@ -16,7 +16,7 @@ const Header: React.FC<IHeaderProps> = (props: IHeaderProps) => {
         </span>
       </div>
     </HeaderContainer>
-  );
-};
+  )
+}
 
-export default Header;
+export default Header

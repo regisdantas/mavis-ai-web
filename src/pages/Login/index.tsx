@@ -1,50 +1,46 @@
-import React, { useEffect } from "react";
-import {
-  BodyContainer,
-  CustomButton,
-  DataContainer,
-} from "../../styles/global";
-import { useStatus } from "../../hooks/useStatus";
-import { BsFacebook, BsGoogle } from "react-icons/bs";
-import { MdEmail } from "react-icons/md";
-import { useNavigate } from "react-router-dom";
-import { UserAuth } from "../../contexts/AuthContext";
+import React, { useEffect } from 'react'
+import { BodyContainer, CustomButton, DataContainer } from '../../styles/global'
+import { useStatus } from '../../hooks/useStatus'
+import { BsFacebook, BsGoogle } from 'react-icons/bs'
+import { MdEmail } from 'react-icons/md'
+import { useNavigate } from 'react-router-dom'
+import { UserAuth } from '../../contexts/AuthContext'
 
 const Login: React.FC = () => {
-  const { user, signInWithGoogle, signInWithFacebook } = UserAuth();
-  const [inputStatus, setInputStatus] = useStatus(null);
-  const navigate = useNavigate();
+  const { user, signInWithGoogle, signInWithFacebook } = UserAuth()
+  const [inputStatus, setInputStatus] = useStatus(null)
+  const navigate = useNavigate()
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithGoogle();
+      await signInWithGoogle()
     } catch (error) {
-      console.log(error);
+      console.log(error)
       setInputStatus({
-        type: "error",
-        fields: "email",
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
+        type: 'error',
+        fields: 'email',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      })
     }
-  };
+  }
 
   const handleFacebookSignIn = async () => {
     try {
-      await signInWithFacebook();
+      await signInWithFacebook()
     } catch (error) {
-      console.log(error);
+      console.log(error)
       setInputStatus({
-        type: "error",
-        fields: "email",
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
+        type: 'error',
+        fields: 'email',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      })
     }
-  };
+  }
 
   useEffect(() => {
     if (user !== null && user.displayName !== undefined) {
-      navigate("/dashboard");
+      navigate('/dashboard')
     }
-  }, [user]);
+  }, [user])
 
   return (
     <BodyContainer>
@@ -52,19 +48,19 @@ const Login: React.FC = () => {
         <form action="submit">
           <input type="text" placeholder="Email" />
           <input type="password" placeholder="Password" />
-          <CustomButton color={"#04d361"}>
+          <CustomButton color={'#04d361'}>
             <MdEmail /> Sign in with Email
           </CustomButton>
         </form>
-        <CustomButton color={"#DB4437"} onClick={handleGoogleSignIn}>
+        <CustomButton color={'#DB4437'} onClick={handleGoogleSignIn}>
           <BsGoogle size={20} /> Sign in using Google Account
         </CustomButton>
-        <CustomButton color={"#3b5998"} onClick={handleFacebookSignIn}>
+        <CustomButton color={'#3b5998'} onClick={handleFacebookSignIn}>
           <BsFacebook size={20} /> Sign in using Facebook Account
         </CustomButton>
       </DataContainer>
     </BodyContainer>
-  );
-};
+  )
+}
 
-export default Login;
+export default Login

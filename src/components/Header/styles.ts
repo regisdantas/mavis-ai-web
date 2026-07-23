@@ -1,4 +1,4 @@
-import styled from "styled-components";
+import styled from 'styled-components'
 
 export const HeaderContainer = styled.header`
   z-index: 10;
@@ -39,7 +39,9 @@ export const HeaderContainer = styled.header`
     justify-content: flex-start;
     align-items: center;
     img {
-      margin: 0;
+      margin: 0px;
+      margin-right: 6px;
+      border-radius: 0;
     }
   }
 
@@ -65,7 +67,7 @@ export const HeaderContainer = styled.header`
     display: flex;
     width: 100%;
     height: 40px;
-    background: #04d361;;
+    background: #04d361;
     align-items: center;
     justify-content: center;
     flex-direction: row;
@@ -89,4 +91,4 @@ export const HeaderContainer = styled.header`
     margin: 4px;
     margin-left: 30px;
   }
-`;
+`
