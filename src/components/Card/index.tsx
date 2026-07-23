@@ -1,5 +1,5 @@
-import React from "react";
-import { CardContainer } from "./styles";
+import React from 'react'
+import { CardContainer } from './styles'
 import {
   FiTrash2,
   FiLock,
@@ -9,177 +9,160 @@ import {
   FiMic,
   FiVolume2,
   FiVolumeX,
-} from "react-icons/fi";
-import { RxDividerVertical } from "react-icons/rx";
-import { MdOutlineColorLens } from "react-icons/md";
-import { FaStar } from "react-icons/fa";
-import { IoMdArrowDropdown, IoMdArrowDropleft } from "react-icons/io";
-import { FiSend } from "react-icons/fi";
-import { BsThreeDotsVertical } from "react-icons/bs";
-import { FaRegCopy } from "react-icons/fa6";
+} from 'react-icons/fi'
+import { RxDividerVertical } from 'react-icons/rx'
+import { MdOutlineColorLens } from 'react-icons/md'
+import { FaStar } from 'react-icons/fa'
+import { IoMdArrowDropdown, IoMdArrowDropleft } from 'react-icons/io'
+import { FiSend } from 'react-icons/fi'
+import { BsThreeDotsVertical } from 'react-icons/bs'
+import { FaRegCopy } from 'react-icons/fa6'
 
-import { isJsonString } from "../../utils";
-import { TbPinned, TbPinnedOff } from "react-icons/tb";
-import { formatDate, limitInputLength } from "../../utils";
+import { isJsonString } from '../../utils'
+import { formatDate, limitInputLength } from '../../utils'
 
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import remarkFrontmatter from "remark-frontmatter";
-import remarkEmoji from "remark-emoji";
-import remarkMath from "remark-math";
-import rehypeKatex from "rehype-katex";
-import remarkToc from "remark-toc";
-import remarkBreaks from "remark-breaks";
-import stringWidth from "string-width";
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
+import remarkFrontmatter from 'remark-frontmatter'
+import remarkEmoji from 'remark-emoji'
+import remarkMath from 'remark-math'
+import rehypeKatex from 'rehype-katex'
+import remarkToc from 'remark-toc'
+import remarkBreaks from 'remark-breaks'
+import stringWidth from 'string-width'
+import FloatingColorPicker from '../FloatingColorPicker'
+import { IconButton } from '../../styles/global'
 
-import { useSpeechRecognition } from "../../hooks/useSpeechRecognition";
-import { useTextToSpeech } from "../../hooks/useTextToSpeech";
-import { useClickOutside } from "../../hooks/useClickOutside";
+import { useSpeechRecognition } from '../../hooks/useSpeechRecognition'
+import { useTextToSpeech } from '../../hooks/useTextToSpeech'
+import { useClickOutside } from '../../hooks/useClickOutside'
+import FloatingTemplatePicker from '../FloatingTemplatePicker'
+
+import { templateOptions, TemplateOption } from '../../utils'
 
 interface ICardProps {
-  id: string;
-  number: number;
-  date: string;
-  content: string;
-  onDeleteCard: any;
-  onChangeContent: any;
+  id: string
+  number: number
+  date: string
+  content: string
+  onDeleteCard: any
+  onChangeContent: any
 }
 
 const defaultContent = {
-  title: "",
-  type: "record",
-  text: "",
-  color: "#fff",
+  title: '',
+  type: 'record',
+  text: '',
+  color: '#fff',
   locked: false,
   favorite: false,
   pinned: false,
   collapsed: false,
-};
-
-const noteColors = [
-  "#F8F9FA",
-  "#CED4DA",
-  "#FFF4B5",
-  "#FFDCC8",
-  "#FFCDD2",
-  "#FADCE6",
-  "#DCCCFB",
-  "#BBDEFB",
-  "#C8E6C9",
-  "#B2DFDB",
-  "#F3E5C8",
-  "#D7CCC8",
-];
-
-interface IColorPickerProps {
-  color: string[];
-  onColorClicked: any;
 }
 
-const ColorPicker: React.FC<IColorPickerProps> = ({
-  color,
-  onColorClicked,
-}) => {
-  return (
-    <div className="colorPicker">
-      {color.map((c) => (
-        <button
-          key={c}
-          style={{
-            backgroundColor: c,
-            width: 50,
-            height: 20,
-            border: "none",
-            borderRadius: 3,
-            cursor: "pointer",
-            margin: 0,
-            padding: 0,
-          }}
-          onClick={() => onColorClicked(c)}
-        />
-      ))}
-    </div>
-  );
-};
+const noteColors = [
+  '#F8F9FA',
+  '#CED4DA',
+  '#FFF4B5',
+  '#FFDCC8',
+  '#FFCDD2',
+  '#FADCE6',
+  '#DCCCFB',
+  '#BBDEFB',
+  '#C8E6C9',
+  '#B2DFDB',
+  '#F3E5C8',
+  '#D7CCC8',
+]
 
 const Card: React.FC<ICardProps> = ({
   id,
-  number,
   date,
   content,
   onDeleteCard,
   onChangeContent,
 }: ICardProps) => {
-  const { listening, transcript, startListening, stopListening } =
-    useSpeechRecognition();
-  const { speak, speaking, stopSpeaking } = useTextToSpeech();
-  const [editingContent, setEditingContent] = React.useState(false);
-  const [showToolBox, setShowToolBox] = React.useState(false);
-  const [showColorPicker, setShowColorPicker] = React.useState(false);
-  const toolboxRef = React.useRef(null);
-  const footboxRef = React.useRef(null);
+  const { listening, transcript, startListening, stopListening } = useSpeechRecognition()
+  const { speak, speaking, stopSpeaking } = useTextToSpeech()
+  const [editingContent, setEditingContent] = React.useState(false)
+  const [showToolBox, setShowToolBox] = React.useState(false)
+  const [showColorPicker, setShowColorPicker] = React.useState(false)
+  const [showTemplatePicker, setShowTemplatePicker] = React.useState(false)
 
-  const closeToolBox = () => {
-    setShowToolBox(false);
-    setShowColorPicker(false);
-  };
-
-  useClickOutside(toolboxRef, () => closeToolBox());
-
-  React.useEffect(() => {
-    if (listening) {
-      onChangeContent(id, JSON.stringify({ ...objContent, text: transcript }));
-    }
-  }, [listening]);
-
+  const toolboxRef = React.useRef(null)
+  const footboxRef = React.useRef(null)
   const objContent = isJsonString(content)
     ? JSON.parse(content)
-    : { ...defaultContent, text: content };
-  const [value, setValue] = React.useState(objContent.text || "");
+    : { ...defaultContent, text: content }
+  const [value, setValue] = React.useState(objContent.text || '')
+
+  const closeToolBox = () => {
+    setShowToolBox(false)
+    setShowColorPicker(false)
+    setShowTemplatePicker(false)
+  }
+
+  const setTemplate = (option: TemplateOption) => {
+    closeToolBox()
+    if (!objContent.locked) {
+      onChangeContent(
+        id,
+        JSON.stringify({
+          ...objContent,
+          collapsed: false,
+          color: option.color,
+          text: option.text,
+          title: option.title,
+        })
+      )
+      setValue(option.text)
+    }
+  }
+
+  useClickOutside(toolboxRef, () => closeToolBox())
+
+  React.useEffect(() => {
+    if (!listening) {
+      onChangeContent(id, JSON.stringify({ ...objContent, text: objContent.text + transcript }))
+      setValue(objContent.text + transcript)
+    }
+  }, [listening])
+
   return (
     <CardContainer key={id}>
-      <div
-        className="ContentContainer"
-        style={{ backgroundColor: objContent.color || "#eee" }}
-      >
+      <div className="ContentContainer" style={{ backgroundColor: objContent.color || '#eee' }}>
         <header className="header">
           <strong className="titleBox">
-            {objContent.pinned ? (
-              <TbPinnedOff
-                title="Unpin note"
-                size={18}
+            {objContent.favorite ? (
+              <IconButton
+                title="Unfavorite note"
                 onClick={() =>
-                  onChangeContent(
-                    id,
-                    JSON.stringify({ ...objContent, pinned: false })
-                  )
+                  onChangeContent(id, JSON.stringify({ ...objContent, favorite: false }))
                 }
-              />
+              >
+                <FaStar />
+              </IconButton>
             ) : (
-              <TbPinned
-                title="Pin note"
-                size={18}
+              <IconButton
+                title="Favorite note"
                 onClick={() =>
-                  onChangeContent(
-                    id,
-                    JSON.stringify({ ...objContent, pinned: true })
-                  )
+                  onChangeContent(id, JSON.stringify({ ...objContent, favorite: true }))
                 }
-              />
+              >
+                <FiStar />
+              </IconButton>
             )}
             {!showToolBox ? (
               <span
                 className="title"
                 title="Note name"
                 role="textbox"
-                contentEditable
+                contentEditable={!objContent.locked}
+                suppressContentEditableWarning
                 data-placeholder="🙋 Give me a name"
                 onInput={(e) => limitInputLength(e, 40)}
                 onBlur={(e) =>
-                  onChangeContent(
-                    id,
-                    JSON.stringify({ ...objContent, title: e.target.innerText })
-                  )
+                  onChangeContent(id, JSON.stringify({ ...objContent, title: e.target.innerText }))
                 }
               >
                 {objContent.title}
@@ -188,132 +171,87 @@ const Card: React.FC<ICardProps> = ({
               <span className="title"></span>
             )}
           </strong>
+
           <span ref={toolboxRef} className="toolbox">
-            {showToolBox ? (
+            {showToolBox && (
               <>
-                {listening ? (
-                  <FiSend
-                    size={18}
-                    title="Stop listening"
-                    onClick={stopListening}
-                  />
-                ) : (
-                  <FiMic
-                    size={18}
-                    title="Listen note"
-                    onClick={startListening}
-                  />
-                )}
-                <RxDividerVertical size={18} />
-                <FiTrash2
-                  size={18}
+                <IconButton
                   title="Delete note"
-                  onClick={(e) => onDeleteCard(id)}
-                />
-                <RxDividerVertical size={18} />
-                {objContent.favorite ? (
-                  <FaStar
-                    size={18}
-                    title="Unfavorite note"
-                    onClick={(e) =>
-                      onChangeContent(
-                        id,
-                        JSON.stringify({ ...objContent, favorite: false })
-                      )
-                    }
-                  />
-                ) : (
-                  <FiStar
-                    size={18}
-                    title="Favorite note"
-                    onClick={(e) =>
-                      onChangeContent(
-                        id,
-                        JSON.stringify({ ...objContent, favorite: true })
-                      )
-                    }
-                  />
-                )}
-                {objContent.locked ? (
-                  <FiUnlock
-                    size={18}
-                    title="Unlock note"
-                    onClick={(e) =>
-                      onChangeContent(
-                        id,
-                        JSON.stringify({ ...objContent, locked: false })
-                      )
-                    }
-                  />
-                ) : (
-                  <FiLock
-                    size={18}
-                    title="Lock note"
-                    onClick={(e) =>
-                      onChangeContent(
-                        id,
-                        JSON.stringify({ ...objContent, locked: true })
-                      )
-                    }
-                  />
-                )}
-                <MdOutlineColorLens
-                  size={18}
+                  onClick={() => {
+                    if (!objContent.locked) onDeleteCard(id)
+                  }}
+                >
+                  <FiTrash2 />
+                </IconButton>
+
+                <RxDividerVertical />
+
+                <IconButton
                   title="Change note background color"
                   onClick={() => setShowColorPicker(!showColorPicker)}
                   onBlur={() => setShowColorPicker(false)}
-                />
-                <FiType size={18} title="Load template" />
+                >
+                  <MdOutlineColorLens />
+                </IconButton>
+
+                <IconButton
+                  title="Load template"
+                  onClick={() => setShowTemplatePicker(!showTemplatePicker)}
+                  onBlur={() => setShowTemplatePicker(false)}
+                >
+                  <FiType />
+                </IconButton>
               </>
-            ) : (
-              <></>
             )}
-            {showColorPicker && (
-              <ColorPicker
-                color={noteColors}
-                onColorClicked={(selectedColor: string) => {
-                  onChangeContent(
-                    id,
-                    JSON.stringify({
-                      ...objContent,
-                      color: selectedColor,
-                    })
-                  );
-                  setShowColorPicker(false);
-                }}
-              />
-            )}
-            <BsThreeDotsVertical
-              size={18}
+
+            <IconButton
               title="Tool Box"
               onClick={() => setShowToolBox(!showToolBox)}
               onBlur={() => closeToolBox()}
-            />
+            >
+              <BsThreeDotsVertical />
+            </IconButton>
+
+            {objContent.locked ? (
+              <IconButton
+                title="Unlock note"
+                onClick={() =>
+                  onChangeContent(id, JSON.stringify({ ...objContent, locked: false }))
+                }
+              >
+                <FiLock />
+              </IconButton>
+            ) : (
+              <IconButton
+                title="Lock note"
+                onClick={() => onChangeContent(id, JSON.stringify({ ...objContent, locked: true }))}
+              >
+                <FiUnlock />
+              </IconButton>
+            )}
+
             {objContent.collapsed ? (
-              <IoMdArrowDropleft
-                size={18}
+              <IconButton
                 title="Expand note"
                 onClick={() =>
-                  onChangeContent(
-                    id,
-                    JSON.stringify({ ...objContent, collapsed: false })
-                  )
+                  onChangeContent(id, JSON.stringify({ ...objContent, collapsed: false }))
                 }
-              />
+              >
+                <IoMdArrowDropleft />
+              </IconButton>
             ) : (
-              <IoMdArrowDropdown
-                size={18}
+              <IconButton
                 title="Collapse note"
                 onClick={() =>
-                  onChangeContent(
-                    id,
-                    JSON.stringify({ ...objContent, collapsed: true })
-                  )
+                  onChangeContent(id, JSON.stringify({ ...objContent, collapsed: true }))
                 }
-              />
+              >
+                <IoMdArrowDropdown />
+              </IconButton>
             )}
           </span>
         </header>
+
         {!objContent.collapsed ? (
           <>
             {editingContent ? (
@@ -324,33 +262,32 @@ const Card: React.FC<ICardProps> = ({
 
 <markdown editor>`}
                 onFocus={(e) => {
-                  const el = e.currentTarget;
-                  el.style.height = "auto";
-                  el.style.height = `${el.scrollHeight}px`;
+                  const el = e.currentTarget
+                  el.style.height = 'auto'
+                  el.style.height = `${el.scrollHeight}px`
                 }}
                 onChange={(e) => {
-                  const el = e.currentTarget;
-                  el.style.height = "auto";
-                  el.style.height = `${el.scrollHeight}px`;
-                  setValue(e.target.value);
+                  const el = e.currentTarget
+                  el.style.height = 'auto'
+                  el.style.height = `${el.scrollHeight}px`
+                  setValue(e.target.value)
                 }}
                 autoFocus
-                value={value || ""}
-                onBlur={(e) => {
-                  onChangeContent(
-                    id,
-                    JSON.stringify({ ...objContent, text: value })
-                  );
-                  setEditingContent(false);
+                value={value || ''}
+                onBlur={() => {
+                  onChangeContent(id, JSON.stringify({ ...objContent, text: value }))
+                  setEditingContent(false)
                 }}
               />
             ) : (
               <div
-                className={"reactMarkDown"}
-                onClick={() => setEditingContent(true)}
+                className="reactMarkDown"
+                onClick={() => {
+                  setEditingContent(!objContent.locked)
+                }}
               >
                 <ReactMarkdown
-                  children={value || "* ❓ What do you have for today?"}
+                  children={value || '* ❓ What do you have for today?'}
                   remarkPlugins={[
                     [
                       remarkEmoji,
@@ -373,34 +310,66 @@ const Card: React.FC<ICardProps> = ({
         ) : (
           <></>
         )}
+
+        {showColorPicker && (
+          <FloatingColorPicker
+            colors={noteColors}
+            onColorClicked={(selectedColor: string) => {
+              onChangeContent(
+                id,
+                JSON.stringify({
+                  ...objContent,
+                  color: selectedColor,
+                })
+              )
+              setShowColorPicker(false)
+            }}
+          />
+        )}
+        {showTemplatePicker ? (
+          <FloatingTemplatePicker options={templateOptions} onPicked={setTemplate} />
+        ) : (
+          <></>
+        )}
+
         <footer className="footer">
           <span ref={footboxRef} className="footbox">
             <span className="date">{formatDate(date)}</span>
+
             <span className="toolbox">
-              {speaking ? (
-                <FiVolumeX
-                  size={18}
-                  title="Stop hearing note"
-                  onClick={stopSpeaking}
-                />
+              {listening ? (
+                <IconButton title="Stop listening" onClick={stopListening}>
+                  <FiSend />
+                </IconButton>
               ) : (
-                <FiVolume2
-                  size={18}
-                  title="Hear note"
-                  onClick={(e) => speak(value)}
-                />
+                <IconButton
+                  title="Listen note"
+                  onClick={() => {
+                    if (!objContent.locked) startListening()
+                  }}
+                >
+                  <FiMic />
+                </IconButton>
               )}
-              <FaRegCopy
-                size={18}
-                title="Copy note"
-                onClick={() => navigator.clipboard.writeText(value)}
-              />
+              {speaking ? (
+                <IconButton title="Stop hearing note" onClick={stopSpeaking}>
+                  <FiVolumeX />
+                </IconButton>
+              ) : (
+                <IconButton title="Hear note" onClick={() => speak(value)}>
+                  <FiVolume2 />
+                </IconButton>
+              )}
+
+              <IconButton title="Copy note" onClick={() => navigator.clipboard.writeText(value)}>
+                <FaRegCopy />
+              </IconButton>
             </span>
           </span>
         </footer>
       </div>
     </CardContainer>
-  );
-};
+  )
+}
 
-export default Card;
+export default Card

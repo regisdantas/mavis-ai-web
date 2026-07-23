@@ -1,21 +1,21 @@
-import { useState } from "react";
+import { useState } from 'react'
 
 export function useTextToSpeech() {
-  const [speaking, setSpeaking] = useState(false);
+  const [speaking, setSpeaking] = useState(false)
 
   const speak = (text: string) => {
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = "pt-BR";
-    utter.onstart = () => setSpeaking(true);
-    utter.onend = () => setSpeaking(false);
+    const utter = new SpeechSynthesisUtterance(text)
+    utter.lang = 'pt-BR'
+    utter.onstart = () => setSpeaking(true)
+    utter.onend = () => setSpeaking(false)
 
-    speechSynthesis.speak(utter);
-  };
+    speechSynthesis.speak(utter)
+  }
 
   const stopSpeaking = () => {
-    speechSynthesis.cancel();
-    setSpeaking(false);
-  };
+    speechSynthesis.cancel()
+    setSpeaking(false)
+  }
 
-  return { speak, stopSpeaking, speaking };
+  return { speak, stopSpeaking, speaking }
 }

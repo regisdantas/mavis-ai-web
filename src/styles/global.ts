@@ -1,5 +1,5 @@
-import styled, { css, createGlobalStyle } from "styled-components";
-import { shade } from "polished";
+import styled, { css, createGlobalStyle } from 'styled-components'
+import { shade } from 'polished'
 
 export const GlobalStyles = createGlobalStyle`
 * {
@@ -49,7 +49,44 @@ a{
   color: inherit;
   text-decoration: none;
 }
-`;
+`
+
+interface IconButtonProps {
+  expanded?: boolean
+}
+
+export const IconButton = styled.div<IconButtonProps>`
+  width: ${({ expanded }) => (expanded ? '100%' : '30px')} !important;
+  min-height: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: ${({ expanded }) => (expanded ? 'flex-start' : 'center')};
+
+  gap: 10px;
+  padding: ${({ expanded }) => (expanded ? '0 10px' : '0')};
+  margin: 2px !important;
+
+  border-radius: 10px;
+  cursor: pointer;
+
+  transition: all 0.2s;
+
+  svg {
+    flex-shrink: 0;
+    color: #2e2e2e;
+  }
+
+  span {
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  &:hover {
+    background: rgba(128, 128, 128, 0.15);
+  }
+`
 
 export const BodyContainer = styled.div`
   width: 100%;
@@ -60,7 +97,7 @@ export const BodyContainer = styled.div`
   display: flex;
   flex-direction: row;
   justify-content: center;
-`;
+`
 export const DataContainer = styled.div`
   width: 100%;
   height: 100%;
@@ -68,7 +105,7 @@ export const DataContainer = styled.div`
   padding: 10px;
   max-width: 990px;
   background: #e0e0e5;
-`;
+`
 
 export const AppContainer = styled.div`
   min-height: 90vh;
@@ -104,13 +141,13 @@ export const AppContainer = styled.div`
     font-weight: bold;
     transition: background-color 0.2s;
     &:hover {
-      background-color: ${shade(0.2, "#323232")};
+      background-color: ${shade(0.2, '#323232')};
     }
   }
-`;
+`
 
 interface CustomButtonProps {
-  color: string;
+  color: string
 }
 
 export const CustomButton = styled.button<CustomButtonProps>`
@@ -128,7 +165,7 @@ export const CustomButton = styled.button<CustomButtonProps>`
         background-color: ${shade(0.2, props.color)} !important;
       }
     `}
-`;
+`
 
 export const FloatingButton = styled.button<CustomButtonProps>`
   position: fixed;
@@ -144,8 +181,7 @@ export const FloatingButton = styled.button<CustomButtonProps>`
 
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 8px 16px rgba(0, 0, 0, 0.4);
 
-  transition: background-color 0.2s ease, box-shadow 0.2s ease,
-    transform 0.2s ease;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 
   &:hover {
     transform: translateY(-2px);
@@ -166,6 +202,6 @@ export const FloatingButton = styled.button<CustomButtonProps>`
         background-color: ${shade(0.2, props.color)} !important;
       }
     `}
-`;
+`
 
-export const EntryList = styled.div``;
+export const EntryList = styled.div``

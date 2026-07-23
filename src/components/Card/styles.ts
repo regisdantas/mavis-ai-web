@@ -1,9 +1,9 @@
-import styled from "styled-components";
+import styled from 'styled-components'
 
 export const Title = styled.h1`
   font-size: 36px;
   color: #3a3a3a;
-`;
+`
 
 export const CardContainer = styled.div`
   width: 100%;
@@ -41,7 +41,6 @@ export const CardContainer = styled.div`
       justify-content: space-between;
       border-bottom: 1px solid #757575;
       padding: 10px;
-      gap: 20px;
 
       svg {
         margin: 0;
@@ -58,7 +57,6 @@ export const CardContainer = styled.div`
       justify-content: flex-end;
       border-bottom: 1px solid lightgray;
       padding: 10px;
-      gap: 20px;
 
       svg {
         margin: 0;
@@ -68,6 +66,8 @@ export const CardContainer = styled.div`
     }
 
     .titleBox {
+      padding: 0;
+      margin: 0;
       height: 20px;
     }
 
@@ -97,7 +97,7 @@ export const CardContainer = styled.div`
       align-items: center;
       margin: 0;
       padding: 0;
-      gap: 10px;
+      z-index: 8;
     }
 
     .footbox {
@@ -109,29 +109,6 @@ export const CardContainer = styled.div`
       align-items: center;
       margin: 0;
       padding: 0;
-      gap: 10px;
-    }
-
-    .colorPicker {
-      position: absolute;
-      top: 28px;
-      right: 0;
-
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-
-      width: auto;
-
-      padding: 4px;
-
-      background: white;
-      border: 1px solid #323232;
-      border-radius: 6px;
-
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18);
-
-      z-index: 999999;
     }
 
     select {
@@ -175,7 +152,7 @@ export const CardContainer = styled.div`
       padding: 20px;
       margin: 0px;
       color: #000;
-      font: 13px "Myriad Pro", "Lucida Grande", Lucida, Verdana, sans-serif;
+      font: 13px 'Myriad Pro', 'Lucida Grande', Lucida, Verdana, sans-serif;
     }
 
     /* links */
@@ -231,7 +208,7 @@ export const CardContainer = styled.div`
       color: #919699;
       size: 1;
       width: 100%;
-      noshade: "noshade";
+      noshade: 'noshade';
     }
 
     /* headers */
@@ -242,7 +219,7 @@ export const CardContainer = styled.div`
     h4,
     h5,
     h6 {
-      font-family: "Myriad Pro", "Lucida Grande", Lucida, Verdana, sans-serif;
+      font-family: 'Myriad Pro', 'Lucida Grande', Lucida, Verdana, sans-serif;
       font-weight: bold;
     }
 
@@ -386,7 +363,7 @@ export const CardContainer = styled.div`
       margin: 3px 0 10px 0;
     }
 
-    .reactMarkDown input[type="checkbox"] {
+    .reactMarkDown input[type='checkbox'] {
       display: inline-block;
       vertical-align: start;
       margin: 0 6px 0 0;
@@ -433,9 +410,9 @@ export const CardContainer = styled.div`
   .ContentContainer .date {
     width: auto;
     align-self: flex-end;
-    padding: 4px 10px 4px 10px;
+    padding: 4px 10px 4px 0px;
     color: gray;
     align-items: flex-end;
     z-index: 0;
   }
-`;
+`

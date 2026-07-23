@@ -1,10 +1,10 @@
-import React from "react";
+import React from 'react'
 export interface IStatus {
-  type: string;
-  fields: string;
-  message: string;
+  type: string
+  fields: string
+  message: string
 }
 
 export const useStatus = (initial: IStatus | null) => {
-  return React.useState<IStatus | null>(initial);
-};
+  return React.useState<IStatus | null>(initial)
+}
