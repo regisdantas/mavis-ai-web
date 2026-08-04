@@ -2,9 +2,8 @@ import React from 'react'
 import { BodyContainer, DataContainer, IconButton } from '../../styles/global'
 import { IoMdAddCircleOutline } from 'react-icons/io'
 import { MdOutlineClear } from 'react-icons/md'
-import { FiStar, FiCalendar, FiArchive, FiTrash2 } from 'react-icons/fi'
+import { FiStar, FiArchive, FiTrash2 } from 'react-icons/fi'
 import { IoMdSearch } from 'react-icons/io'
-import { BiTag } from 'react-icons/bi'
 
 import Card from '../../components/Card'
 import uuid from 'react-uuid'
@@ -37,9 +36,11 @@ import { useDashboard } from '../../contexts/DashboardContext'
 import { HeaderPortal } from '../../components/HeaderPortal'
 import userImg from '../../assets/user.png'
 import { FiArrowLeft, FiArrowRight } from 'react-icons/fi'
-import { FiEye, FiEyeOff } from 'react-icons/fi'
+import { FiEye } from 'react-icons/fi'
 import { IoMdArrowDropdown, IoMdArrowDropleft } from 'react-icons/io'
 import VerticalBar from '../../components/VerticalBar'
+import { BsJournalBookmark } from 'react-icons/bs'
+import { LiaProjectDiagramSolid } from 'react-icons/lia'
 
 interface IEntry {
   uid: string
@@ -51,14 +52,19 @@ interface IEntry {
 
 const pages = [
   { name: 'Favorites', icon: FiStar, items: undefined },
-  { name: 'Calendar', icon: FiCalendar, items: undefined },
-  { name: 'Markers', icon: BiTag, items: ['Personal', 'Work', 'Projects', 'Ideas', 'Important'] },
+  { name: 'All', icon: FiEye, items: undefined },
+  { name: 'Journal', icon: BsJournalBookmark, items: undefined },
+  {
+    name: 'Projects',
+    icon: LiaProjectDiagramSolid,
+    items: ['Personal', 'Work', 'Projects', 'Ideas', 'Important'],
+  },
   { name: 'Archive', icon: FiArchive, items: undefined },
   { name: 'Trash', icon: FiTrash2, items: undefined },
 ]
 
 const Dashboard: React.FC = () => {
-  const { selectedDate, setSelectedDate, showAll, setShowAll } = useDashboard()
+  const { selectedDate, setSelectedDate } = useDashboard()
   const [collapsed, setCollapsed] = React.useState(false)
   const [searchContent, setSearchContent] = React.useState(String)
   const [entries, setEntries] = React.useState<IEntry[]>([])
@@ -217,7 +223,7 @@ const Dashboard: React.FC = () => {
               <SelectedPageIcon />
               {searchContent.trim() === '' ? selectedPage.name : 'Search'}
             </SelectedPage>
-            {selectedPage.name == 'Calendar' ? (
+            {selectedPage.name == 'Journal' ? (
               <DateContainer>
                 <IconButton title="Previous day" onClick={() => handleDateIncDec(-1)}>
                   <FiArrowLeft />
@@ -255,16 +261,6 @@ const Dashboard: React.FC = () => {
               <IconButton title="Lock all notes" onClick={handleLockAll}>
                 <FiLock />
               </IconButton>
-
-              {showAll ? (
-                <IconButton title="Show only selected day" onClick={() => setShowAll(false)}>
-                  <FiEyeOff />
-                </IconButton>
-              ) : (
-                <IconButton title="Show all notes" onClick={() => setShowAll(true)}>
-                  <FiEye />
-                </IconButton>
-              )}
 
               {collapsed ? (
                 <IconButton title="Expand all notes" onClick={() => handleCollapseExpand(false)}>
@@ -306,8 +302,8 @@ const Dashboard: React.FC = () => {
           {entries.map((entry) => {
             const visible =
               searchContent.trim() === ''
-                ? showAll ||
-                  (selectedPage.name === 'Calendar' && entry.date === selectedDate) ||
+                ? selectedPage.name === 'All' ||
+                  (selectedPage.name === 'Journal' && entry.date === selectedDate) ||
                   (selectedPage.name === 'Favorites' &&
                     isJsonString(entry.content) &&
                     JSON.parse(entry.content).favorite === true)

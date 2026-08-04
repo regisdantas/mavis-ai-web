@@ -39,730 +39,129 @@ export type TemplateOption = {
 export const templateOptions: TemplateOption[] = [
   {
     id: 0,
-    name: 'markdown',
-    title: '📝 Markdown Example',
-    color: '#D7CCC8',
-    text: `---
-# Table of Contents
----
+    name: 'habits',
+    title: '🔁 Habits - /year',
+    color: '#BBDEFB',
+    text: String.raw`<div style="display:flex; gap:8px; align-items:flex-start;">
 
-# h1 Heading 8-)
-## h2 Heading
-### h3 Heading
-#### h4 Heading
-##### h5 Heading
-###### h6 Heading
+<div style="flex:1">
 
-## Badges
+| Action | Habit | Count | Target | Progress | Done |
+|---------|---------|---------|---------|---------|---------|
+| @button(Done, \${follow_diet_done_dates}=\${follow_diet_done_dates} + "@date" + "," ) | 🍽️ Follow Diet | @eval(countDates(follow_diet_done_dates)) | 120 | @progress(@eval(countDates(follow_diet_done_dates) / 120)) | @eval(follow_diet_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${drink_water_done_dates}=\${drink_water_done_dates} + "@date" + "," ) | 🚰 Drink 3L Water | @eval(countDates(drink_water_done_dates)) | 120 | @progress(@eval(countDates(drink_water_done_dates) / 120)) | @eval(drink_water_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${exercise_done_dates}=\${exercise_done_dates} + "@date" + "," ) | 💪 Exercise | @eval(countDates(exercise_done_dates)) | 90 | @progress(@eval(countDates(exercise_done_dates) / 90)) | @eval(exercise_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${no_alcohol_done_dates}=\${no_alcohol_done_dates} + "@date" + "," ) | 🚱 No Alcohol | @eval(countDates(no_alcohol_done_dates)) | 120 | @progress(@eval(countDates(no_alcohol_done_dates) / 120)) | @eval(no_alcohol_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${no_porn_done_dates}=\${no_porn_done_dates} + "@date" + "," ) | 🔞 No Porn | @eval(countDates(no_porn_done_dates)) | 120 | @progress(@eval(countDates(no_porn_done_dates) / 120)) | @eval(no_porn_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${no_fap_done_dates}=\${no_fap_done_dates} + "@date" + "," ) | 🚯 No FAP | @eval(countDates(no_fap_done_dates)) | 120 | @progress(@eval(countDates(no_fap_done_dates) / 120)) | @eval(no_fap_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${study_done_dates}=\${study_done_dates} + "@date" + "," ) | 📖 Study | @eval(countDates(study_done_dates)) | 100 | @progress(@eval(countDates(study_done_dates) / 100)) | @eval(study_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${read_done_dates}=\${read_done_dates} + "@date" + "," ) | 📙 Read | @eval(countDates(read_done_dates)) | 100 | @progress(@eval(countDates(read_done_dates) / 100)) | @eval(read_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${meditation_done_dates}=\${meditation_done_dates} + "@date" + "," ) | 🧘 Meditation | @eval(countDates(meditation_done_dates)) | 100 | @progress(@eval(countDates(meditation_done_dates) / 100)) | @eval(meditation_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${gratitude_done_dates}=\${gratitude_done_dates} + "@date" + "," ) | 🙏 Gratitude | @eval(countDates(gratitude_done_dates)) | 100 | @progress(@eval(countDates(gratitude_done_dates) / 100)) | @eval(gratitude_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${journal_done_dates}=\${journal_done_dates} + "@date" + "," ) | ✍🏼 Journal | @eval(countDates(journal_done_dates)) | 100 | @progress(@eval(countDates(journal_done_dates) / 100)) | @eval(journal_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${track_mood_done_dates}=\${track_mood_done_dates} + "@date" + "," ) | 😃 Track Mood | @eval(countDates(track_mood_done_dates)) | 120 | @progress(@eval(countDates(track_mood_done_dates) / 120)) | @eval(track_mood_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${good_work_done_dates}=\${good_work_done_dates} + "@date" + "," ) | 👷 Good Work | @eval(countDates(good_work_done_dates)) | 120 | @progress(@eval(countDates(good_work_done_dates) / 120)) | @eval(good_work_done_dates.includes("@date") ? '✅' : '⬜') |
 
-https://img.shields.io/badge/-READ-blue - Read this text.
-![Watch](httpsields.io/badge/-WATCH-blueviolet - Watch this vídeo.
-![Success](https:ds.io/badge/-SUCCESS-success - Finished with success.
-https://img.shields.io/badge/-WARN-yellow - Warning: pay attention on this.
-https://img.shields.io/badge/-ERROR-red - Error: finished with errors.
-[![Create](.shields.io/badge/-CREATE%20YOUR%20OWN-FF69B4](https://shields.io/) - Click this to create your own customized badges.
+</div>
 
-## Horizontal Rules
+<div style="flex:1">
 
-### With underscores
-___
+| Action | Habit | Count | Target | Progress | Done |
+|---------|---------|---------|---------|---------|---------|
+| @button(Done, \${projects_done_dates}=\${projects_done_dates} + "@date" + "," ) | 🏗️ Projects | @eval(countDates(projects_done_dates)) | 80 | @progress(@eval(countDates(projects_done_dates) / 80)) | @eval(projects_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${organization_done_dates}=\${organization_done_dates} + "@date" + "," ) | 🗂️ Organization | @eval(countDates(organization_done_dates)) | 60 | @progress(@eval(countDates(organization_done_dates) / 60)) | @eval(organization_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${fun_done_dates}=\${fun_done_dates} + "@date" + "," ) | 🎉 Fun | @eval(countDates(fun_done_dates)) | 60 | @progress(@eval(countDates(fun_done_dates) / 60)) | @eval(fun_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${run_done_dates}=\${run_done_dates} + "@date" + "," ) | 🏃 Run | @eval(countDates(run_done_dates)) | 60 | @progress(@eval(countDates(run_done_dates) / 60)) | @eval(run_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${meal_prep_done_dates}=\${meal_prep_done_dates} + "@date" + "," ) | 🍱 Meal Prep | @eval(countDates(meal_prep_done_dates)) | 40 | @progress(@eval(countDates(meal_prep_done_dates) / 40)) | @eval(meal_prep_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${measure_weight_done_dates}=\${measure_weight_done_dates} + "@date" + "," ) | ⚖️ Measure Weight | @eval(countDates(measure_weight_done_dates)) | 120 | @progress(@eval(countDates(measure_weight_done_dates) / 120)) | @eval(measure_weight_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${cold_shower_done_dates}=\${cold_shower_done_dates} + "@date" + "," ) | 🛀 Cold Shower | @eval(countDates(cold_shower_done_dates)) | 90 | @progress(@eval(countDates(cold_shower_done_dates) / 90)) | @eval(cold_shower_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${wim_hof_done_dates}=\${wim_hof_done_dates} + "@date" + "," ) | 🫁 Wim Hof | @eval(countDates(wim_hof_done_dates)) | 90 | @progress(@eval(countDates(wim_hof_done_dates) / 90)) | @eval(wim_hof_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${body_scan_done_dates}=\${body_scan_done_dates} + "@date" + "," ) | 👃 Body Scan | @eval(countDates(body_scan_done_dates)) | 90 | @progress(@eval(countDates(body_scan_done_dates) / 90)) | @eval(body_scan_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${dev_challenge_done_dates}=\${dev_challenge_done_dates} + "@date" + "," ) | 👨‍💻 Dev Challenge | @eval(countDates(dev_challenge_done_dates)) | 100 | @progress(@eval(countDates(dev_challenge_done_dates) / 100)) | @eval(dev_challenge_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${family_activity_done_dates}=\${family_activity_done_dates} + "@date" + "," ) | 👨‍👩‍👦 Family Activity | @eval(countDates(family_activity_done_dates)) | 50 | @progress(@eval(countDates(family_activity_done_dates) / 50)) | @eval(family_activity_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${nature_time_done_dates}=\${nature_time_done_dates} + "@date" + "," ) | 🌿 Nature Time | @eval(countDates(nature_time_done_dates)) | 50 | @progress(@eval(countDates(nature_time_done_dates) / 50)) | @eval(nature_time_done_dates.includes("@date") ? '✅' : '⬜') |
+| @button(Done, \${music_creation_done_dates}=\${music_creation_done_dates} + "@date" + "," ) | 🎵 Music Creation | @eval(countDates(music_creation_done_dates)) | 60 | @progress(@eval(countDates(music_creation_done_dates) / 60)) | @eval(music_creation_done_dates.includes("@date") ? '✅' : '⬜') |
 
-### With dashes
----
+</div>
 
-### With stars
-***
+</div>
 
-## CheckLists
-
-* [x] List item checked
-* [x] List item checked
-* [ ] List item unchecked
-* [x] List item checked
-* [ ] List item unchecked
-* [x] List item checked
-
-## Emphasis
-
-**This is bold text**
-
-__This is bold text__
-
-*This is italic text*
-
-_This is italic text_
-
-~~Strikethrough~~
-
-## Blockquotes
-
-> Blockquotes can also be nested...
->> ...by using additional greater-than signs right next to each other...
-> > > ...or with spaces between arrows.
-
-## Lists
-
-Unordered
-
-+ Create a list by starting a line with \`+\`, \`-\`, or \`*\`
-+ Sub-lists are made by indenting 2 spaces:
->  - Marker character change forces new list start:
->>    * Ac tristique libero volutpat at
-    + Facilisis in pretium nisl aliquet
-    - Nulla volutpat aliquam velit
-+ Very easy!
-
-Ordered
-
-1. Lorem ipsum dolor sit amet
-2. Consectetur adipiscing elit
-3. Integer molestie lorem at massa
-
-1. You can use sequential numbers...
-1. ...or keep all the numbers as \`1.\`
-
-Start numbering with offset:
-
-57. foo
-1. bar
-
-## Code
-
-Inline \`code\`
-
-Indented code
-
-    // Some comments
-    line 1 of code
-    line 2 of code
-    line 3 of code
-
-Block code "fences"
-
-\`\`\`
-Sample text here...
-\`\`\`
-
-Syntax highlighting
-
-\`\`\`js
-var foo = function (bar) {
-  return bar++;
-};
-
-console.log(foo(5));
-\`\`\`
-
-## Tables
-
-| Option | Description |
-| ------ | ----------- |
-| data   | path to data files to supply the data that will be passed into templates. |
-| engine | engine to be used for processing templates. Handlebars is the default. |
-| ext    | extension to be used for dest files. |
-
-\\
-Right aligned columns
-
-| Option | Description |
-| ------:| -----------:|
-| data   | path to data files to supply the data that will be passed into templates. |
-| engine | engine to be used for processing templates. Handlebars is the default. |
-| ext    | extension to be used for dest files. |
-
-## Links
-
-[link text](https://github.com/regisdantas/roadmap-me)
-
-[link with title](https://github.com/regisdantas/roadmap-me)
-
-Common: https://github.com/regisdantas/roadmap-me
-
-## Images
-
-https://octodex.github.com/images/minion.png
-
-### Emojies
-
-> Classic markup: :wink: :crush: :cry: :tear: :laughing: :yum:
->
-> Shortcuts (emoticons): :-) :-( 8-) ;)
-
-### Footnotes
-
-Footnote 1 link[^first].
-
-Footnote 2 link[^second].
-
-Inline footnote^[Text of inline footnote] definition.
-
-Duplicated footnote reference[^second].
-
-[^first]: Footnote **can have markup**
-
-    and multiple paragraphs.
-
-[^second]: Footnote text.
-`,
+\${follow_diet_done_dates}=
+\${drink_water_done_dates}=
+\${exercise_done_dates}=
+\${no_alcohol_done_dates}=
+\${no_porn_done_dates}=
+\${no_fap_done_dates}=
+\${study_done_dates}=
+\${read_done_dates}=
+\${meditation_done_dates}=
+\${gratitude_done_dates}=
+\${journal_done_dates}=
+\${track_mood_done_dates}=
+\${good_work_done_dates}=
+\${projects_done_dates}=
+\${organization_done_dates}=
+\${fun_done_dates}=
+\${run_done_dates}=
+\${meal_prep_done_dates}=
+\${measure_weight_done_dates}=
+\${cold_shower_done_dates}=
+\${wim_hof_done_dates}=
+\${body_scan_done_dates}=
+\${dev_challenge_done_dates}=
+\${family_activity_done_dates}=
+\${nature_time_done_dates}=
+\${music_creation_done_dates}=`,
   },
   {
     id: 1,
-    name: 'socratic-questioning',
-    title: '🧠 Socratic Questioning',
-    color: '#BBDEFB',
-    text: `# 🧠 Socratic Questioning
+    name: 'journal',
+    title: '✍🏼 Journal - /date',
+    color: '#F3E5C8',
+    text: String.raw`📍 /city - /country, /dayofweek, /datetime
+🌤️ Weather: /weather /temperature
+🌙 Moon: /moon
+🍂 Season: /season
 
-## 📍 Situation
-What happened?
+⚖️ Weight: \${weight} kg
+📏 BMI: @bmi(\${weight},\${height})
+🎂 Age: /age(1991-12-21)
 
----
+💤 Sleep: \${sleep}h
+🎭 Mood: @select[ | happy 😄, joyful 😊 , excited 🤩 , calm 😌 , neutral 😐 , tired 😪 , sleepy 😴 , worried 😟 , anxious 😰 , sad 😢 ]
+⚡ Energy: @select[ | High 🚀, Medium ⚡, Low 🔋 ]
+🧠 Focus: @select[ | High 🚀, Medium ⚡, Low 😐, Poor 👎 ]
 
-## 💭 Automatic Thought
-What thought came to mind?
+\${sleep}=
+\${weight}=
+\${height}=
 
----
+📝 Day Summary:
 
-## ✅ Evidence Supporting the Thought
--
 
----
 
-## ❌ Evidence Against the Thought
--
-
----
-
-## 🔄 Alternative Perspectives
-What else could be true?
-
----
-
-## ⚖️ Balanced Conclusion
-What is a more realistic interpretation?
-
----
-
-## 🚶 Next Action
-What will I do next?
-`,
-  },
-  {
-    id: 2,
-    name: 'daily-reflection',
-    title: '✨ Daily Reflection',
-    color: '#F8F9FA',
-    text: `# 📖 Daily Reflection
-
-## 📅 Date
--
-
----
-
-## 🌟 Highlights
-What went well today?
+🗓️ Schedule:
 
 -
 
----
-
-## 🧗 Challenges
-What was difficult?
+🎯 Top priority:
 
 -
 
----
-
-## 🎓 Lessons Learned
-What did I learn?
+❤️ Gratitude:
 
 -
 
----
-
-## 🙏 Gratitude
-What am I grateful for?
+🤝 Commitments:
 
 -
 
----
-
-## 🎯 Tomorrow's Focus
-What is the most important thing for tomorrow?
-
--
-`,
-  },
-  {
-    id: 3,
-    name: 'gratitude-journal',
-    title: '🙏 Gratitude Journal',
-    color: '#FFF4B5',
-    text: `# 🙏 Gratitude Journal
-
-## ☀️ Today I Am Grateful For
-
-1.
-2.
-3.
-
----
-
-## 💝 Someone Who Made My Day Better
+✅ Main achievement:
 
 -
 
----
+💭 Notes:
 
-## 🏡 Something I Usually Take For Granted
-
--
-
----
-
-## 🌈 Positive Memory
-
--
-
----
-
-## 😊 How I Feel After Reflecting
-
--
-`,
-  },
-  {
-    id: 4,
-    name: 'goal-planning',
-    title: '🎯 SMART Goal Planning',
-    color: '#FFDCC8',
-    text: `# 🎯 SMART Goal Planning
-
-## 🎯 Specific Goal
-What exactly do I want to achieve?
-
--
-
----
-
-## 📏 Measurable Outcome
-How will I measure success?
-
--
-
----
-
-## ✅ Achievable
-Why is this realistic?
-
--
-
----
-
-## ❤️ Relevant
-Why does this matter to me?
-
--
-
----
-
-## 📅 Time-Bound
-What is the target date?
-
--
-
----
-
-## 📝 Milestones
-
-- [ ]
-- [ ]
-- [ ]
-
----
-
-## 🚧 Potential Obstacles
-
--
-
----
-
-## 🛡️ Mitigation Plan
-How will I overcome obstacles?
-
--
-
----
-
-## 👣 Next Action
-What is the very next step?
-
--
-
----
-
-## 🎉 Definition of Success
-
--
-`,
-  },
-  {
-    id: 5,
-    name: 'weekly-review',
-    title: '🏆 Weekly Review',
-    color: '#B2DFDB',
-    text: `# 🗓️ Weekly Review
-
-## 🏆 Wins
-
--
--
--
-
----
-
-## ⚡ Challenges
-
--
--
--
-
----
-
-## 🎓 Lessons Learned
-
--
-
----
-
-## 📈 Progress Toward Goals
-
--
-
----
-
-## 🔧 What To Improve Next Week
-
--
-
----
-
-## 🚀 Priorities For Next Week
-
-1.
-2.
-3.
-`,
-  },
-  {
-    id: 6,
-    name: 'habit-tracker',
-    title: '✅ Habit Tracker',
-    color: '#C8E6C9',
-    text: `# 📈 Habit Tracker
-
-## ✅ Habits
-
-| Habit | Mon | Tue | Wed | Thu | Fri | Sat | Sun |
-| ------ | --- | --- | --- | --- | --- | --- | --- |
-| 💪 Exercise | | | | | | | |
-| 🚶 Walk 10,000 Steps | | | | | | | |
-| 🏃 Run | | | | | | | |
-| 🧘 Meditation | | | | | | | |
-| 📖 Read 30 Minutes | | | | | | | |
-| ✍️ Journal | | | | | | | |
-| 💧 Drink 2L Water | | | | | | | |
-| 🛏️ Sleep 8 Hours | | | | | | | |
-| 🌅 Wake Up Early | | | | | | | |
-| 🦷 Floss | | | | | | | |
-| 🍎 Eat Healthy | | | | | | | |
-| 🥗 Eat Vegetables | | | | | | | |
-| 🚫 No Junk Food | | | | | | | |
-| 🚫 No Alcohol | | | | | | | |
-| 🚭 No Smoking | | | | | | | |
-| 📵 Limit Social Media | | | | | | | |
-| 📚 Study | | | | | | | |
-| 💻 Side Project | | | | | | | |
-| 🎯 Deep Work | | | | | | | |
-| 💰 Track Expenses | | | | | | | |
-| 🧹 Clean Workspace | | | | | | | |
-| 🏠 House Chores | | | | | | | |
-| ☎️ Contact Family | | | | | | | |
-| 🙏 Gratitude Practice | | | | | | | |
-| 🌙 Evening Review | | | | | | | |
-
----
-
-## 🔥 Streaks
-
-| Habit | Current Streak | Best Streak |
-| ------ | ------ | ------ |
-| | | |
-| | | |
-| | | |
-
----
-
-## 📊 Weekly Summary
-
-### ✅ Habits Completed Well
-
--
-
-### ⚠️ Habits That Need Attention
-
--
-
-### 🎯 Focus Habits For Next Week
-
-1.
-2.
-3.
-
----
-
-## 📝 Notes
-
--
-`,
-  },
-  {
-    id: 7,
-    name: 'decision-journal',
-    title: '🤔 Decision Journal',
-    color: '#CED4DA',
-    text: `# ⚖️ Decision Journal
-
-## 🎯 Decision
-
--
-
----
-
-## 📚 Context
-
--
-
----
-
-## 🛣️ Options
-
-1.
-2.
-3.
-
----
-
-## ✅ Pros
-
--
-
----
-
-## ❌ Cons
-
--
-
----
-
-## 🔮 Expected Outcome
-
--
-
----
-
-## 🏁 Final Decision
-
--
-
----
-
-## 📅 Review Later
-
-What actually happened?
-`,
-  },
-  {
-    id: 8,
-    name: 'cbt-thought-record',
-    title: '💭 Thought Record (CBT)',
-    color: '#DCCCFB',
-    text: `# 💭 Thought Record
-
-## 📍 Situation
-
--
-
----
-
-## ❤️ Emotion
-
-| Emotion | Intensity (0-100) |
-| -------- | ---------------- |
-| | |
-
----
-
-## 💬 Automatic Thought
-
--
-
----
-
-## 🧠 Cognitive Distortions
-
-- Catastrophizing
-- Mind Reading
-- All-or-Nothing Thinking
-- Overgeneralization
-- Emotional Reasoning
-
----
-
-## 🌱 Alternative Thought
-
--
-
----
-
-## 😊 New Emotion
-
-| Emotion | Intensity (0-100) |
-| -------- | ---------------- |
-| | |
-`,
-  },
-  {
-    id: 9,
-    name: 'emotional-processing',
-    title: '❤️ Emotional Processing',
-    color: '#FADCE6',
-    text: `# ❤️ Emotional Processing
-
-## 🎭 What Am I Feeling?
-
--
-
----
-
-## ⚡ What Triggered It?
-
--
-
----
-
-## 🫀 Where Do I Feel It In My Body?
-
--
-
----
-
-## 🌱 What Does This Emotion Need?
-
--
-
----
-
-## 🎮 What Can I Control?
-
--
-
----
-
-## 🍃 What Must I Accept?
-
--
-
----
-
-## 🤗 Self-Compassion
-
-What would I say to a close friend in this situation?
-
--
-`,
-  },
-  {
-    id: 10,
-    name: 'morning-planning',
-    title: '🚀 Morning Planning',
-    color: '#FFF4B5',
-    text: `# 🌅 Morning Planning
-
-## 😊 How Do I Feel Today?
-
--
-
----
-
-## 🎯 Top 3 Priorities
-
-1.
-2.
-3.
-
----
-
-## ⭐ One Thing That Would Make Today Successful
-
--
-
----
-
-## 🚧 Potential Distractions
-
--
-
----
-
-## 💪 Personal Commitment
-
-Today I will:
-`,
-  },
-  {
-    id: 11,
-    name: 'evening-review',
-    title: '🌙 Evening Review',
-    color: '#D7CCC8',
-    text: `# 🌙 Evening Review
-
-## 🏆 Today's Wins
-
--
--
--
-
----
-
-## 🤔 Challenges
-
--
-
----
-
-## 🎓 What Did I Learn?
-
--
-
----
-
-## 🧭 Did I Live According To My Values?
-
--
-
----
-
-## 🌱 What Will I Improve Tomorrow?
-
--
-
----
-
-## 🙏 Gratitude
-
-1.
-2.
-3.
-`,
+- `,
   },
 ]

@@ -47,14 +47,16 @@ export const HeaderContainer = styled.header`
 
   .titlebar h1 {
     font-family: Holiday;
-    text-transform: lowercase;
     font-size: 26px;
     font-weight: bolder;
+    letter-spacing: 2px;
     margin-left: 10px;
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
     align-items: center;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
   }
 
   @media (max-width: 600px) {

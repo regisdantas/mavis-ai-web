@@ -318,7 +318,8 @@ export const CardContainer = styled.div`
     /* table */
 
     .reactMarkDown table {
-      width: 100%;
+      display: inline-table;
+      width: auto;
       border-top: 1px solid #919699;
       border-left: 1px solid #919699;
       border-spacing: 0;
@@ -334,6 +335,8 @@ export const CardContainer = styled.div`
     .reactMarkDown table th p {
       font-weight: bold;
       margin-bottom: 0px;
+      margin: 0;
+      padding: 0;
     }
 
     .reactMarkDown table td {
@@ -342,6 +345,8 @@ export const CardContainer = styled.div`
       vertical-align: top;
       border-bottom: 1px solid #919699;
       border-right: 1px solid #919699;
+      margin: 0;
+      padding: 2px;
     }
     .reactMarkDown table td p {
       margin-bottom: 0px;
@@ -360,7 +365,18 @@ export const CardContainer = styled.div`
     }
 
     .reactMarkDown button {
-      margin: 3px 0 10px 0;
+      margin: 0;
+      height: 20px;
+      min-width: 40px;
+      width: fit-content;
+      border: 1px solid #919699;
+      background: #e2e2e2;
+      color: #000;
+      font-size: 12px;
+      cursor: pointer;
+      padding: 0 6px;
+      border-radius: 3px;
+      white-space: nowrap;
     }
 
     .reactMarkDown input[type='checkbox'] {

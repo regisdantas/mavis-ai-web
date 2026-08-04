@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
-import { FiUsers, FiMenu } from 'react-icons/fi'
-import { Container, MarkersContainer, MarkerItem, MarkerHeader } from './styles'
+import { FiMenu } from 'react-icons/fi'
+import { Container, MarkersContainer, MarkerItem } from './styles'
 import { IconButton } from '../../styles/global'
 import { IconType } from 'react-icons'
 
