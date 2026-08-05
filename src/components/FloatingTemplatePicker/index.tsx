@@ -46,7 +46,7 @@ const FloatingTemplatePicker: React.FC<FloatingTemplatePickerProps> = ({ options
             onPicked(opt)
           }}
         >
-          {opt.title}
+          {opt.name}
         </button>
       ))}
     </div>,

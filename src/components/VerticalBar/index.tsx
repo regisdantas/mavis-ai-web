@@ -22,7 +22,7 @@ const VerticalBar: React.FC<VerticalBarProps> = ({ pages, selectedPage, setSelec
 
   React.useEffect(() => {
     console.log(selectedPage.name)
-    if (selectedPage.name === 'Markers') {
+    if (selectedPage.name === 'Tags') {
       setMarkersExpanded(true)
     } else {
       setMarkersExpanded(false)

@@ -358,6 +358,10 @@ export const CardContainer = styled.div`
       margin-top: 5px;
     }
 
+    .reactMarkDown table tr {
+      height: 22px;
+    }
+
     /* forms */
 
     .reactMarkDown form {

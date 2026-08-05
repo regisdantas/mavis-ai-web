@@ -40,7 +40,8 @@ import { FiEye } from 'react-icons/fi'
 import { IoMdArrowDropdown, IoMdArrowDropleft } from 'react-icons/io'
 import VerticalBar from '../../components/VerticalBar'
 import { BsJournalBookmark } from 'react-icons/bs'
-import { LiaProjectDiagramSolid } from 'react-icons/lia'
+import { GoTag } from 'react-icons/go'
+import { CgTemplate } from 'react-icons/cg'
 
 interface IEntry {
   uid: string
@@ -51,14 +52,15 @@ interface IEntry {
 }
 
 const pages = [
-  { name: 'Favorites', icon: FiStar, items: undefined },
   { name: 'All', icon: FiEye, items: undefined },
+  { name: 'Favorites', icon: FiStar, items: undefined },
   { name: 'Journal', icon: BsJournalBookmark, items: undefined },
   {
-    name: 'Projects',
-    icon: LiaProjectDiagramSolid,
+    name: 'Tags',
+    icon: GoTag,
     items: ['Personal', 'Work', 'Projects', 'Ideas', 'Important'],
   },
+  { name: 'Templates', icon: CgTemplate, items: undefined },
   { name: 'Archive', icon: FiArchive, items: undefined },
   { name: 'Trash', icon: FiTrash2, items: undefined },
 ]

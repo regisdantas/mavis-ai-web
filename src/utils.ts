@@ -39,8 +39,8 @@ export type TemplateOption = {
 export const templateOptions: TemplateOption[] = [
   {
     id: 0,
-    name: 'habits',
-    title: '🔁 Habits - /year',
+    name: 'Habits',
+    title: '🔁 Habits - /year/S/eval(/month > 6 ? 2 : 1)',
     color: '#BBDEFB',
     text: String.raw`<div style="display:flex; gap:8px; align-items:flex-start;">
 
@@ -115,8 +115,8 @@ export const templateOptions: TemplateOption[] = [
   },
   {
     id: 1,
-    name: 'journal',
-    title: '✍🏼 Journal - /date',
+    name: 'Journal',
+    title: '✍🏼 Journal - /dayofweek, /date',
     color: '#F3E5C8',
     text: String.raw`📍 /city - /country, /dayofweek, /datetime
 🌤️ Weather: /weather /temperature
