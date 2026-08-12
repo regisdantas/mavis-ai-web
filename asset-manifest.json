@@ -1,7 +1,7 @@
 {
   "files": {
     "main.css": "/mavis-ai/static/css/main.0891155b.css",
-    "main.js": "/mavis-ai/static/js/main.3c234076.js",
+    "main.js": "/mavis-ai/static/js/main.c439ea02.js",
     "login.js": "/mavis-ai/static/js/login.9ad8538d.chunk.js",
     "dashboard.js": "/mavis-ai/static/js/dashboard.0eb8e017.chunk.js",
     "static/js/235.f237f97f.chunk.js": "/mavis-ai/static/js/235.f237f97f.chunk.js",
@@ -11,7 +11,7 @@
     "static/media/user.png": "/mavis-ai/static/media/user.ae3a914be1e9f200b221.png",
     "index.html": "/mavis-ai/index.html",
     "main.0891155b.css.map": "/mavis-ai/static/css/main.0891155b.css.map",
-    "main.3c234076.js.map": "/mavis-ai/static/js/main.3c234076.js.map",
+    "main.c439ea02.js.map": "/mavis-ai/static/js/main.c439ea02.js.map",
     "login.9ad8538d.chunk.js.map": "/mavis-ai/static/js/login.9ad8538d.chunk.js.map",
     "dashboard.0eb8e017.chunk.js.map": "/mavis-ai/static/js/dashboard.0eb8e017.chunk.js.map",
     "235.f237f97f.chunk.js.map": "/mavis-ai/static/js/235.f237f97f.chunk.js.map",
@@ -19,6 +19,6 @@
   },
   "entrypoints": [
     "static/css/main.0891155b.css",
-    "static/js/main.3c234076.js"
+    "static/js/main.c439ea02.js"
   ]
 }
