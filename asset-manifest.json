@@ -1,17 +1,18 @@
 {
   "files": {
     "main.css": "/mavis-ai-web/static/css/main.aa74c5fd.css",
-    "main.js": "/mavis-ai-web/static/js/main.ae5dd035.js",
+    "main.js": "/mavis-ai-web/static/js/main.d9a80c43.js",
     "login.js": "/mavis-ai-web/static/js/login.8c98d17c.chunk.js",
     "dashboard.js": "/mavis-ai-web/static/js/dashboard.1e0e6a84.chunk.js",
     "static/js/235.820a3f4f.chunk.js": "/mavis-ai-web/static/js/235.820a3f4f.chunk.js",
     "static/js/219.b1e4df0e.chunk.js": "/mavis-ai-web/static/js/219.b1e4df0e.chunk.js",
+    "static/media/logo.png": "/mavis-ai-web/static/media/logo.3ee40e9df982af627070.png",
     "static/media/mavis.png": "/mavis-ai-web/static/media/mavis.ef2b70409e731852a8ca.png",
     "static/media/vampire.otf": "/mavis-ai-web/static/media/vampire.5986426c4d28f8a0ea28.otf",
     "static/media/user.png": "/mavis-ai-web/static/media/user.ae3a914be1e9f200b221.png",
     "index.html": "/mavis-ai-web/index.html",
     "main.aa74c5fd.css.map": "/mavis-ai-web/static/css/main.aa74c5fd.css.map",
-    "main.ae5dd035.js.map": "/mavis-ai-web/static/js/main.ae5dd035.js.map",
+    "main.d9a80c43.js.map": "/mavis-ai-web/static/js/main.d9a80c43.js.map",
     "login.8c98d17c.chunk.js.map": "/mavis-ai-web/static/js/login.8c98d17c.chunk.js.map",
     "dashboard.1e0e6a84.chunk.js.map": "/mavis-ai-web/static/js/dashboard.1e0e6a84.chunk.js.map",
     "235.820a3f4f.chunk.js.map": "/mavis-ai-web/static/js/235.820a3f4f.chunk.js.map",
@@ -19,6 +20,6 @@
   },
   "entrypoints": [
     "static/css/main.aa74c5fd.css",
-    "static/js/main.ae5dd035.js"
+    "static/js/main.d9a80c43.js"
   ]
 }
