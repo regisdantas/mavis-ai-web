@@ -1,10 +1,12 @@
-import styled from "styled-components";
+import styled from 'styled-components'
 
 export const HeaderContainer = styled.header`
-  position: fixed;
+  z-index: 10;
+  position: absolute;
   user-select: none;
   top: 0;
   left: 0;
+  height: 40px !important;
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -28,62 +30,63 @@ export const HeaderContainer = styled.header`
   }
 
   .titlebar .logo-title {
+    position: absolute;
+    left: 0;
     cursor: pointer;
     width: 100px;
-    margin-left: 10px;
+    margin-left: 0px;
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
     align-items: center;
-    img {
-      margin: 0;
-    }
   }
 
   .titlebar h1 {
-    font-family: Holiday;
-    font-size: 36px;
+    font-family: Vampire !important;
+    color: #e9262a !important;
+    font-size: 26px;
     font-weight: bolder;
-    text-transform: lowercase;
+    letter-spacing: 2px;
     margin-left: 10px;
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
     align-items: center;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
   }
 
-  @media (max-width: 600px) {
+  @media (max-width: 1260px) {
     .titlebar h1 {
       display: none;
+    }
+
+    .titlebar .logo-title {
+      width: auto;
     }
   }
 
   .titlebar {
     display: flex;
     width: 100%;
-    height: 56px;
-    background: #04d361;
+    height: 40px;
+    background: #231f20;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     flex-direction: row;
     margin: 0px;
     padding: 0px;
     img {
       width: auto;
-      height: 40px;
+      height: 30px;
       border-radius: 50%;
-      margin-left: auto;
+      top: 4px;
+      right: 4px;
+      position: absolute;
     }
 
     svg {
       cursor: pointer;
     }
   }
-
-  img {
-    height: 56px;
-    border-radius: 0%;
-    margin: 10px;
-    margin-left: 30px;
-  }
-`;
+`

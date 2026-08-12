@@ -1,5 +1,5 @@
-import styled, { css, createGlobalStyle } from "styled-components";
-import { shade } from "polished";
+import styled, { css, createGlobalStyle } from 'styled-components'
+import { shade } from 'polished'
 
 export const GlobalStyles = createGlobalStyle`
 * {
@@ -49,26 +49,49 @@ a{
   color: inherit;
   text-decoration: none;
 }
-`;
+`
 
-export const BodyContainer = styled.div`
-  width: 100%;
-  height: 100%;
-  padding-top: 80px;
-  padding-bottom: 40px;
-  min-height: 90vh;
+interface IconButtonProps {
+  expanded?: boolean
+  disabled?: boolean
+  selected?: boolean
+}
+
+export const IconButton = styled.div<IconButtonProps>`
+  width: ${({ expanded }) => (expanded ? '100%' : '30px')} !important;
+  min-height: 30px;
+  height: 30px;
+
   display: flex;
-  flex-direction: row;
-  justify-content: center;
-`;
-export const DataContainer = styled.div`
-  width: 100%;
-  height: 100%;
-  min-height: 90vh;
-  padding: 10px;
-  max-width: 990px;
-  background: #e0e0e5;
-`;
+  align-items: center;
+  justify-content: ${({ expanded }) => (expanded ? 'flex-start' : 'center')};
+
+  gap: 10px;
+  padding: ${({ expanded }) => (expanded ? '0 10px' : '0')};
+  margin: 2px !important;
+
+  border-radius: 10px;
+
+  opacity: ${({ disabled }) => (disabled ? 0.4 : 1)};
+  pointer-events: ${({ disabled }) => (disabled ? 'none' : 'auto')};
+  cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
+
+  transition: all 0.2s;
+
+  svg {
+    flex-shrink: 0;
+    color: ${({ selected }) => (selected ? '#2563eb' : '#2e2e2e;')} !important;
+  }
+
+  span {
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  &:hover {
+    background: rgba(128, 128, 128, 0.15);
+  }
+`
 
 export const AppContainer = styled.div`
   min-height: 90vh;
@@ -97,62 +120,14 @@ export const AppContainer = styled.div`
     }
   }
   button {
-    background: #04d361;
+    background: #323232;
     justify-content: center;
     border: 0;
     color: #fff;
     font-weight: bold;
     transition: background-color 0.2s;
     &:hover {
-      background-color: ${shade(0.2, "#04d361")};
+      background-color: ${shade(0.2, '#323232')};
     }
   }
-`;
-
-interface CustomButtonProps {
-  color: string;
-}
-
-export const CustomButton = styled.button<CustomButtonProps>`
-  display: block !important;
-  svg {
-    float: left;
-    margin-left: 10px;
-  }
-
-  ${(props) =>
-    props.color &&
-    css`
-      background-color: ${props.color} !important;
-      &:hover {
-        background-color: ${shade(0.2, props.color)} !important;
-      }
-    `}
-`;
-
-export const FloatingButton = styled.button<CustomButtonProps>`
-  position: fixed;
-  bottom: 40px;
-  right: calc(50% - 25px);
-  display: block !important;
-  width: 50px !important;
-  border-radius: 50% !important;
-  height: 50px !important;
-  border: 3px solid #e0e0e5 !important;
-
-  svg {
-    float: left;
-    margin-left: 10px;
-  }
-
-  ${(props) =>
-    props.color &&
-    css`
-      background-color: ${props.color} !important;
-      &:hover {
-        background-color: ${shade(0.2, props.color)} !important;
-      }
-    `}
-`;
-
-export const EntryList = styled.div``;
+`
