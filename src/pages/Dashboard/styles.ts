@@ -6,109 +6,66 @@ export const EntryList = styled.div`
   padding-bottom: 60px;
 `
 
-export const DateContainer = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  margin: 0px;
-  padding: 0px;
-  height: 35px;
-  border-radius: 10px;
-  border-right: 0;
-  input[type='date'] {
-    width: 140px;
-    margin: 0;
-    padding: 0;
-  }
-`
-
-export const SelectedPage = styled.div`
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  margin: 10px;
-  padding: 0px;
-  height: 35px;
-  gap: 10px;
-  border-radius: 10px;
-  border-right: 0;
-`
-
-export const SearchContainer = styled.div`
-  display: flex;
-  position: absolute;
-  right: 140px;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  margin: 0px;
-  padding: 2px;
-  height: 35px;
-  width: 250px;
-  background: #f0f0f5;
-  border-bottom-right-radius: 10px;
-  border-bottom-left-radius: 10px;
-  svg {
-    margin: 0;
-    padding: 0;
-  }
-  input {
-    margin: 0;
-    padding: 10px;
-  }
-`
-
 export const ContentContainer = styled.div`
   flex: 1;
   padding: 0 20px;
 `
 
-export const ActionsContainer = styled.div`
+export const ChatContainer = styled.div`
   display: flex;
-  position: absolute;
-  right: 0px;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  margin: 0px;
-  padding: 0px;
-  height: 35px;
-  height: 35px;
+  flex-direction: column;
+  height: 100%;
 `
 
-export const MenuContainer = styled.div`
-  position: absolute;
-  will-change: transform;
-  right: calc(50% - 495px);
-  bottom: 0px;
+export const ChatHistory = styled.div`
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+
   display: flex;
-  flex-direction: row;
-  justify-content: left;
-  align-items: center;
-  align-self: flex-end;
-  margin: 0px;
-  width: 990px;
-  height: 35px;
-  border-top-left-radius: 10px;
-  border-top-right-radius: 10px;
+  flex-direction: column;
+  gap: 10px;
+`
+
+export const ChatMessageBubble = styled.div<{ role: string }>`
+  max-width: 90%;
+  padding: 10px 14px;
+  border-radius: 12px;
+
+  white-space: pre-wrap;
+  word-break: break-word;
+
+  align-self: ${({ role }) => (role === 'user' ? 'flex-end' : 'flex-start')};
+
+  background: ${({ role }) => (role === 'user' ? '#2563eb' : '#f5f5f5')};
+
+  color: ${({ role }) => (role === 'user' ? '#fff' : '#222')};
+`
+export const ChatInputContainer = styled.div`
+  border-top: 1px solid #d0d0d0;
+  padding: 10px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
   background: #e0e0e5;
-  color: #2e2e2e;
+`
 
-  input {
-    background: transparent;
-    height: auto;
-    border: none;
-    outline: none;
-    color: #2e2e2e;
-  }
+export const ChatTextarea = styled.textarea`
+  resize: none;
+  min-height: 80px;
+  max-height: 200px;
 
-  input:focus {
-    border: none;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+
+  padding: 10px;
+  font-size: 14px;
+
+  &:focus {
     outline: none;
-    box-shadow: none;
-    color: #2e2e2e;
+    border-color: #2563eb;
   }
 `
 
@@ -120,4 +77,55 @@ export const MenuBarContainer = styled.div`
   flex-direction: row;
   align-items: center;
   width: 100px;
+
+  @media (max-width: 1260px) {
+    top: 3px;
+    right: 2px;
+  }
+`
+
+export const NotesMiniMap = styled.div`
+  position: fixed;
+
+  left: 160px;
+  top: 40px;
+
+  width: 40px;
+  height: calc(100vh - 40px);
+
+  display: flex;
+  flex-direction: column;
+
+  overflow: hidden;
+
+  background: #e0e0e5;
+
+  z-index: 25;
+
+  padding-top: 6px;
+`
+
+export const MiniMapItem = styled.div<{ $selected?: boolean }>`
+  width: 100%;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+
+  gap: 2px;
+
+  border-radius: 4px;
+
+  padding: 0 2px;
+
+  border: ${({ $selected }) => ($selected ? '2px solid #2563eb' : '1px solid transparent')};
+  button:hover {
+    background: white;
+  }
+
+  svg {
+    margin: 0;
+    padding: 0;
+  }
 `

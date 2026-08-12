@@ -10,11 +10,13 @@ interface MarkerHeaderProps {
 
 export const Container = styled.div<ContainerProps>`
   position: fixed;
+  z-index: 11;
   left: 0;
-  width: ${({ expanded }) => (expanded ? '140px' : '44px')};
+  top: 40px;
+  width: ${({ expanded }) => (expanded ? '160px' : '44px')};
   height: 100%;
 
-  background: #f0f0f5;
+  background: rgba(240, 240, 245, 0.8);
   border-right: 1px solid #d0d0d0;
 
   display: flex;
@@ -24,6 +26,24 @@ export const Container = styled.div<ContainerProps>`
   padding: 15px 6px;
 
   transition: width 0.2s ease;
+  @media (max-width: 1260px) {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+
+    width: 100%;
+    height: 40px;
+
+    flex-direction: row;
+
+    overflow-x: auto;
+    overflow-y: hidden;
+
+    flex-wrap: nowrap;
+    white-space: nowrap;
+
+    -webkit-overflow-scrolling: touch;
+  }
 `
 
 export const MarkerHeader = styled.div<MarkerHeaderProps>`
@@ -50,28 +70,5 @@ export const MarkerHeader = styled.div<MarkerHeaderProps>`
 
   &:hover {
     background: rgba(128, 128, 128, 0.15);
-  }
-`
-
-export const MarkersContainer = styled.div`
-  width: 100%;
-  padding: 0 8px;
-
-  display: flex;
-  flex-direction: column;
-`
-
-export const MarkerItem = styled.div`
-  font-size: 12px;
-  padding: 6px 8px;
-  border-radius: 6px;
-
-  background: #f3f3f5;
-  color: #2e2e2e;
-
-  cursor: pointer;
-
-  &:hover {
-    background: #dddddf;
   }
 `

@@ -34,6 +34,17 @@ export type TemplateOption = {
   title: string
   text: string
   color: string
+  tags?: string[]
+}
+
+export const getTags = (content: string): string[] => {
+  if (!isJsonString(content)) {
+    return []
+  }
+
+  const data = JSON.parse(content)
+
+  return Array.from(new Set(data.tags || []))
 }
 
 export const templateOptions: TemplateOption[] = [
@@ -42,6 +53,7 @@ export const templateOptions: TemplateOption[] = [
     name: 'Habits',
     title: '🔁 Habits - /year/S/eval(/month > 6 ? 2 : 1)',
     color: '#BBDEFB',
+    tags: ['daily'],
     text: String.raw`<div style="display:flex; gap:8px; align-items:flex-start;">
 
 <div style="flex:1">
@@ -118,6 +130,7 @@ export const templateOptions: TemplateOption[] = [
     name: 'Journal',
     title: '✍🏼 Journal - /dayofweek, /date',
     color: '#F3E5C8',
+    tags: ['journal'],
     text: String.raw`📍 /city - /country, /dayofweek, /datetime
 🌤️ Weather: /weather /temperature
 🌙 Moon: /moon

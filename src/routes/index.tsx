@@ -1,14 +1,17 @@
 import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
-import { UserAuth } from '../contexts/AuthContext'
-import { DashboardContextProvider } from '../contexts/DashboardContext'
+import { UserAuth } from '../context/AuthContext'
+import { DashboardContextProvider } from '../pages/Dashboard/context/DashboardContext'
 
 const Login = React.lazy(
   () => import(/* webpackPrefetch: true */ /* webpackChunkName: "login" */ '../pages/Login')
 )
 
 const Dashboard = React.lazy(
-  () => import(/* webpackPrefetch: true */ /* webpackChunkName: "dashboard" */ '../pages/Dashboard')
+  () =>
+    import(
+      /* webpackPrefetch: true */ /* webpackChunkName: "dashboard" */ '../pages/Dashboard/Dashboard'
+    )
 )
 
 interface IProtectedRouteProps {

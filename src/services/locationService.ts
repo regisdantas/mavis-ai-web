@@ -5,6 +5,8 @@ export type LocationData = {
   country: string
 }
 
+const apiKey = process.env.REACT_APP_MAPSCO_API_KEY
+
 export const getWeatherDescription = (code: number): string => {
   if (code === 0) return '☀️ Sunny'
   if ([1, 2].includes(code)) return '🌤️ Partly Cloudy'
@@ -33,25 +35,31 @@ export const getLocationData = async (): Promise<LocationData> =>
 
         const weatherData = await weatherResponse.json()
 
-        const geoResponse = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${coords.latitude}&lon=${coords.longitude}&format=json`
-        )
+        let city = ''
+        let country = ''
 
-        const geo = await geoResponse.json()
+        try {
+          const geoResponse = await fetch(
+            `https://geocode.maps.co/reverse?lat=${coords.latitude}&lon=${coords.longitude}&api_key=${apiKey}`
+          )
+
+          const geo = await geoResponse.json()
+
+          city = geo.address?.city || geo.address?.town || geo.address?.village || ''
+
+          country = geo.address?.country || ''
+        } catch {
+          console.warn('Reverse geocoding failed')
+        }
 
         resolve({
           temperature: `${Math.round(weatherData.current.temperature_2m)}°C`,
           weather: getWeatherDescription(weatherData.current.weather_code),
-          city:
-            geo.address?.city ||
-            geo.address?.town ||
-            geo.address?.village ||
-            geo.address?.municipality ||
-            '',
-          country: geo.address?.country || '',
+          city,
+          country,
         })
       } catch (err) {
         reject(err)
       }
-    }, reject)
+    })
   })

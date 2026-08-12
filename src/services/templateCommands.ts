@@ -30,6 +30,7 @@ export const createCommandContext = (data: Record<string, any> = {}): Record<str
 export const processCommands = (
   text: string,
   context: Record<string, any> = {},
+  isMobile: boolean = false,
   nested = 0
 ): string => {
   const now = new Date()
@@ -80,6 +81,17 @@ export const processCommands = (
 
     .replace(/@select\[(.*?)\|(.*?)\]/g, (_, selected) => selected.trim())
 
+    .replace(/@bmi\(([\d.]+),([\d.]+)\)/g, (_, weight, height) => {
+      const w = Number(weight)
+      const h = Number(height)
+
+      if (!w || !h) {
+        return '[BMI error]'
+      }
+
+      return (w / (h * h)).toFixed(1)
+    })
+
     .replace(/@calculate\((.*?)\)/g, (_, expr) => {
       try {
         return String(Function(`return (${expr})`)())
@@ -105,7 +117,8 @@ export const processCommands = (
     .replace(/@progress\((-?[\d.]+)\)/g, (_, value) => {
       const ratio = Math.max(-1, Math.min(1, Number(value)))
 
-      const width = 10
+      const width = context.isMobile ? 5 : 10
+
       const absRatio = Math.abs(ratio)
 
       const percent = Math.round(ratio * 100)
@@ -134,7 +147,7 @@ export const processCommands = (
     })
 
   if (text.includes('@') && nested < 5) {
-    return processCommands(text, context, nested + 1)
+    return processCommands(text, context, isMobile, nested + 1)
   }
 
   return text

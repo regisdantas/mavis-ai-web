@@ -1,6 +1,6 @@
 import React from 'react'
 import { createPortal } from 'react-dom'
-import { TemplateOption } from '../../utils'
+import { TemplateOption } from '../../../utils'
 
 interface FloatingTemplatePickerProps {
   options: TemplateOption[]

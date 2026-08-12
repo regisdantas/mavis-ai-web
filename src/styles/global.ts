@@ -53,6 +53,8 @@ a{
 
 interface IconButtonProps {
   expanded?: boolean
+  disabled?: boolean
+  selected?: boolean
 }
 
 export const IconButton = styled.div<IconButtonProps>`
@@ -69,13 +71,16 @@ export const IconButton = styled.div<IconButtonProps>`
   margin: 2px !important;
 
   border-radius: 10px;
-  cursor: pointer;
+
+  opacity: ${({ disabled }) => (disabled ? 0.4 : 1)};
+  pointer-events: ${({ disabled }) => (disabled ? 'none' : 'auto')};
+  cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
 
   transition: all 0.2s;
 
   svg {
     flex-shrink: 0;
-    color: #2e2e2e;
+    color: ${({ selected }) => (selected ? '#2563eb' : '#2e2e2e;')} !important;
   }
 
   span {
@@ -86,25 +91,6 @@ export const IconButton = styled.div<IconButtonProps>`
   &:hover {
     background: rgba(128, 128, 128, 0.15);
   }
-`
-
-export const BodyContainer = styled.div`
-  width: 100%;
-  height: 100%;
-  padding-top: 40px;
-  padding-bottom: 20px;
-  min-height: 95vh;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-`
-export const DataContainer = styled.div`
-  width: 100%;
-  height: 100%;
-  min-height: 95vh;
-  padding: 10px;
-  max-width: 990px;
-  background: #e0e0e5;
 `
 
 export const AppContainer = styled.div`
@@ -145,63 +131,3 @@ export const AppContainer = styled.div`
     }
   }
 `
-
-interface CustomButtonProps {
-  color: string
-}
-
-export const CustomButton = styled.button<CustomButtonProps>`
-  display: block !important;
-  svg {
-    float: left;
-    margin-left: 10px;
-  }
-
-  ${(props) =>
-    props.color &&
-    css`
-      background-color: ${props.color} !important;
-      &:hover {
-        background-color: ${shade(0.2, props.color)} !important;
-      }
-    `}
-`
-
-export const FloatingButton = styled.button<CustomButtonProps>`
-  position: fixed;
-  top: 30px;
-  right: calc(50% - 25px);
-  display: block !important;
-  width: 50px !important;
-  height: 50px !important;
-  border-radius: 50% !important;
-  border: 0 !important;
-
-  z-index: 10 !important;
-
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2), 0 8px 16px rgba(0, 0, 0, 0.4);
-
-  transition: background-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2), 0 12px 24px rgba(0, 0, 0, 0.4);
-  }
-
-  svg {
-    float: left;
-    margin-left: 10px;
-  }
-
-  ${(props) =>
-    props.color &&
-    css`
-      background-color: ${props.color} !important;
-
-      &:hover {
-        background-color: ${shade(0.2, props.color)} !important;
-      }
-    `}
-`
-
-export const EntryList = styled.div``

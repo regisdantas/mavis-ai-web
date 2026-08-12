@@ -59,7 +59,11 @@ export const processButtons = (text: string): string =>
       `<button data-expression="${encodeURIComponent(expression.trim())}">${label}</button>`
   )
 
-export const renderTemplate = (text: string, context: TemplateContext): string => {
+export const renderTemplate = (
+  text: string,
+  context: TemplateContext,
+  isMobile: boolean
+): string => {
   const variables = extractVariables(text)
 
   const evalContext = createCommandContext({
@@ -80,7 +84,8 @@ export const renderTemplate = (text: string, context: TemplateContext): string =
 
   return processCommands(
     resolveVariables(removeVariableDeclarations(processButtons(text)), variables),
-    evalContext
+    evalContext,
+    isMobile
   )
 }
 
