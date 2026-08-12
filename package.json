@@ -1,6 +1,6 @@
 {
-  "homepage": "https://regisdantas.github.io/mavis-ai",
-  "name": "mavis-ai",
+  "homepage": "https://regisdantas.github.io/mavis-ai-web",
+  "name": "mavis-ai-web",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
