@@ -1,26 +1,26 @@
 {
   "files": {
     "main.css": "/mavis-ai-web/static/css/main.aa74c5fd.css",
-    "main.js": "/mavis-ai-web/static/js/main.4b6e5ce0.js",
+    "main.js": "/mavis-ai-web/static/js/main.13fd90e0.js",
     "login.js": "/mavis-ai-web/static/js/login.8c98d17c.chunk.js",
-    "dashboard.js": "/mavis-ai-web/static/js/dashboard.9a0eaa50.chunk.js",
+    "dashboard.js": "/mavis-ai-web/static/js/dashboard.7732bcb0.chunk.js",
     "static/js/235.820a3f4f.chunk.js": "/mavis-ai-web/static/js/235.820a3f4f.chunk.js",
     "static/js/219.b1e4df0e.chunk.js": "/mavis-ai-web/static/js/219.b1e4df0e.chunk.js",
     "static/js/59.1b7229f8.chunk.js": "/mavis-ai-web/static/js/59.1b7229f8.chunk.js",
-    "static/media/logo.png": "/mavis-ai-web/static/media/logo.e2e571ad437a1e676a8a.png",
-    "static/media/mavis.png": "/mavis-ai-web/static/media/mavis.ef2b70409e731852a8ca.png",
+    "static/media/mavis.png": "/mavis-ai-web/static/media/mavis.28a5d798b26e2e8abaab.png",
+    "static/media/logo.png": "/mavis-ai-web/static/media/logo.6ab9f75437060fb948ce.png",
     "static/media/vampire.otf": "/mavis-ai-web/static/media/vampire.5986426c4d28f8a0ea28.otf",
     "index.html": "/mavis-ai-web/index.html",
     "main.aa74c5fd.css.map": "/mavis-ai-web/static/css/main.aa74c5fd.css.map",
-    "main.4b6e5ce0.js.map": "/mavis-ai-web/static/js/main.4b6e5ce0.js.map",
+    "main.13fd90e0.js.map": "/mavis-ai-web/static/js/main.13fd90e0.js.map",
     "login.8c98d17c.chunk.js.map": "/mavis-ai-web/static/js/login.8c98d17c.chunk.js.map",
-    "dashboard.9a0eaa50.chunk.js.map": "/mavis-ai-web/static/js/dashboard.9a0eaa50.chunk.js.map",
+    "dashboard.7732bcb0.chunk.js.map": "/mavis-ai-web/static/js/dashboard.7732bcb0.chunk.js.map",
     "235.820a3f4f.chunk.js.map": "/mavis-ai-web/static/js/235.820a3f4f.chunk.js.map",
     "219.b1e4df0e.chunk.js.map": "/mavis-ai-web/static/js/219.b1e4df0e.chunk.js.map",
     "59.1b7229f8.chunk.js.map": "/mavis-ai-web/static/js/59.1b7229f8.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.aa74c5fd.css",
-    "static/js/main.4b6e5ce0.js"
+    "static/js/main.13fd90e0.js"
   ]
 }
