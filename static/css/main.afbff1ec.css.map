@@ -1,0 +1,1 @@
+{"version":3,"file":"static/css/main.c5622e19.css","mappings":"AAAA,WAGE,kBAAmB,CAFnB,mBAAsB,CACtB,wGAEF","sources":["index.css"],"sourcesContent":["@font-face {\n  font-family: 'Vampire';\n  src: local('Vampire'), url('./assets/fonts/vampire.otf') format('opentype');\n  font-display: block;\n}\n"],"names":[],"sourceRoot":""}
