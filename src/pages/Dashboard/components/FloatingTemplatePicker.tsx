@@ -1,6 +1,7 @@
 import React from 'react'
 import { createPortal } from 'react-dom'
-import { TemplateOption } from '../../../utils'
+import styled from 'styled-components'
+import { TemplateOption } from '../utils/cardUtils'
 
 interface FloatingTemplatePickerProps {
   options: TemplateOption[]
@@ -9,49 +10,92 @@ interface FloatingTemplatePickerProps {
 
 const FloatingTemplatePicker: React.FC<FloatingTemplatePickerProps> = ({ options, onPicked }) => {
   return createPortal(
-    <div
-      onMouseDown={(e) => e.stopPropagation()}
-      onClick={(e) => e.stopPropagation()}
-      style={{
-        position: 'fixed',
-        top: '120px',
-        right: '50%',
-        transform: 'translate(420px, 0%)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '4px',
-        padding: '8px',
-        background: 'white',
-        border: '1px solid #323232',
-        borderRadius: '8px',
-        boxShadow: '0 10px 30px rgba(0,0,0,0.25)',
-        zIndex: 999999,
-      }}
-    >
-      {options.map((opt) => (
-        <button
-          key={opt.id}
-          style={{
-            backgroundColor: '#cfcfcf',
-            width: '100%',
-            height: 24,
-            border: '1px solid #666',
-            borderRadius: 4,
-            cursor: 'pointer',
-            padding: '2px',
-          }}
+    <TemplateDropdown onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+      {options.map((option, index) => (
+        <TemplateOptionItem
+          key={index}
           onMouseDown={(e) => {
             e.preventDefault()
             e.stopPropagation()
-            onPicked(opt)
+            onPicked(option)
           }}
         >
-          {opt.name}
-        </button>
+          <TemplateContent>
+            <TemplateTitle>{option.title}</TemplateTitle>
+          </TemplateContent>
+        </TemplateOptionItem>
       ))}
-    </div>,
+    </TemplateDropdown>,
     document.body
   )
 }
 
 export default FloatingTemplatePicker
+
+const TemplateDropdown = styled.div`
+  position: absolute;
+
+  top: 120px;
+  right: 50%;
+
+  min-width: 220px;
+  max-width: 320px;
+  max-height: 320px;
+
+  overflow-y: auto;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  background: white;
+
+  border-radius: 14px;
+
+  padding: 4px;
+
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+
+  z-index: 999999;
+`
+
+const TemplateOptionItem = styled.button`
+  width: 100%;
+
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+
+  border: none;
+  border-radius: 10px;
+
+  background: #f5f6f8;
+
+  padding: 8px 10px;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+
+  text-align: left;
+
+  &:hover {
+    background: #eceff3;
+  }
+`
+const TemplateContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  min-width: 0;
+`
+
+const TemplateTitle = styled.span`
+  color: #444;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  line-height: 1.3;
+`

@@ -97,6 +97,36 @@ const DataContainer = styled.div`
   scrollbar-width: thin;
   scrollbar-color: #b0b0b5 #e0e0e5;
 
+  input,
+  button {
+    margin-left: auto;
+    margin-right: auto;
+
+    max-width: 400px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    border-radius: 5px;
+    padding: 10px;
+    height: 50px;
+    svg {
+      font-size: 24px;
+      margin-right: 7px;
+    }
+  }
+  button {
+    background: #323232;
+    justify-content: center;
+    border: 0;
+    color: #fff;
+    font-weight: bold;
+    transition: background-color 0.2s;
+    &:hover {
+      background-color: ${shade(0.2, '#323232')};
+    }
+
   &::-webkit-scrollbar {
     width: 12px;
   }

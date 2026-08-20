@@ -9,7 +9,7 @@ import FloatingColorPicker from '../FloatingColorPicker'
 import FloatingTemplatePicker from '../FloatingTemplatePicker'
 
 import { IconButton } from '../../../../styles/global'
-import { TemplateOption } from '../../../../utils'
+import { TemplateOption } from '../../utils/cardUtils'
 
 interface CardActionsProps {
   isLocked: boolean
@@ -68,7 +68,7 @@ const CardActions: React.FC<CardActionsProps> = ({
   onTemplateSelected,
 }) => {
   return (
-    <>
+    <GeneralContainer>
       <ActionsContainer>
         <IconButton
           disabled={isLocked}
@@ -146,21 +146,27 @@ const CardActions: React.FC<CardActionsProps> = ({
           <FloatingTemplatePicker options={templateOptions} onPicked={onTemplateSelected} />
         </TemplatePickerWrapper>
       )}
-    </>
+    </GeneralContainer>
   )
 }
 
 export default CardActions
 
-const ActionsContainer = styled.span`
+const GeneralContainer = styled.div`
   position: relative;
-
-  width: auto;
-
   display: flex;
+  width: 100%;
+  flex: 0 0;
+`
+
+const ActionsContainer = styled.span`
+  flex: 0 0 auto;
+  position: relative;
   flex-direction: row;
   justify-content: flex-end;
   align-items: center;
+  display: inline-flex;
+  width: fit-content;
 
   margin: 0;
   padding: 0;

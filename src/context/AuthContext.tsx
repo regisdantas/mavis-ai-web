@@ -1,4 +1,4 @@
-import { useContext, createContext, useEffect, useState } from 'react'
+import { useContext, createContext, useEffect, useState, ReactNode } from 'react'
 import {
   GoogleAuthProvider,
   FacebookAuthProvider,
@@ -10,7 +10,7 @@ import {
 import { auth } from '../services/firebase'
 
 interface IAuthContext {
-  user: User
+  user: User | null
   signInWithGoogle: () => Promise<void>
   signInWithFacebook: () => Promise<void>
   logOut: () => Promise<void>
@@ -19,39 +19,42 @@ interface IAuthContext {
 const AuthContext = createContext({} as IAuthContext)
 
 interface IAuthProps {
-  children: JSX.Element
+  children: ReactNode
 }
 
 export const AuthContextProvider = ({ children }: IAuthProps) => {
-  const [user, setUser] = useState<User>({} as User)
+  const [user, setUser] = useState<User | null>(null)
+
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider()
-    signInWithPopup(auth, provider)
+    await signInWithPopup(auth, provider)
   }
 
   const signInWithFacebook = async () => {
     const provider = new FacebookAuthProvider()
-    signInWithPopup(auth, provider)
-      .then((res) => console.log(res))
-      .catch((err) => console.log(err))
+    await signInWithPopup(auth, provider)
   }
 
-  const logOut = () => {
-    signOut(auth)
+  const logOut = async () => {
+    await signOut(auth)
   }
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser as User)
+      setUser(currentUser)
     })
-    return () => {
-      unsubscribe()
-    }
+
+    return unsubscribe
   }, [])
 
   return (
     <AuthContext.Provider
-      value={{ user, signInWithGoogle, signInWithFacebook, logOut } as IAuthContext}
+      value={{
+        user,
+        signInWithGoogle,
+        signInWithFacebook,
+        logOut,
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -13,9 +13,11 @@ export function useNoteTags({ tags, onTagsChange }: UseNoteTagsProps) {
   const hasTag = (tag: string) => tags.includes(tag)
 
   const toggleTag = (tag: string) => {
+    console.log('current tags', tags)
     const updatedTags = Array.from(
       new Set(hasTag(tag) ? tags.filter((t) => t !== tag) : [...tags, tag])
     )
+    console.log('updated tags', updatedTags)
 
     onTagsChange(updatedTags)
   }
