@@ -1,43 +1,116 @@
 import React from 'react'
 import styled from 'styled-components'
-import { DashboardToolbar } from './components/DashboardToolbar'
+import { NotesToolbar } from './components/NotesToolbar'
 import { useEntryFilter } from './hooks/useEntryFilter'
 import { useCardMeasurements } from './hooks/useCardMeasurements'
 import { useEntries } from './hooks/useEntries'
 import { UserAuth } from '../../context/AuthContext'
-
-import { UserMenu } from './components/UserMenu'
+import { HeaderPortal } from '../../components/HeaderPortal'
 import { defaultContent } from './utils/cardUtils'
 import { useDashboard } from './context/DashboardContext'
-import { HeaderPortal } from '../../components/HeaderPortal'
-import { VerticalBar } from '../../components/VerticalBar'
+import { ExplorerSideBar } from './components/ExplorerSideBar'
 import { NotesList } from './components/NotesList'
 import { NotesMiniMap } from './components/NotesMiniMap'
-import { MavisChat } from './components/MavisChat'
+import { Chat } from './components/Chat'
+import { ChatToolbar } from './components/ChatToolbar'
+import { ChatSideBar } from './components/ChatSideBar'
+import { ChatAiProvider } from './context/ChatAiContext'
 
-const Dashboard: React.FC = () => {
+interface DashboardProps {
+  explorerExpanded: boolean
+  setExplorerExpanded: (expanded: boolean) => void
+}
+
+const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpanded }) => {
   const { selectedDate, setSelectedDate } = useDashboard()
   const { user } = UserAuth()
-  const { entries, fetchEntries, addEntry, updateEntry, deleteEntry } = useEntries(user?.uid || '')
-
+  const { entries, fetchEntries, addEntry, updateEntry, deleteEntry, updateEntryDate } = useEntries(
+    user?.uid || ''
+  )
   const {
     searchContent,
     setSearchContent,
-
     selectedTag,
     setSelectedTag,
-
     systemTags,
     availableTags,
     pickerTags,
-
     visibleEntries,
   } = useEntryFilter(entries)
 
   const { cardRefs, cardHeights, totalHeight } = useCardMeasurements([entries])
   const [hoveredCardId, setHoveredCardId] = React.useState<string | null>(null)
-  const notesContainerRef = React.useRef<HTMLDivElement>(null)
   const [selectedNoteIds, setSelectedNoteIds] = React.useState<string[]>([])
+  const notesPanelRef = React.useRef<HTMLDivElement>(null)
+  const [notesPanelWidth, setNotesPanelWidth] = React.useState(0)
+  const chatPanelRef = React.useRef<HTMLDivElement>(null)
+  const [chatPanelWidth, setChatPanelWidth] = React.useState(0)
+  const [notesMinimized, setNotesMinimized] = React.useState(false)
+  const [chatMinimized, setChatMinimized] = React.useState(false)
+
+  const templateOptions = React.useMemo(() => {
+    return entries
+      .filter((entry) => {
+        try {
+          const content = JSON.parse(entry.content)
+          return (content.tags || []).includes('templates')
+        } catch {
+          return false
+        }
+      })
+      .map((entry) => {
+        const content = JSON.parse(entry.content)
+
+        return {
+          title: content.title || 'Untitled Template',
+          text: content.text || '',
+          color: content.color,
+          tags: (content.tags || []).filter((tag: string) => tag !== 'templates'),
+        }
+      })
+  }, [entries])
+
+  React.useLayoutEffect(() => {
+    const update = () => {
+      setChatPanelWidth(chatPanelRef.current?.offsetWidth ?? 0)
+    }
+
+    update()
+
+    const resizeObserver = new ResizeObserver(update)
+
+    if (chatPanelRef.current) {
+      resizeObserver.observe(chatPanelRef.current)
+    }
+
+    window.addEventListener('resize', update)
+
+    return () => {
+      resizeObserver.disconnect()
+      window.removeEventListener('resize', update)
+    }
+  }, [])
+
+  React.useLayoutEffect(() => {
+    const update = () => {
+      setNotesPanelWidth(notesPanelRef.current?.offsetWidth ?? 0)
+    }
+
+    update()
+
+    const resizeObserver = new ResizeObserver(update)
+
+    if (notesPanelRef.current) {
+      resizeObserver.observe(notesPanelRef.current)
+    }
+
+    window.addEventListener('resize', update)
+
+    return () => {
+      resizeObserver.disconnect()
+      window.removeEventListener('resize', update)
+    }
+  }, [])
 
   const toggleNoteSelection = React.useCallback((id: string) => {
     setSelectedNoteIds((current) =>
@@ -60,7 +133,7 @@ const Dashboard: React.FC = () => {
   }, [entries])
 
   const selectedNotesText = React.useMemo(() => {
-    return visibleEntries
+    return entries
       .filter((entry) => selectedNoteIds.includes(entry.id))
       .map((entry) => {
         try {
@@ -77,10 +150,10 @@ const Dashboard: React.FC = () => {
         }
       })
       .join('\n\n────────────────────────────\n\n')
-  }, [visibleEntries, selectedNoteIds])
+  }, [entries, selectedNoteIds])
 
   const selectedNoteTitles = React.useMemo(() => {
-    return visibleEntries
+    return entries
       .filter((entry) => selectedNoteIds.includes(entry.id))
       .map((entry) => {
         try {
@@ -90,7 +163,7 @@ const Dashboard: React.FC = () => {
           return 'Untitled'
         }
       })
-  }, [visibleEntries, selectedNoteIds])
+  }, [entries, selectedNoteIds])
 
   const handleCopyAllNotes = async () => {
     const text =
@@ -173,33 +246,57 @@ const Dashboard: React.FC = () => {
     await deleteEntry(id)
   }
 
+  const availablePromptNotes = React.useMemo(() => {
+    return entries
+      .filter((entry) => {
+        try {
+          const content = JSON.parse(entry.content)
+
+          return (content.tags || []).includes('prompts')
+        } catch {
+          return false
+        }
+      })
+      .map((entry) => {
+        const content = JSON.parse(entry.content)
+
+        return {
+          id: entry.id,
+          title: content.title || 'Untitled Prompt',
+        }
+      })
+  }, [entries])
+
   const handleChangeEntry = updateEntry
 
   const scrollToCard = (id: string, position: 'top' | 'bottom') => {
     const card = cardRefs.current[id]
-    const container = notesContainerRef.current
+    const container = notesPanelRef.current
 
-    if (!card || !container) {
-      return
-    }
+    if (!card || !container) return
 
-    const targetTop = card.offsetTop - 10
+    const cardTop = card.offsetTop
 
-    const targetBottom = card.offsetTop + card.offsetHeight - container.clientHeight + 20
+    const target =
+      position === 'top' ? cardTop - 100 : cardTop - container.clientHeight + card.offsetHeight + 50
 
     container.scrollTo({
-      top: position === 'top' ? targetTop : targetBottom,
+      top: Math.max(0, target),
       behavior: 'smooth',
     })
   }
 
-  const isLoggedIn = !!user
-
   return (
-    <BodyContainer>
-      <HeaderPortal>
-        {isLoggedIn && (
-          <DashboardToolbar
+    <Workspace>
+      <ChatAiProvider
+        uid={user ? user.uid : ''}
+        selectedNotesText={selectedNotesText}
+        noteTitles={selectedNoteTitles}
+        clearSelectedNotes={clearSelectedNotes}
+        entries={entries}
+      >
+        <HeaderPortal>
+          <NotesToolbar
             selectedTag={selectedTag}
             selectedDate={selectedDate}
             searchContent={searchContent}
@@ -209,74 +306,98 @@ const Dashboard: React.FC = () => {
             onCopyAllNotes={handleCopyAllNotes}
             onSelectAll={selectAllNotes}
             onClearAll={clearSelectedNotes}
+            selectedCount={selectedNoteIds.length}
+            expanded={explorerExpanded}
+            panelWidth={notesPanelWidth}
+            minimized={notesMinimized}
+            setMinimized={setNotesMinimized}
+          />
+          <ChatToolbar
+            onClearAll={clearSelectedNotes}
+            expanded={explorerExpanded}
+            panelWidth={chatPanelWidth}
+            minimized={chatMinimized}
+            setMinimized={setChatMinimized}
+            notesMinimized={notesMinimized}
+          />
+        </HeaderPortal>
+        <ExplorerSideBar
+          systemTags={systemTags}
+          customTags={availableTags}
+          selectedTag={selectedTag}
+          setSelectedTag={setSelectedTag}
+          explorerExpanded={explorerExpanded}
+          setExplorerExpanded={setExplorerExpanded}
+          minimized={notesMinimized}
+          setMinimized={setNotesMinimized}
+        />
+        {!notesMinimized && (
+          <NotesMiniMap
+            entries={visibleEntries}
+            hoveredCardId={hoveredCardId}
+            cardHeights={cardHeights}
+            totalHeight={totalHeight}
+            onScrollToCard={scrollToCard}
           />
         )}
-        {isLoggedIn && <UserMenu />}
-      </HeaderPortal>
-      <DataContainer
-        ref={notesContainerRef}
-        style={{ width: '990px', left: '200px', overflowY: 'scroll' }}
-      >
-        <NotesList
-          entries={visibleEntries}
-          pickerTags={pickerTags}
-          cardRefs={cardRefs}
-          onHoverCard={setHoveredCardId}
-          onDeleteEntry={handleDeleteEntry}
-          onChangeEntry={handleChangeEntry}
-          selectedNoteIds={selectedNoteIds}
-          onToggleSelection={toggleNoteSelection}
-        />
-      </DataContainer>
-      <NotesMiniMap
-        entries={visibleEntries}
-        hoveredCardId={hoveredCardId}
-        cardHeights={cardHeights}
-        totalHeight={totalHeight}
-        onScrollToCard={scrollToCard}
-      />
-      <DataContainer
-        style={{
-          right: '40px',
-          maxWidth: '680px',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <MavisChat
-          uid={user?.uid || ''}
-          text={selectedNotesText}
-          noteTitles={selectedNoteTitles}
-          notesCount={selectedNoteIds.length}
-        />
-      </DataContainer>
-      <VerticalBar
-        systemTags={systemTags}
-        customTags={availableTags}
-        selectedTag={selectedTag}
-        setSelectedTag={setSelectedTag}
-      />
-    </BodyContainer>
+
+        <NotesPanel ref={notesPanelRef} minimized={notesMinimized}>
+          {!notesMinimized && (
+            <NotesList
+              entries={visibleEntries}
+              pickerTags={pickerTags}
+              cardRefs={cardRefs}
+              updateEntryDate={updateEntryDate}
+              onHoverCard={setHoveredCardId}
+              onDeleteEntry={handleDeleteEntry}
+              onChangeEntry={handleChangeEntry}
+              selectedNoteIds={selectedNoteIds}
+              onToggleSelection={toggleNoteSelection}
+              templateOptions={templateOptions}
+            />
+          )}
+        </NotesPanel>
+        <ChatPanel ref={chatPanelRef} minimized={chatMinimized}>
+          <Chat
+            uid={user?.uid || ''}
+            selectedNotesText={selectedNotesText}
+            noteTitles={selectedNoteTitles}
+            notesCount={selectedNoteIds.length}
+            clearSelectedNotes={clearSelectedNotes}
+          />
+        </ChatPanel>
+        <ChatSideBar minimized={chatMinimized} setMinimized={setChatMinimized} />
+      </ChatAiProvider>
+    </Workspace>
   )
 }
 
 export default Dashboard
 
-const DataContainer = styled.div`
-  position: absolute;
-  margin-top: 25px;
-
+const Workspace = styled.div`
+  display: flex;
+  flex-direction: row;
   width: 100%;
-  max-width: 990px;
+  height: 100%;
+  overflow: hidden;
+`
 
-  height: calc(100vh - 25px);
-
-  overflow-x: hidden;
-
-  padding: 4px;
-  padding-top: 10px;
+const ChatPanel = styled.div<{ minimized: boolean }>`
+  flex: ${({ minimized }) => (minimized ? '0' : '1')};
+  width: ${({ minimized }) => (minimized ? '0' : 'auto')};
+  flex-direction: column;
+  overflow: hidden;
   background: #e0e0e5;
+`
 
+const NotesPanel = styled.div<{ minimized: boolean }>`
+  flex: ${({ minimized }) => (minimized ? '0 0 0' : '1.5')};
+  width: ${({ minimized }) => (minimized ? '0' : 'auto')};
+  margin-right: 10px;
+  flex-direction: column;
+  overflow: hidden;
+  background: #e0e0e5;
+  overflow-y: scroll;
   scrollbar-width: thin;
   scrollbar-color: #b0b0b5 #e0e0e5;
 
@@ -296,23 +417,5 @@ const DataContainer = styled.div`
 
   &::-webkit-scrollbar-thumb:hover {
     background: #909095;
-  }
-
-  @media (max-width: 1260px) {
-    max-width: 100%;
-    padding: 5px;
-  }
-`
-const BodyContainer = styled.div`
-  width: 100%;
-  height: 100vh;
-  overflow: hidden;
-
-  display: flex;
-  justify-content: center;
-
-  @media (max-width: 1260px) {
-    padding-top: 40px;
-    padding-bottom: 10px;
   }
 `

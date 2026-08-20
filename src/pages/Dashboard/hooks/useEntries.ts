@@ -118,7 +118,9 @@ export function useEntries(userId: string) {
         content,
       }
 
-      setEntries((current) => current.map((entry) => (entry.id === id ? updatedEntry : entry)))
+      setEntries((current) =>
+        sortEntries(current.map((entry) => (entry.id === id ? updatedEntry : entry)))
+      )
 
       const documents = await findEntryDocuments(userId, id)
 
@@ -138,7 +140,9 @@ export function useEntries(userId: string) {
       }
 
       setEntries((current) =>
-        current.map((currentEntry) => (currentEntry.id === entry.id ? entry : currentEntry))
+        sortEntries(
+          current.map((currentEntry) => (currentEntry.id === entry.id ? entry : currentEntry))
+        )
       )
 
       const documents = await findEntryDocuments(userId, entry.id)
@@ -150,6 +154,26 @@ export function useEntries(userId: string) {
       )
     },
     [userId]
+  )
+
+  const updateEntryDate = React.useCallback(
+    async (id: string, date: string) => {
+      if (!userId) {
+        return
+      }
+
+      const existingEntry = entries.find((entry) => entry.id === id)
+
+      if (!existingEntry) {
+        return
+      }
+
+      await replaceEntry({
+        ...existingEntry,
+        date,
+      })
+    },
+    [entries, replaceEntry, userId]
   )
 
   const deleteEntry = React.useCallback(
@@ -179,5 +203,6 @@ export function useEntries(userId: string) {
     updateEntry,
     replaceEntry,
     deleteEntry,
+    updateEntryDate,
   }
 }

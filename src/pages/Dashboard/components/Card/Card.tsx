@@ -9,7 +9,7 @@ import CardTags from './CardTags'
 
 import { useSpeechRecognition } from '../../../../hooks/useSpeechRecognition'
 import { useTextToSpeech } from '../../../../hooks/useTextToSpeech'
-import { templateOptions, TemplateOption } from '../../../../utils'
+import { TemplateOption } from '../../utils/cardUtils'
 import { processMacros } from '../../../../services/templateMacros'
 import { renderTemplate, executeExpression } from '../../../../services/templateEngine'
 
@@ -32,11 +32,15 @@ interface ICardProps {
   number: number
   date: string
   content: string
+
   onDeleteCard: (id: string, permanent?: boolean) => void
   onChangeContent: (id: string, content: string) => void
+  onChangeDate: (id: string, date: string) => void
+
   tags: string[]
   selected: boolean
   onToggleSelection: (id: string) => void
+  templateOptions: TemplateOption[]
 }
 
 export const Card: React.FC<ICardProps> = ({
@@ -45,9 +49,11 @@ export const Card: React.FC<ICardProps> = ({
   content,
   onDeleteCard,
   onChangeContent,
+  onChangeDate,
   tags,
   selected,
   onToggleSelection,
+  templateOptions,
 }) => {
   const { listening, transcript, startListening, stopListening } = useSpeechRecognition()
   const { speak, speaking, stopSpeaking } = useTextToSpeech()
@@ -67,21 +73,21 @@ export const Card: React.FC<ICardProps> = ({
     textareaRef,
   })
 
-  useCardClickOutside({
-    tagPickerRef,
-    colorPickerRef,
-    templatePickerRef,
-    closeTagPicker: () => {
-      setShowTagPicker(false)
-      setCreatingTag(false)
-    },
-    closeColorPicker: () => {
-      setShowColorPicker(false)
-    },
-    closeTemplatePicker: () => {
-      setShowTemplatePicker(false)
-    },
-  })
+  // useCardClickOutside({
+  //   tagPickerRef,
+  //   colorPickerRef,
+  //   templatePickerRef,
+  //   closeTagPicker: () => {
+  //     setShowTagPicker(false)
+  //     setCreatingTag(false)
+  //   },
+  //   closeColorPicker: () => {
+  //     setShowColorPicker(false)
+  //   },
+  //   closeTemplatePicker: () => {
+  //     setShowTemplatePicker(false)
+  //   },
+  // })
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -235,13 +241,17 @@ export const Card: React.FC<ICardProps> = ({
     )
   }
 
-  const localProcessMacros = (text: string) =>
-    processMacros(text, {
-      weather,
-      temperature,
-      city: location.city,
-      country: location.country,
-    })
+  const localProcessMacros = (text: string) => {
+    if (!hasTag('templates')) {
+      return processMacros(text, {
+        weather,
+        temperature,
+        city: location.city,
+        country: location.country,
+      })
+    }
+    return text
+  }
 
   const onChangeMarkdownContent = (id: string, newText: string) => {
     const processedText = localProcessMacros(newText)
@@ -393,6 +403,7 @@ export const Card: React.FC<ICardProps> = ({
                   setShowTagPicker={setShowTagPicker}
                   setCreatingTag={setCreatingTag}
                   setNewTagName={setNewTagName}
+                  onDateChange={(newDate) => onChangeDate(id, newDate)}
                   hasTag={hasTag}
                   toggleTag={toggleTag}
                   createTag={createTag}

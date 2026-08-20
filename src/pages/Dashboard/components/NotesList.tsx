@@ -3,6 +3,7 @@ import styled from 'styled-components'
 
 import { Card } from './Card/Card'
 import { IEntry } from '../hooks/useEntries'
+import { TemplateOption } from '../utils/cardUtils'
 
 interface NotesListProps {
   entries: IEntry[]
@@ -11,8 +12,10 @@ interface NotesListProps {
   onHoverCard: (id: string | null) => void
   onDeleteEntry: (id: string, permanent?: boolean) => Promise<void>
   onChangeEntry: (id: string, content: string) => Promise<void>
+  updateEntryDate: (id: string, date: string) => Promise<void>
   selectedNoteIds: string[]
   onToggleSelection: (id: string) => void
+  templateOptions: TemplateOption[]
 }
 
 export const NotesList: React.FC<NotesListProps> = ({
@@ -22,8 +25,10 @@ export const NotesList: React.FC<NotesListProps> = ({
   onHoverCard,
   onDeleteEntry,
   onChangeEntry,
+  updateEntryDate,
   selectedNoteIds,
   onToggleSelection,
+  templateOptions,
 }) => {
   return (
     <EntryList>
@@ -43,9 +48,11 @@ export const NotesList: React.FC<NotesListProps> = ({
             content={entry.content}
             onDeleteCard={onDeleteEntry}
             onChangeContent={onChangeEntry}
+            onChangeDate={updateEntryDate}
             tags={pickerTags}
             selected={selectedNoteIds.includes(entry.id)}
             onToggleSelection={onToggleSelection}
+            templateOptions={templateOptions}
           />
         </div>
       ))}
@@ -55,5 +62,6 @@ export const NotesList: React.FC<NotesListProps> = ({
 
 const EntryList = styled.div`
   width: 100%;
+  padding: 8px;
   padding-bottom: 60px;
 `

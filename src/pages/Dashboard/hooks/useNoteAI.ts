@@ -83,18 +83,32 @@ export function useNoteAI({
 
         const selectedText = value.substring(start, end)
 
-        const result = await executeAI(userId, systemPrompt, userInstruction, selectedText, apiKey)
+        const result = await executeAI(
+          userId,
+          systemPrompt,
+          userInstruction,
+          selectedText,
+          'gpt-5.6-luna',
+          apiKey
+        )
 
-        const updated = value.substring(0, start) + result + value.substring(end)
+        const updated = value.substring(0, start) + result.output_text.trim() + value.substring(end)
 
         onContentChange(updated)
 
         return
       }
 
-      const result = await executeAI(userId, systemPrompt, userInstruction, value, apiKey)
+      const result = await executeAI(
+        userId,
+        systemPrompt,
+        userInstruction,
+        value,
+        'gpt-5.6-luna',
+        apiKey
+      )
 
-      const updated = `${value}\n\n${result}`
+      const updated = `${value}\n\n${result.output_text.trim()}`
 
       onContentChange(updated)
     } catch (error) {

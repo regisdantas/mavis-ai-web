@@ -51,24 +51,14 @@ export const NotesMiniMap: React.FC<NotesMiniMapProps> = ({
 }
 
 const Container = styled.div`
-  position: fixed;
-
-  left: 160px;
-  top: 40px;
-
-  width: 40px;
-  height: calc(100vh - 40px);
-
+  padding-top: 20px;
+  width: 60px;
+  height: 100%;
+  overflow-y: hidden;
   display: flex;
   flex-direction: column;
-
-  overflow: hidden;
-
-  background: #e0e0e5;
-
-  z-index: 25;
-
-  padding-top: 6px;
+  border-right: 1px solid #d0d0d0;
+  background: #d0d0d0;
 `
 
 const MiniMapItem = styled.div<{ $selected?: boolean }>`

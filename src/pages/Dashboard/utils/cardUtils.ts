@@ -62,3 +62,10 @@ export const getTrashTags = (tags: string[]) =>
   Array.from(new Set([...tags.filter((tag) => tag !== 'archive'), 'trash']))
 
 export const formatTag = (tag: string) => tag.replace(/\b\w/g, (c) => c.toUpperCase())
+
+export interface TemplateOption {
+  title: string
+  text: string
+  color?: string
+  tags?: string[]
+}

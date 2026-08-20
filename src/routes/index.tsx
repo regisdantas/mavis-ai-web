@@ -23,7 +23,12 @@ export const ProtectedRoute = ({ children }: IProtectedRouteProps) => {
   return user !== null && user.displayName !== undefined ? children : <Navigate to="/login" />
 }
 
-export const Router: React.FC = () => {
+interface IRouterProps {
+  explorerExpanded: boolean
+  setExplorerExpanded: (expanded: boolean) => void
+}
+
+export const Router: React.FC<IRouterProps> = ({ explorerExpanded, setExplorerExpanded }) => {
   return (
     <React.Suspense fallback={''}>
       <Routes>
@@ -31,7 +36,10 @@ export const Router: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardContextProvider>
-                <Dashboard />
+                <Dashboard
+                  explorerExpanded={explorerExpanded}
+                  setExplorerExpanded={setExplorerExpanded}
+                />
               </DashboardContextProvider>
             </ProtectedRoute>
           }
@@ -41,7 +49,10 @@ export const Router: React.FC = () => {
           element={
             <ProtectedRoute>
               <DashboardContextProvider>
-                <Dashboard />
+                <Dashboard
+                  explorerExpanded={explorerExpanded}
+                  setExplorerExpanded={setExplorerExpanded}
+                />
               </DashboardContextProvider>
             </ProtectedRoute>
           }

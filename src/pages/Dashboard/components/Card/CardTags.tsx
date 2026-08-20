@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-
+import { createPortal } from 'react-dom'
 import { IoMdAddCircleOutline } from 'react-icons/io'
 import { FiTag } from 'react-icons/fi'
 
@@ -19,6 +19,7 @@ interface CardTagsProps {
   setShowTagPicker: React.Dispatch<React.SetStateAction<boolean>>
   setCreatingTag: React.Dispatch<React.SetStateAction<boolean>>
   setNewTagName: React.Dispatch<React.SetStateAction<string>>
+  onDateChange: (date: string) => void
 
   hasTag: (tag: string) => boolean
   toggleTag: (tag: string) => void
@@ -39,17 +40,35 @@ const CardTags: React.FC<CardTagsProps> = ({
   setShowTagPicker,
   setCreatingTag,
   setNewTagName,
+  onDateChange,
   hasTag,
   toggleTag,
   createTag,
   formatTag,
   formatDate,
 }) => {
+  const dateInputRef = React.useRef<HTMLInputElement>(null)
   return (
     <Container>
       <TagList>
-        <DateChip>{formatDate(date)}</DateChip>
+        <>
+          <DateChip
+            onClick={() => {
+              dateInputRef.current?.showPicker?.()
+              dateInputRef.current?.click()
+            }}
+          >
+            {formatDate(date)}
+          </DateChip>
 
+          <input
+            ref={dateInputRef}
+            type="date"
+            value={date}
+            style={{ display: 'none' }}
+            onChange={(e) => onDateChange(e.target.value)}
+          />
+        </>
         {tags.map((tag) => (
           <TagChip key={tag} onClick={() => !isLocked && toggleTag(tag)}>
             {formatTag(tag)}
@@ -64,51 +83,53 @@ const CardTags: React.FC<CardTagsProps> = ({
           </TagPickerButton>
         )}
 
-        {showTagPicker && (
-          <TagDropdown>
-            {availableTags.map((tag) => (
-              <TagOption
-                key={tag}
-                className={hasTag(tag) ? 'selected' : ''}
-                onClick={() => toggleTag(tag)}
-              >
-                <FiTag />
-                <span>{formatTag(tag)}</span>
-              </TagOption>
-            ))}
+        {showTagPicker &&
+          createPortal(
+            <TagDropdown>
+              {availableTags.map((tag) => (
+                <TagOption
+                  key={tag}
+                  className={hasTag(tag) ? 'selected' : ''}
+                  onClick={() => toggleTag(tag)}
+                >
+                  <FiTag />
+                  <span>{formatTag(tag)}</span>
+                </TagOption>
+              ))}
 
-            {!creatingTag ? (
-              <NewTagButton onClick={() => setCreatingTag(true)}>
-                <FiTag />
-                New Tag
-              </NewTagButton>
-            ) : (
-              <NewTagInput
-                autoFocus
-                placeholder="Tag name..."
-                value={newTagName}
-                onChange={(e) => setNewTagName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    createTag(newTagName)
-                  }
+              {!creatingTag ? (
+                <NewTagButton onClick={() => setCreatingTag(true)}>
+                  <FiTag />
+                  New Tag
+                </NewTagButton>
+              ) : (
+                <NewTagInput
+                  autoFocus
+                  placeholder="Tag name..."
+                  value={newTagName}
+                  onChange={(e) => setNewTagName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      createTag(newTagName)
+                    }
 
-                  if (e.key === 'Escape') {
-                    setCreatingTag(false)
-                    setNewTagName('')
-                  }
-                }}
-                onBlur={() => {
-                  if (newTagName.trim()) {
-                    createTag(newTagName)
-                  } else {
-                    setCreatingTag(false)
-                  }
-                }}
-              />
-            )}
-          </TagDropdown>
-        )}
+                    if (e.key === 'Escape') {
+                      setCreatingTag(false)
+                      setNewTagName('')
+                    }
+                  }}
+                  onBlur={() => {
+                    if (newTagName.trim()) {
+                      createTag(newTagName)
+                    } else {
+                      setCreatingTag(false)
+                    }
+                  }}
+                />
+              )}
+            </TagDropdown>,
+            document.body
+          )}
       </TagPicker>
     </Container>
   )
@@ -118,7 +139,9 @@ export default CardTags
 
 const Container = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-direction: row !important;
+  justify-content: flex-start !important;
   gap: 8px;
 `
 
@@ -144,8 +167,12 @@ const DateChip = styled.span`
 const TagList = styled.div`
   display: flex;
   flex-wrap: wrap;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  width: fit-content;
   gap: 6px;
-
+  width: fit-content;
   margin-left: 10px;
 `
 
@@ -174,8 +201,8 @@ const TagChip = styled.span`
 
 const TagPicker = styled.div`
   position: relative;
-
-  width: auto;
+  flex: 0 0;
+  width: fit-content;
   margin: 0;
 `
 
@@ -204,8 +231,8 @@ const TagPickerButton = styled.span`
 const TagDropdown = styled.div`
   position: absolute;
 
-  bottom: 42px;
-  left: 0;
+  bottom: 40%;
+  left: 30%;
 
   min-width: 160px;
   max-width: 280px;

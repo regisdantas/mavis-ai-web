@@ -1,5 +1,4 @@
-import styled, { css, createGlobalStyle } from 'styled-components'
-import { shade } from 'polished'
+import styled, { createGlobalStyle } from 'styled-components'
 
 export const GlobalStyles = createGlobalStyle`
 * {
@@ -91,43 +90,11 @@ export const IconButton = styled.div<IconButtonProps>`
   &:hover {
     background: rgba(128, 128, 128, 0.15);
   }
-`
 
-export const AppContainer = styled.div`
-  min-height: 90vh;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-
-  input,
-  button {
-    margin-left: auto;
-    margin-right: auto;
-
-    max-width: 400px;
-    margin-top: 10px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    width: 100%;
-    border-radius: 5px;
-    padding: 10px;
-    height: 50px;
-    svg {
-      font-size: 24px;
-      margin-right: 7px;
-    }
-  }
-  button {
-    background: #323232;
-    justify-content: center;
-    border: 0;
-    color: #fff;
-    font-weight: bold;
-    transition: background-color 0.2s;
-    &:hover {
-      background-color: ${shade(0.2, '#323232')};
-    }
+  input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #2e2e2e;
   }
 `
