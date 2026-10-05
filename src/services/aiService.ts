@@ -32,7 +32,7 @@ Context:
 ${userContext}
 `
   const response = await openai.responses.create({
-    model: model || 'gpt-5.6-luna',
+    model: model || 'gpt-6-luna',
     input: input,
   })
 

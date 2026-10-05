@@ -41,7 +41,7 @@ const useChatAiState = ({
   const [sessionsLoaded, setSessionsLoaded] = useState(false)
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedModel, setSelectedModel] = useState('gpt-5.6-luna')
+  const [selectedModel, setSelectedModel] = useState('gpt-6-luna')
   const [includeHistory, setIncludeHistory] = useState(true)
 
   const getHistory = useCallback((currentMessages: ChatMessage[]) => {

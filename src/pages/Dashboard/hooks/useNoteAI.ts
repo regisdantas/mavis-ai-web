@@ -88,7 +88,7 @@ export function useNoteAI({
           systemPrompt,
           userInstruction,
           selectedText,
-          'gpt-5.6-luna',
+          'gpt-6-luna',
           apiKey
         )
 
@@ -104,7 +104,7 @@ export function useNoteAI({
         systemPrompt,
         userInstruction,
         value,
-        'gpt-5.6-luna',
+        'gpt-6-luna',
         apiKey
       )
 

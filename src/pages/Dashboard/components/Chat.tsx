@@ -22,7 +22,7 @@ import { MdOutlineLayersClear, MdHistoryToggleOff, MdOutlineSummarize } from 're
 import { TbMessagesOff } from 'react-icons/tb'
 import { TbPrompt } from 'react-icons/tb'
 
-const modelsAvailable = ['gpt-5-mini', 'gpt-5.6-luna', 'gpt-5.6-terra', 'gpt-5.6-sol']
+const modelsAvailable = ['gpt-5-mini', 'gpt-6-luna', 'gpt-5.6-terra', 'gpt-5.6-sol']
 
 interface ChatProps {
   uid: string
