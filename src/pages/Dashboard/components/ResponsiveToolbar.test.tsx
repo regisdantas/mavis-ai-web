@@ -6,6 +6,7 @@ import { NotesToolbar } from './NotesToolbar'
 describe('responsive dashboard toolbar menus', () => {
   it('opens the notes menu from the mobile toolbar', () => {
     const setExplorerExpanded = jest.fn()
+    const onToggleNotesLock = jest.fn()
 
     render(
       <NotesToolbar
@@ -24,12 +25,16 @@ describe('responsive dashboard toolbar menus', () => {
         panelWidth={320}
         setMinimized={jest.fn()}
         mobileActive
+        notesLocked
+        onToggleNotesLock={onToggleNotesLock}
       />
     )
 
     fireEvent.click(screen.getByLabelText('Expand notes menu'))
+    fireEvent.click(screen.getByLabelText('Unlock note editing'))
 
     expect(setExplorerExpanded).toHaveBeenCalledWith(true)
+    expect(onToggleNotesLock).toHaveBeenCalledTimes(1)
   })
 
   it('opens the sessions menu from the mobile toolbar', () => {
@@ -46,6 +51,8 @@ describe('responsive dashboard toolbar menus', () => {
         menuExpanded={false}
         setMenuExpanded={setMenuExpanded}
         mobileActive
+        notesLocked
+        onToggleNotesLock={jest.fn()}
       />
     )
 
@@ -78,6 +85,8 @@ describe('responsive dashboard toolbar menus', () => {
             panelWidth={320}
             setMinimized={jest.fn()}
             mobileActive
+            notesLocked
+            onToggleNotesLock={jest.fn()}
           />
         )
         const searchButton = container.querySelector<HTMLButtonElement>(

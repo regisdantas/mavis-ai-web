@@ -25,6 +25,11 @@ export const ChatSideBar: React.FC<ChatSideBarProps> = ({
     removeSession,
   } = useChatAi()
   const sidebarRef = React.useRef<HTMLDivElement>(null)
+  const closeMenuAfterSelection = () => {
+    if (window.innerWidth <= 768) {
+      setMenuExpanded(false)
+    }
+  }
 
   React.useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
@@ -64,13 +69,22 @@ export const ChatSideBar: React.FC<ChatSideBarProps> = ({
         <IconButton
           expanded={menuExpanded}
           title="Expand Chat"
-          onClick={() => setMinimized(!minimized)}
+          onClick={() => {
+            setMinimized(!minimized)
+            closeMenuAfterSelection()
+          }}
         >
           <FiCpu />
           {menuExpanded && <span>Expand Chat</span>}
         </IconButton>
       )}
-      <IconButton expanded={menuExpanded} onClick={() => void createNewSession()}>
+      <IconButton
+        expanded={menuExpanded}
+        onClick={() => {
+          void createNewSession()
+          closeMenuAfterSelection()
+        }}
+      >
         <FiPlus />
         {menuExpanded && <span>New Chat</span>}
       </IconButton>
@@ -79,7 +93,10 @@ export const ChatSideBar: React.FC<ChatSideBarProps> = ({
           <SessionRow key={session.id}>
             <SessionItem
               active={currentSessionId === session.id}
-              onClick={() => loadSession(session.id)}
+              onClick={() => {
+                loadSession(session.id)
+                closeMenuAfterSelection()
+              }}
             >
               {session.title}
             </SessionItem>
@@ -88,6 +105,7 @@ export const ChatSideBar: React.FC<ChatSideBarProps> = ({
               onClick={(event) => {
                 event.stopPropagation()
                 void deleteSession(session.id)
+                closeMenuAfterSelection()
               }}
             >
               <FiTrash2 size={12} />

@@ -1,13 +1,14 @@
 import React from 'react'
 import styled from 'styled-components'
-import { FiCopy, FiStar, FiLock, FiUnlock } from 'react-icons/fi'
+import { FiCopy, FiStar } from 'react-icons/fi'
 import { FaStar } from 'react-icons/fa'
 import { IoMdArrowDropdown, IoMdArrowDropleft } from 'react-icons/io'
 import { IconButton } from '../../../../styles/global'
 
 interface CardHeaderProps {
   title: string
-  locked: boolean
+  titleRef: React.RefObject<HTMLSpanElement>
+  readOnly: boolean
   collapsed: boolean
   isFavorite: boolean
   selected: boolean
@@ -16,21 +17,20 @@ interface CardHeaderProps {
   copyFormattedContent: () => void
 
   onToggleFavorite: () => void
-  onToggleLock: () => void
   onToggleCollapse: () => void
   onTitleChange: (title: string) => void
 }
 
 const CardHeader: React.FC<CardHeaderProps> = ({
   title,
-  locked,
+  titleRef,
+  readOnly,
   collapsed,
   isFavorite,
   selected,
   onToggleSelection,
   copyFormattedContent,
   onToggleFavorite,
-  onToggleLock,
   onToggleCollapse,
   onTitleChange,
 }) => {
@@ -44,18 +44,19 @@ const CardHeader: React.FC<CardHeaderProps> = ({
           {selected ? '✓' : ''}
         </SelectButton>
         {isFavorite ? (
-          <IconButton disabled={locked} title="Remove favorite" onClick={onToggleFavorite}>
+          <IconButton disabled={readOnly} title="Remove favorite" onClick={onToggleFavorite}>
             <FaStar />
           </IconButton>
         ) : (
-          <IconButton disabled={locked} title="Add favorite" onClick={onToggleFavorite}>
+          <IconButton disabled={readOnly} title="Add favorite" onClick={onToggleFavorite}>
             <FiStar />
           </IconButton>
         )}
         <Title
+          ref={titleRef}
           title="Note name"
           role="textbox"
-          contentEditable={!locked}
+          contentEditable={!readOnly}
           suppressContentEditableWarning
           data-placeholder="🙋 Give me a name"
           onBlur={(e) => onTitleChange(e.currentTarget.innerText)}
@@ -69,22 +70,12 @@ const CardHeader: React.FC<CardHeaderProps> = ({
           <FiCopy />
         </IconButton>
 
-        {locked ? (
-          <IconButton title="Unlock note" onClick={onToggleLock}>
-            <FiLock color="#2563eb" />
-          </IconButton>
-        ) : (
-          <IconButton title="Lock note" onClick={onToggleLock}>
-            <FiUnlock />
-          </IconButton>
-        )}
-
         {collapsed ? (
-          <IconButton title="Expand note" onClick={onToggleCollapse}>
+          <IconButton disabled={readOnly} title="Expand note" onClick={onToggleCollapse}>
             <IoMdArrowDropleft />
           </IconButton>
         ) : (
-          <IconButton title="Collapse note" onClick={onToggleCollapse}>
+          <IconButton disabled={readOnly} title="Collapse note" onClick={onToggleCollapse}>
             <IoMdArrowDropdown />
           </IconButton>
         )}

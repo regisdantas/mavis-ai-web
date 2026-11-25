@@ -8,7 +8,7 @@ interface CardTagsProps {
   date: string
   tags: string[]
   availableTags: string[]
-  isLocked: boolean
+  readOnly: boolean
 
   tagPickerRef: React.RefObject<HTMLDivElement>
   tagDropdownRef: React.RefObject<HTMLDivElement>
@@ -34,7 +34,7 @@ const CardTags: React.FC<CardTagsProps> = ({
   date,
   tags,
   availableTags,
-  isLocked,
+  readOnly,
   tagPickerRef,
   tagDropdownRef,
   otherTagsDropdownRef,
@@ -57,7 +57,11 @@ const CardTags: React.FC<CardTagsProps> = ({
       <TagList>
         <>
           <DateChip
+            $disabled={readOnly}
+            aria-disabled={readOnly}
             onClick={() => {
+              if (readOnly) return
+
               dateInputRef.current?.showPicker?.()
               dateInputRef.current?.click()
             }}
@@ -87,7 +91,7 @@ const CardTags: React.FC<CardTagsProps> = ({
           </AssignedTagsSummary>
           <AssignedTagsList>
             {tags.map((tag) => (
-              <TagChip key={tag} type="button" disabled={isLocked} onClick={() => toggleTag(tag)}>
+              <TagChip key={tag} type="button" disabled={readOnly} onClick={() => toggleTag(tag)}>
                 {formatTag(tag)}
               </TagChip>
             ))}
@@ -96,7 +100,7 @@ const CardTags: React.FC<CardTagsProps> = ({
       )}
 
       <TagPicker ref={tagPickerRef}>
-        {!isLocked && (
+        {!readOnly && (
           <TagPickerButton
             type="button"
             title="Add tag"
@@ -114,7 +118,11 @@ const CardTags: React.FC<CardTagsProps> = ({
                 <TagOption
                   key={tag}
                   className={hasTag(tag) ? 'selected' : ''}
-                  onClick={() => toggleTag(tag)}
+                  onClick={() => {
+                    if (!readOnly) {
+                      toggleTag(tag)
+                    }
+                  }}
                 >
                   <FiTag />
                   <span>{formatTag(tag)}</span>
@@ -122,7 +130,7 @@ const CardTags: React.FC<CardTagsProps> = ({
               ))}
 
               {!creatingTag ? (
-                <NewTagButton onClick={() => setCreatingTag(true)}>
+                <NewTagButton onClick={() => !readOnly && setCreatingTag(true)}>
                   <FiTag />
                   New Tag
                 </NewTagButton>
@@ -131,9 +139,9 @@ const CardTags: React.FC<CardTagsProps> = ({
                   autoFocus
                   placeholder="Tag name..."
                   value={newTagName}
-                  onChange={(e) => setNewTagName(e.target.value)}
+                  onChange={(e) => !readOnly && setNewTagName(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (!readOnly && e.key === 'Enter') {
                       createTag(newTagName)
                     }
 
@@ -143,6 +151,12 @@ const CardTags: React.FC<CardTagsProps> = ({
                     }
                   }}
                   onBlur={() => {
+                    if (readOnly) {
+                      setCreatingTag(false)
+                      setNewTagName('')
+                      return
+                    }
+
                     if (newTagName.trim()) {
                       createTag(newTagName)
                     } else {
@@ -174,7 +188,7 @@ const Container = styled.div`
   gap: 8px;
 `
 
-const DateChip = styled.span`
+const DateChip = styled.span<{ $disabled: boolean }>`
   display: flex;
   align-items: center;
 
@@ -188,7 +202,7 @@ const DateChip = styled.span`
   font-size: 11px;
   font-weight: 600;
 
-  cursor: pointer;
+  cursor: ${({ $disabled }) => ($disabled ? 'default' : 'pointer')};
 
   transition: 0.2s;
 `

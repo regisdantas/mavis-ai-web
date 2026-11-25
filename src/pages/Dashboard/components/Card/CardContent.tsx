@@ -16,17 +16,23 @@ interface ButtonCommandProps {
   label: string
   expression: string
   onExecute: (expression: string) => void
+  disabled: boolean
 }
 
-const ButtonCommand: React.FC<ButtonCommandProps> = ({ label, expression, onExecute }) => (
-  <button className="markdownButton" onClick={() => onExecute(expression)}>
+const ButtonCommand: React.FC<ButtonCommandProps> = ({
+  label,
+  expression,
+  onExecute,
+  disabled,
+}) => (
+  <button className="markdownButton" disabled={disabled} onClick={() => onExecute(expression)}>
     {label}
   </button>
 )
 
 interface CardContentProps {
   value: string
-  locked: boolean
+  readOnly: boolean
   editing: boolean
   textareaRef: React.RefObject<HTMLTextAreaElement>
   markdownRef: React.RefObject<HTMLDivElement>
@@ -43,7 +49,7 @@ interface CardContentProps {
 
 const CardContent: React.FC<CardContentProps> = ({
   value,
-  locked,
+  readOnly,
   editing,
   textareaRef,
   markdownRef,
@@ -58,6 +64,7 @@ const CardContent: React.FC<CardContentProps> = ({
     return (
       <Editor
         ref={textareaRef}
+        readOnly={readOnly}
         placeholder={`* ❓ What do you have for today?
 
 <markdown editor>`}
@@ -94,7 +101,7 @@ const CardContent: React.FC<CardContentProps> = ({
     <MarkdownContainer
       ref={markdownRef}
       onClick={(event) => {
-        if (locked) {
+        if (readOnly) {
           return
         }
 
@@ -124,6 +131,7 @@ const CardContent: React.FC<CardContentProps> = ({
                 label={String(props.children)}
                 expression={expression}
                 onExecute={onExecuteExpression}
+                disabled={readOnly}
               />
             )
           },

@@ -16,6 +16,7 @@ interface NotesListProps {
   selectedNoteIds: string[]
   onToggleSelection: (id: string) => void
   templateOptions: TemplateOption[]
+  notesLocked: boolean
 }
 
 export const NotesList: React.FC<NotesListProps> = ({
@@ -29,6 +30,7 @@ export const NotesList: React.FC<NotesListProps> = ({
   selectedNoteIds,
   onToggleSelection,
   templateOptions,
+  notesLocked,
 }) => {
   return (
     <EntryList>
@@ -53,6 +55,7 @@ export const NotesList: React.FC<NotesListProps> = ({
             selected={selectedNoteIds.includes(entry.id)}
             onToggleSelection={onToggleSelection}
             templateOptions={templateOptions}
+            notesLocked={notesLocked}
           />
         </div>
       ))}

@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { FiMenu, FiMinusSquare, FiMaximize2, FiSearch } from 'react-icons/fi'
+import { FiMenu, FiMinusSquare, FiMaximize2, FiSearch, FiLock, FiUnlock } from 'react-icons/fi'
 import { IconButton } from '../../../styles/global'
 
 import { IoMdAddCircleOutline } from 'react-icons/io'
@@ -27,6 +27,8 @@ interface NotesToolbarProps {
   minimized?: boolean
   setMinimized: (value: boolean) => void
   mobileActive?: boolean
+  notesLocked: boolean
+  onToggleNotesLock: () => void
 }
 
 export const NotesToolbar: React.FC<NotesToolbarProps> = ({
@@ -46,6 +48,8 @@ export const NotesToolbar: React.FC<NotesToolbarProps> = ({
   minimized,
   setMinimized,
   mobileActive,
+  notesLocked,
+  onToggleNotesLock,
 }) => {
   const explorerWidth = expanded ? 208 : 52
   const [searchExpanded, setSearchExpanded] = React.useState(false)
@@ -137,6 +141,15 @@ export const NotesToolbar: React.FC<NotesToolbarProps> = ({
         </>
       )}
       <ActionsContainer>
+        <EditLockButton
+          type="button"
+          title={notesLocked ? 'Unlock note editing' : 'Lock note editing'}
+          aria-label={notesLocked ? 'Unlock note editing' : 'Lock note editing'}
+          aria-pressed={notesLocked}
+          onClick={onToggleNotesLock}
+        >
+          {notesLocked ? <FiLock /> : <FiUnlock />}
+        </EditLockButton>
         <MobileMenuButton
           type="button"
           title={expanded ? 'Collapse notes menu' : 'Expand notes menu'}
@@ -161,7 +174,7 @@ export const NotesToolbar: React.FC<NotesToolbarProps> = ({
               <FiCopy />
             </IconButton>
 
-            <IconButton title="Add note" onClick={onAddNote}>
+            <IconButton disabled={notesLocked} title="Add note" onClick={onAddNote}>
               <IoMdAddCircleOutline />
             </IconButton>
           </>
@@ -405,6 +418,33 @@ const ActionsContainer = styled.div`
 
   @media (max-width: 768px) {
     order: 0;
+  }
+`
+
+const EditLockButton = styled.button`
+  display: flex;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin: 2px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #2e2e2e;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(128, 128, 128, 0.15);
+  }
+
+  @media (max-width: 768px) {
+    color: #fff;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
   }
 `
 

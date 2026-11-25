@@ -17,7 +17,7 @@ interface ExplorerSideBarProps {
   systemTags: TagItem[]
   customTags: string[]
   unpinnedTags: string[]
-  onToggleTagPin: (tag: string) => void
+  onToggleTagPin: (tag: string) => Promise<void>
   selectedTag: string
   setSelectedTag: (tag: string) => void
   explorerExpanded: boolean
@@ -35,6 +35,8 @@ interface ExplorerSideBarProps {
   onRestoreSelectedTrash: () => Promise<void>
   onRestoreAllTrash: () => Promise<void>
   onEmptyTrash: () => Promise<void>
+  actionsLocked?: boolean
+  tagPreferencesLoading?: boolean
 }
 export const ExplorerSideBar: React.FC<ExplorerSideBarProps> = ({
   systemTags,
@@ -58,6 +60,8 @@ export const ExplorerSideBar: React.FC<ExplorerSideBarProps> = ({
   onRestoreSelectedTrash,
   onRestoreAllTrash,
   onEmptyTrash,
+  actionsLocked = false,
+  tagPreferencesLoading = false,
 }) => {
   const formatTag = (tag: string) => tag.replace(/\b\w/g, (c) => c.toUpperCase())
   const [openMenuTag, setOpenMenuTag] = React.useState<string | null>(null)
@@ -71,6 +75,23 @@ export const ExplorerSideBar: React.FC<ExplorerSideBarProps> = ({
   }, [])
 
   useClickOutside(menuRef, closeMenu)
+
+  React.useEffect(() => {
+    if (actionsLocked) {
+      closeMenu()
+    }
+  }, [actionsLocked, closeMenu])
+
+  const closeMobileSidebar = () => {
+    if (window.innerWidth <= 768) {
+      setExplorerExpanded(false)
+    }
+  }
+
+  const selectTag = (tag: string) => {
+    setSelectedTag(tag)
+    closeMobileSidebar()
+  }
 
   React.useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
@@ -97,8 +118,13 @@ export const ExplorerSideBar: React.FC<ExplorerSideBarProps> = ({
   }, [explorerExpanded, setExplorerExpanded])
 
   const runMenuAction = async (action: () => Promise<void>) => {
-    await action()
-    setOpenMenuTag(null)
+    try {
+      await action()
+      setOpenMenuTag(null)
+      closeMobileSidebar()
+    } catch (error) {
+      console.error('Failed to complete tag menu action.', error)
+    }
   }
 
   const renderSystemTag = (tag: TagItem) => {
@@ -116,7 +142,7 @@ export const ExplorerSideBar: React.FC<ExplorerSideBarProps> = ({
           expanded={explorerExpanded}
           selected={selectedTag === tag.name}
           title={tag.name}
-          onClick={() => setSelectedTag(tag.name)}
+          onClick={() => selectTag(tag.name)}
         >
           <Icon />
           {explorerExpanded && <span>{formatTag(tag.name)}</span>}
@@ -126,6 +152,7 @@ export const ExplorerSideBar: React.FC<ExplorerSideBarProps> = ({
           <MenuWrapper>
             <MenuButton
               type="button"
+              disabled={actionsLocked}
               aria-label={`Manage ${tag.name} tag`}
               title={`Manage ${formatTag(tag.name)} tag`}
               onClick={(event) => {
@@ -204,7 +231,7 @@ export const ExplorerSideBar: React.FC<ExplorerSideBarProps> = ({
           expanded={explorerExpanded}
           selected={selectedTag === tag}
           title={formatTag(tag)}
-          onClick={() => setSelectedTag(tag)}
+          onClick={() => selectTag(tag)}
         >
           <FiTag />
           {editingTag === tag ? (
@@ -216,7 +243,7 @@ export const ExplorerSideBar: React.FC<ExplorerSideBarProps> = ({
                 event.currentTarget.setCustomValidity('')
                 setEditedName(event.target.value)
               }}
-              onKeyDown={async (event) => {
+              onKeyDown={(event) => {
                 if (event.key === 'Enter') {
                   const newName = editedName.trim()
                   if (!newName) {
@@ -225,9 +252,10 @@ export const ExplorerSideBar: React.FC<ExplorerSideBarProps> = ({
                     return
                   }
 
-                  await onRenameTag(tag, newName)
-                  setEditingTag(null)
-                  setOpenMenuTag(null)
+                  void runMenuAction(async () => {
+                    await onRenameTag(tag, newName)
+                    setEditingTag(null)
+                  })
                 }
 
                 if (event.key === 'Escape') {
@@ -244,6 +272,7 @@ export const ExplorerSideBar: React.FC<ExplorerSideBarProps> = ({
           <MenuWrapper>
             <MenuButton
               type="button"
+              disabled={actionsLocked}
               aria-label={`Manage ${tag} tag`}
               title={`Manage ${formatTag(tag)} tag`}
               onClick={(event) => {
@@ -258,10 +287,8 @@ export const ExplorerSideBar: React.FC<ExplorerSideBarProps> = ({
               <PopupMenu>
                 <MenuItem
                   type="button"
-                  onClick={() => {
-                    onToggleTagPin(tag)
-                    setOpenMenuTag(null)
-                  }}
+                  disabled={actionsLocked || tagPreferencesLoading}
+                  onClick={() => void runMenuAction(() => onToggleTagPin(tag))}
                 >
                   {isPinned ? 'Unpin' : 'Pin'}
                 </MenuItem>
@@ -394,6 +421,11 @@ const MenuButton = styled.button`
   background: transparent;
   cursor: pointer;
   padding: 4px;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
 `
 
 const PopupMenu = styled.div`

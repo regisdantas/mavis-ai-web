@@ -11,7 +11,7 @@ import { IconButton } from '../../../../styles/global'
 import { TemplateOption } from '../../utils/cardUtils'
 
 interface CardActionsProps {
-  isLocked: boolean
+  readOnly: boolean
   aiLoading: boolean
 
   isArchived: boolean
@@ -42,7 +42,7 @@ interface CardActionsProps {
 }
 
 const CardActions: React.FC<CardActionsProps> = ({
-  isLocked,
+  readOnly,
   aiLoading,
   isArchived,
   isTrash,
@@ -67,7 +67,7 @@ const CardActions: React.FC<CardActionsProps> = ({
     <GeneralContainer>
       <ActionsContainer>
         <IconButton
-          disabled={isLocked}
+          disabled={readOnly}
           title="Change note background color"
           onClick={() => setShowColorPicker((v) => !v)}
         >
@@ -75,7 +75,7 @@ const CardActions: React.FC<CardActionsProps> = ({
         </IconButton>
 
         <IconButton
-          disabled={isLocked}
+          disabled={readOnly}
           title="Load template"
           onClick={() => setShowTemplatePicker((v) => !v)}
         >
@@ -83,7 +83,7 @@ const CardActions: React.FC<CardActionsProps> = ({
         </IconButton>
 
         <IconButton
-          disabled={isLocked}
+          disabled={readOnly}
           data-keepeditor="true"
           title="AI assistant"
           onMouseDown={(e) => e.preventDefault()}
@@ -93,7 +93,7 @@ const CardActions: React.FC<CardActionsProps> = ({
         </IconButton>
 
         <IconButton
-          disabled={isLocked}
+          disabled={readOnly}
           data-keepeditor="true"
           title="Revert last change"
           onMouseDown={(e) => e.preventDefault()}
@@ -103,7 +103,7 @@ const CardActions: React.FC<CardActionsProps> = ({
         </IconButton>
 
         <IconButton
-          disabled={isLocked}
+          disabled={readOnly}
           title={isArchived ? 'Unarchive note' : 'Archive note'}
           onClick={archiveNote}
         >
@@ -111,7 +111,7 @@ const CardActions: React.FC<CardActionsProps> = ({
         </IconButton>
 
         <IconButton
-          disabled={isLocked}
+          disabled={readOnly}
           title={isTrash ? 'Delete permanently' : 'Move to trash'}
           onClick={trashNote}
         >

@@ -4,7 +4,6 @@ export interface NoteContent {
   tags: string[]
   text: string
   color: string
-  locked: boolean
   pinned: boolean
   collapsed: boolean
 }
@@ -15,7 +14,6 @@ export const defaultContent: NoteContent = {
   tags: [],
   text: '',
   color: '#fff',
-  locked: false,
   pinned: false,
   collapsed: false,
 }
@@ -45,6 +43,10 @@ export const parseNoteContent = (
         ...defaultContent,
         text: content,
       }
+
+  if (parsed && typeof parsed === 'object') {
+    delete parsed.locked
+  }
 
   return {
     ...defaultContent,

@@ -30,9 +30,10 @@ interface ICardProps {
   number: number
   date: string
   content: string
+  notesLocked: boolean
 
   onDeleteCard: (id: string, permanent?: boolean) => void
-  onChangeContent: (id: string, content: string) => void
+  onChangeContent: (id: string, content: string) => Promise<void>
   onChangeDate: (id: string, date: string) => void
 
   tags: string[]
@@ -45,6 +46,7 @@ export const Card: React.FC<ICardProps> = ({
   id,
   date,
   content,
+  notesLocked,
   onDeleteCard,
   onChangeContent,
   onChangeDate,
@@ -58,6 +60,7 @@ export const Card: React.FC<ICardProps> = ({
   const [showTemplatePicker, setShowTemplatePicker] = React.useState(false)
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
   const markdownRef = React.useRef<HTMLDivElement>(null)
+  const titleRef = React.useRef<HTMLSpanElement>(null)
   const tagPickerRef = React.useRef<HTMLDivElement>(null)
   const otherTagsDropdownRef = React.useRef<HTMLDetailsElement>(null)
   const colorPickerRef = React.useRef<HTMLDivElement>(null)
@@ -104,6 +107,8 @@ export const Card: React.FC<ICardProps> = ({
   }, [])
 
   const archiveNote = () => {
+    if (notesLocked) return
+
     const updatedTags = getArchiveTags(objContent.tags)
 
     onChangeContent(
@@ -116,6 +121,7 @@ export const Card: React.FC<ICardProps> = ({
   }
 
   const objContent = React.useMemo(() => parseNoteContent(content, isJsonString), [content])
+  const readOnly = notesLocked
 
   const {
     showTagPicker,
@@ -132,6 +138,8 @@ export const Card: React.FC<ICardProps> = ({
   } = useNoteTags({
     tags: objContent.tags,
     onTagsChange: (tags) => {
+      if (readOnly) return
+
       onChangeContent(
         id,
         JSON.stringify({
@@ -142,8 +150,124 @@ export const Card: React.FC<ICardProps> = ({
     },
   })
 
+  const localProcessMacros = React.useCallback(
+    (text: string) => {
+      if (!hasTag('templates')) {
+        return processMacros(text, {
+          weather,
+          temperature,
+          city: location.city,
+          country: location.country,
+        })
+      }
+
+      return text
+    },
+    [hasTag, location.city, location.country, temperature, weather]
+  )
+
   const [value, setValue] = React.useState(objContent.text || '')
   const [history, setHistory] = React.useState<string[]>([])
+  const savedDraftRef = React.useRef({
+    text: objContent.text || '',
+    title: objContent.title || '',
+  })
+
+  React.useEffect(() => {
+    savedDraftRef.current = {
+      text: objContent.text || '',
+      title: objContent.title || '',
+    }
+  }, [objContent.text, objContent.title])
+
+  const saveCurrentDraft = React.useCallback(
+    (nextText?: string, nextTitle?: string) => {
+      const currentText = nextText ?? (editingContent ? textareaRef.current?.value ?? value : value)
+      const currentTitle = nextTitle ?? titleRef.current?.innerText ?? objContent.title ?? ''
+      const savedText = localProcessMacros(currentText)
+      const savedTitle = localProcessMacros(currentTitle)
+      const previousDraft = savedDraftRef.current
+
+      if (previousDraft.text === savedText && previousDraft.title === savedTitle) {
+        return
+      }
+
+      savedDraftRef.current = { text: savedText, title: savedTitle }
+      setValue(savedText)
+
+      void onChangeContent(
+        id,
+        JSON.stringify({
+          ...objContent,
+          text: savedText,
+          title: savedTitle,
+        })
+      ).catch((error) => {
+        console.error('Failed to autosave note.', error)
+
+        if (
+          savedDraftRef.current.text === savedText &&
+          savedDraftRef.current.title === savedTitle
+        ) {
+          savedDraftRef.current = previousDraft
+        }
+      })
+    },
+    [editingContent, id, localProcessMacros, objContent, onChangeContent, value]
+  )
+
+  React.useEffect(() => {
+    if (!editingContent || readOnly) {
+      return
+    }
+
+    const timeout = window.setTimeout(() => saveCurrentDraft(), 500)
+
+    return () => window.clearTimeout(timeout)
+  }, [editingContent, readOnly, saveCurrentDraft, value])
+
+  React.useEffect(() => {
+    const saveBeforeLeaving = () => saveCurrentDraft()
+    const saveWhenHidden = () => {
+      if (document.visibilityState === 'hidden') {
+        saveCurrentDraft()
+      }
+    }
+
+    document.addEventListener('visibilitychange', saveWhenHidden)
+    window.addEventListener('pagehide', saveBeforeLeaving)
+    window.addEventListener('beforeunload', saveBeforeLeaving)
+
+    return () => {
+      document.removeEventListener('visibilitychange', saveWhenHidden)
+      window.removeEventListener('pagehide', saveBeforeLeaving)
+      window.removeEventListener('beforeunload', saveBeforeLeaving)
+    }
+  }, [saveCurrentDraft])
+
+  React.useEffect(() => {
+    if (!readOnly) return
+
+    setShowColorPicker(false)
+    setShowTemplatePicker(false)
+    setShowTagPicker(false)
+    setCreatingTag(false)
+
+    if (otherTagsDropdownRef.current) {
+      otherTagsDropdownRef.current.open = false
+    }
+
+    if (editingContent) {
+      textareaRef.current?.blur()
+    }
+  }, [
+    editingContent,
+    readOnly,
+    setCreatingTag,
+    setShowTagPicker,
+    setShowColorPicker,
+    setShowTemplatePicker,
+  ])
 
   const pushHistory = React.useCallback((currentText: string) => {
     setHistory((h) => {
@@ -161,6 +285,8 @@ export const Card: React.FC<ICardProps> = ({
     textareaRef,
     pushHistory,
     onContentChange: (updated) => {
+      if (readOnly) return
+
       setValue(updated)
 
       onChangeContent(
@@ -174,26 +300,26 @@ export const Card: React.FC<ICardProps> = ({
   })
 
   const setTemplate = (option: TemplateOption) => {
+    if (readOnly) return
+
     pushHistory(value)
     let text = option.text.replace(/\\\$\{/g, '${')
     text = localProcessMacros(text)
 
-    if (!objContent.locked) {
-      const mergedTags = Array.from(new Set([...(objContent.tags || []), ...(option.tags || [])]))
+    const mergedTags = Array.from(new Set([...(objContent.tags || []), ...(option.tags || [])]))
 
-      onChangeContent(
-        id,
-        JSON.stringify({
-          ...objContent,
-          collapsed: false,
-          color: option.color,
-          text: text,
-          title: localProcessMacros(option.title),
-          tags: mergedTags,
-        })
-      )
-      setValue(text)
-    }
+    void onChangeContent(
+      id,
+      JSON.stringify({
+        ...objContent,
+        collapsed: false,
+        color: option.color,
+        text,
+        title: localProcessMacros(option.title),
+        tags: mergedTags,
+      })
+    )
+    setValue(text)
 
     setShowTemplatePicker(false)
   }
@@ -211,6 +337,8 @@ export const Card: React.FC<ICardProps> = ({
     )
 
   const handleExecuteExpression = (expression: string) => {
+    if (readOnly) return
+
     pushHistory(value)
     const newText = executeExpression(value, expression, {
       temperature,
@@ -231,6 +359,8 @@ export const Card: React.FC<ICardProps> = ({
   }
 
   const trashNote = () => {
+    if (readOnly) return
+
     if (hasTag('trash')) {
       onDeleteCard(id, true)
       return
@@ -245,32 +375,6 @@ export const Card: React.FC<ICardProps> = ({
         tags: updatedTags,
       })
     )
-  }
-
-  const localProcessMacros = (text: string) => {
-    if (!hasTag('templates')) {
-      return processMacros(text, {
-        weather,
-        temperature,
-        city: location.city,
-        country: location.country,
-      })
-    }
-    return text
-  }
-
-  const onChangeMarkdownContent = (id: string, newText: string) => {
-    const processedText = localProcessMacros(newText)
-
-    onChangeContent(
-      id,
-      JSON.stringify({
-        ...objContent,
-        text: processedText,
-      })
-    )
-
-    setValue(processedText)
   }
 
   const copyFormattedContent = async () => {
@@ -290,6 +394,8 @@ export const Card: React.FC<ICardProps> = ({
   }
 
   const undoLastChange = () => {
+    if (readOnly) return
+
     const previous = history[history.length - 1]
 
     if (!previous) {
@@ -309,53 +415,39 @@ export const Card: React.FC<ICardProps> = ({
     )
   }
 
-  const isLocked = objContent.locked
-
   return (
     <CardContainer key={id} selected={selected}>
       <div className="ContentContainer" style={{ backgroundColor: objContent.color || '#eee' }}>
         <CardHeader
           title={objContent.title}
-          locked={objContent.locked}
+          titleRef={titleRef}
+          readOnly={notesLocked}
           collapsed={objContent.collapsed}
           selected={selected}
           onToggleSelection={() => onToggleSelection(id)}
           isFavorite={hasTag('favorite')}
           copyFormattedContent={copyFormattedContent}
-          onToggleFavorite={() => toggleTag('favorite')}
-          onToggleLock={() =>
-            onChangeContent(
-              id,
-              JSON.stringify({
-                ...objContent,
-                locked: !objContent.locked,
-              })
-            )
-          }
-          onToggleCollapse={() =>
-            onChangeContent(
-              id,
-              JSON.stringify({
-                ...objContent,
-                collapsed: !objContent.collapsed,
-              })
-            )
-          }
-          onTitleChange={(title) =>
-            onChangeContent(
-              id,
-              JSON.stringify({
-                ...objContent,
-                title: localProcessMacros(title),
-              })
-            )
-          }
+          onToggleFavorite={() => {
+            if (!readOnly) toggleTag('favorite')
+          }}
+          onToggleCollapse={() => {
+            if (!notesLocked) {
+              void onChangeContent(
+                id,
+                JSON.stringify({
+                  ...objContent,
+                  collapsed: !objContent.collapsed,
+                })
+              )
+            }
+          }}
+          onTitleChange={(title) => saveCurrentDraft(undefined, title)}
         />
 
         {!objContent.collapsed && (
           <CardContent
             value={value}
-            locked={objContent.locked}
+            readOnly={readOnly}
             editing={editingContent}
             textareaRef={textareaRef}
             markdownRef={markdownRef}
@@ -363,8 +455,10 @@ export const Card: React.FC<ICardProps> = ({
             setEditing={setEditingContent}
             processMarkdown={processAndDisplayMarkdown}
             onExecuteExpression={handleExecuteExpression}
-            onSave={() => onChangeMarkdownContent(id, value)}
+            onSave={() => saveCurrentDraft(textareaRef.current?.value ?? value)}
             onMarkdownClick={(clickedText, sourceOffset) => {
+              if (readOnly) return
+
               pushHistory(value)
 
               const pos = sourceOffset ?? findBestCursorPosition(clickedText, value)
@@ -382,7 +476,7 @@ export const Card: React.FC<ICardProps> = ({
               date={date}
               tags={objContent.tags}
               availableTags={tags}
-              isLocked={isLocked}
+              readOnly={readOnly}
               tagPickerRef={tagPickerRef}
               showTagPicker={showTagPicker}
               creatingTag={creatingTag}
@@ -390,7 +484,11 @@ export const Card: React.FC<ICardProps> = ({
               setShowTagPicker={setShowTagPicker}
               setCreatingTag={setCreatingTag}
               setNewTagName={setNewTagName}
-              onDateChange={(newDate) => onChangeDate(id, newDate)}
+              onDateChange={(newDate) => {
+                if (!readOnly) {
+                  onChangeDate(id, newDate)
+                }
+              }}
               hasTag={hasTag}
               toggleTag={toggleTag}
               createTag={createTag}
@@ -401,7 +499,7 @@ export const Card: React.FC<ICardProps> = ({
             <CardActions
               colorDropdownRef={colorDropdownRef}
               templateDropdownRef={templateDropdownRef}
-              isLocked={isLocked}
+              readOnly={readOnly}
               aiLoading={aiLoading}
               isArchived={hasTag('archive')}
               isTrash={hasTag('trash')}
@@ -413,23 +511,25 @@ export const Card: React.FC<ICardProps> = ({
               templateOptions={templateOptions}
               undoLastChange={undoLastChange}
               handleAI={() => {
-                if (!objContent.locked) {
+                if (!readOnly) {
                   handleAI()
                 }
               }}
               archiveNote={() => {
-                if (!objContent.locked) {
+                if (!readOnly) {
                   archiveNote()
                 }
               }}
               trashNote={() => {
-                if (!objContent.locked) {
+                if (!readOnly) {
                   trashNote()
                 }
               }}
               setShowColorPicker={setShowColorPicker}
               setShowTemplatePicker={setShowTemplatePicker}
               onColorSelected={(selectedColor) => {
+                if (readOnly) return
+
                 onChangeContent(
                   id,
                   JSON.stringify({

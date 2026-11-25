@@ -1,5 +1,5 @@
 import React from 'react'
-import { fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { FiEye, FiStar, FiTrash2 } from 'react-icons/fi'
 import { ExplorerSideBar } from './ExplorerSideBar'
 
@@ -15,7 +15,7 @@ const renderExplorer = (props: Partial<React.ComponentProps<typeof ExplorerSideB
       systemTags={systemTags}
       customTags={[]}
       unpinnedTags={[]}
-      onToggleTagPin={jest.fn()}
+      onToggleTagPin={jest.fn(async () => {})}
       selectedTag="favorite"
       setSelectedTag={jest.fn()}
       explorerExpanded
@@ -66,8 +66,8 @@ describe('ExplorerSideBar fixed-tag menus', () => {
     expect(screen.queryByRole('button', { name: 'Empty Bin' })).toBeNull()
   })
 
-  it('moves unpinned tags below Trash and lets tags be pinned or unpinned', () => {
-    const onToggleTagPin = jest.fn()
+  it('moves unpinned tags below Trash and lets tags be pinned or unpinned', async () => {
+    const onToggleTagPin = jest.fn(async () => {})
 
     renderExplorer({
       customTags: ['pinned', 'unpinned'],
@@ -90,11 +90,12 @@ describe('ExplorerSideBar fixed-tag menus', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Manage unpinned tag' }))
     fireEvent.click(screen.getByRole('button', { name: 'Pin' }))
+    await waitFor(() => expect(onToggleTagPin).toHaveBeenNthCalledWith(1, 'unpinned'))
+
     fireEvent.click(screen.getByRole('button', { name: 'Manage pinned tag' }))
     fireEvent.click(screen.getByRole('button', { name: 'Unpin' }))
 
-    expect(onToggleTagPin).toHaveBeenNthCalledWith(1, 'unpinned')
-    expect(onToggleTagPin).toHaveBeenNthCalledWith(2, 'pinned')
+    await waitFor(() => expect(onToggleTagPin).toHaveBeenNthCalledWith(2, 'pinned'))
   })
 
   it('collapses the notes menu after an outside click on a small screen', () => {
@@ -106,6 +107,26 @@ describe('ExplorerSideBar fixed-tag menus', () => {
       renderExplorer({ explorerExpanded: true, setExplorerExpanded })
       fireEvent.click(document.body)
 
+      expect(setExplorerExpanded).toHaveBeenCalledWith(false)
+    } finally {
+      Object.defineProperty(window, 'innerWidth', {
+        configurable: true,
+        value: originalWidth,
+      })
+    }
+  })
+
+  it('collapses the notes menu after selecting a tag on a small screen', () => {
+    const originalWidth = window.innerWidth
+    const setExplorerExpanded = jest.fn()
+    const setSelectedTag = jest.fn()
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 390 })
+
+    try {
+      renderExplorer({ explorerExpanded: true, setExplorerExpanded, setSelectedTag })
+      fireEvent.click(screen.getByTitle('all'))
+
+      expect(setSelectedTag).toHaveBeenCalledWith('all')
       expect(setExplorerExpanded).toHaveBeenCalledWith(false)
     } finally {
       Object.defineProperty(window, 'innerWidth', {

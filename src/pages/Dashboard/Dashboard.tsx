@@ -8,6 +8,7 @@ import { UserAuth } from '../../context/AuthContext'
 import { HeaderPortal } from '../../components/HeaderPortal'
 import { defaultContent } from './utils/cardUtils'
 import { getTags } from '../../utils'
+import { getTagPinPreferences, saveTagPinPreferences } from '../../services/tagPinPreferences'
 import { useDashboard } from './context/DashboardContext'
 import { ExplorerSideBar } from './components/ExplorerSideBar'
 import { NotesList } from './components/NotesList'
@@ -80,24 +81,57 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
   const [tagPinState, setTagPinState] = React.useState(() => ({
     userId,
     tags: storedUnpinnedTags,
+    loaded: false,
   }))
   const unpinnedTags = tagPinState.userId === userId ? tagPinState.tags : storedUnpinnedTags
+  const tagPreferencesLoaded = tagPinState.userId === userId && tagPinState.loaded
 
-  const saveUnpinnedTags = (tags: string[]) => {
+  React.useEffect(() => {
+    let active = true
+
+    const loadTagPreferences = async () => {
+      if (!userId) {
+        setTagPinState({ userId, tags: [], loaded: true })
+        return
+      }
+
+      try {
+        const remoteTags = await getTagPinPreferences(userId)
+        const tags = remoteTags ?? storedUnpinnedTags
+
+        if (remoteTags === null && tags.length > 0) {
+          await saveTagPinPreferences(userId, tags)
+        }
+
+        if (active) {
+          setTagPinState({ userId, tags, loaded: true })
+        }
+      } catch (error) {
+        console.error('Failed to load tag pin preferences from Firebase.', error)
+
+        if (active) {
+          setTagPinState({ userId, tags: storedUnpinnedTags, loaded: true })
+        }
+      }
+    }
+
+    void loadTagPreferences()
+
+    return () => {
+      active = false
+    }
+  }, [userId, storedUnpinnedTags])
+
+  const saveUnpinnedTags = async (tags: string[]) => {
     const uniqueTags = Array.from(new Set(tags))
 
     if (!userId) {
-      console.error('Cannot save tag pin preferences without an authenticated user.')
-      return
+      throw new Error('Cannot save tag pin preferences without an authenticated user.')
     }
 
-    try {
-      localStorage.setItem(`mavis-ai-web:unpinned-tags:${userId}`, JSON.stringify(uniqueTags))
-    } catch (error) {
-      console.error('Failed to save tag pin preferences.', error)
-    }
+    await saveTagPinPreferences(userId, uniqueTags)
 
-    setTagPinState({ userId, tags: uniqueTags })
+    setTagPinState({ userId, tags: uniqueTags, loaded: true })
   }
 
   const { cardRefs, cardHeights, totalHeight } = useCardMeasurements([entries])
@@ -111,6 +145,22 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
   const [chatMinimized, setChatMinimized] = React.useState(false)
   const [chatSessionsExpanded, setChatSessionsExpanded] = React.useState(false)
   const [activeMobileView, setActiveMobileView] = React.useState<'notes' | 'chat'>('notes')
+  const [notesLocked, setNotesLocked] = React.useState(true)
+
+  const toggleNotesLock = () => {
+    if (!notesLocked) {
+      const activeElement = document.activeElement
+
+      if (
+        activeElement instanceof HTMLElement &&
+        (activeElement.isContentEditable || activeElement instanceof HTMLTextAreaElement)
+      ) {
+        activeElement.blur()
+      }
+    }
+
+    setNotesLocked((current) => !current)
+  }
 
   const handlePanelScroll = React.useCallback((event: React.UIEvent<HTMLDivElement>) => {
     const { clientWidth, scrollLeft } = event.currentTarget
@@ -218,6 +268,8 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
   }, [entries])
 
   const handleRenameTag = async (oldTag: string, newTag: string) => {
+    if (notesLocked) return
+
     await renameTag(oldTag, newTag)
 
     if (unpinnedTags.includes(oldTag)) {
@@ -225,7 +277,7 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
       if (!renamedUnpinnedTags.includes(newTag)) {
         renamedUnpinnedTags.push(newTag)
       }
-      saveUnpinnedTags(renamedUnpinnedTags)
+      await saveUnpinnedTags(renamedUnpinnedTags)
     }
 
     if (selectedTag === oldTag) {
@@ -234,10 +286,12 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
   }
 
   const handleDeleteTag = async (tag: string) => {
+    if (notesLocked) return
+
     await deleteTag(tag)
 
     if (unpinnedTags.includes(tag)) {
-      saveUnpinnedTags(unpinnedTags.filter((unpinnedTag) => unpinnedTag !== tag))
+      await saveUnpinnedTags(unpinnedTags.filter((unpinnedTag) => unpinnedTag !== tag))
     }
 
     if (selectedTag === tag) {
@@ -245,8 +299,10 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
     }
   }
 
-  const handleToggleTagPin = (tag: string) => {
-    saveUnpinnedTags(
+  const handleToggleTagPin = async (tag: string) => {
+    if (notesLocked || !tagPreferencesLoaded) return
+
+    await saveUnpinnedTags(
       unpinnedTags.includes(tag)
         ? unpinnedTags.filter((unpinnedTag) => unpinnedTag !== tag)
         : [...unpinnedTags, tag]
@@ -254,10 +310,12 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
   }
 
   const handleAddTagToSelected = async (tag: string) => {
+    if (notesLocked) return
     await addTagToEntries(selectedNoteIds, tag)
   }
 
   const handleRemoveTagFromSelected = async (tag: string) => {
+    if (notesLocked) return
     await removeTagFromEntries(selectedNoteIds, tag)
   }
 
@@ -322,7 +380,14 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
     setSelectedDate(event.target.value)
   }
 
+  const handleUpdateEntryDate = async (id: string, date: string) => {
+    if (notesLocked) return
+    await updateEntryDate(id, date)
+  }
+
   async function handleAddNewEntry() {
+    if (notesLocked) return
+
     const tags = selectedTag !== 'all' ? [selectedTag] : []
 
     await addEntry({
@@ -348,6 +413,8 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
   }
 
   const handleDeleteEntry = async (id: string, permanent = false) => {
+    if (notesLocked) return
+
     if (!permanent) {
       const entry = entries.find((e) => e.id === id)
 
@@ -376,7 +443,7 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
   }
 
   const handleDeleteSelectedNotes = async () => {
-    if (!selectedNoteIds.length) {
+    if (notesLocked || !selectedNoteIds.length) {
       return
     }
 
@@ -406,15 +473,17 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
   }
 
   const handleRestoreSelectedTrash = async () => {
+    if (notesLocked) return
     await removeTagFromEntries(selectedTrashEntryIds, 'trash')
   }
 
   const handleRestoreAllTrash = async () => {
+    if (notesLocked) return
     await removeTagFromEntries(trashedEntryIds, 'trash')
   }
 
   const handleEmptyTrash = async () => {
-    if (!trashedEntryIds.length) {
+    if (notesLocked || !trashedEntryIds.length) {
       return
     }
 
@@ -498,6 +567,8 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
             minimized={notesMinimized}
             setMinimized={setNotesMinimized}
             mobileActive={activeMobileView === 'notes'}
+            notesLocked={notesLocked}
+            onToggleNotesLock={toggleNotesLock}
           />
           <ChatToolbar
             onClearAll={clearSelectedNotes}
@@ -509,6 +580,8 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
             menuExpanded={chatSessionsExpanded}
             setMenuExpanded={setChatSessionsExpanded}
             mobileActive={activeMobileView === 'chat'}
+            notesLocked={notesLocked}
+            onToggleNotesLock={toggleNotesLock}
           />
         </HeaderPortal>
         <PanelScroller onScroll={handlePanelScroll}>
@@ -535,6 +608,8 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
               onRestoreSelectedTrash={handleRestoreSelectedTrash}
               onRestoreAllTrash={handleRestoreAllTrash}
               onEmptyTrash={handleEmptyTrash}
+              actionsLocked={notesLocked}
+              tagPreferencesLoading={!tagPreferencesLoaded}
             />
             {!notesMinimized && (
               <NotesMiniMap
@@ -552,13 +627,14 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
                   entries={visibleEntries}
                   pickerTags={pickerTags}
                   cardRefs={cardRefs}
-                  updateEntryDate={updateEntryDate}
+                  updateEntryDate={handleUpdateEntryDate}
                   onHoverCard={setHoveredCardId}
                   onDeleteEntry={handleDeleteEntry}
                   onChangeEntry={handleChangeEntry}
                   selectedNoteIds={selectedNoteIds}
                   onToggleSelection={toggleNoteSelection}
                   templateOptions={templateOptions}
+                  notesLocked={notesLocked}
                 />
               )}
             </NotesPanel>
