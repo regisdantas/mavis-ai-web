@@ -26,17 +26,25 @@ export const processMacros = (text: string, context: MacrosContext = {}): string
       })
     )
 
-    .replace(/\/week\b/g, () => {
-      const start = new Date(now.getFullYear(), 0, 1)
-
-      const week = Math.ceil(
-        ((now.getTime() - start.getTime()) / 86400000 + start.getDay() + 1) / 7
-      )
-
-      return String(week)
-    })
-
     .replace(/\/month\b/g, () => String(now.getMonth() + 1))
+
+    .replace(/\/quarter\b/g, () => String(Math.floor(now.getMonth() / 3) + 1))
+
+    .replace(/\/week\b/g, () => {
+      const date = new Date(now)
+
+      date.setHours(0, 0, 0, 0)
+      date.setDate(date.getDate() + 3 - ((date.getDay() + 6) % 7))
+
+      const week1 = new Date(date.getFullYear(), 0, 4)
+
+      return String(
+        1 +
+          Math.round(
+            ((date.getTime() - week1.getTime()) / 86400000 - 3 + ((week1.getDay() + 6) % 7)) / 7
+          )
+      )
+    })
 
     .replace(/\/monthname\b/g, () =>
       now.toLocaleDateString(undefined, {

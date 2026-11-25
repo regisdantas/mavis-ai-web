@@ -156,6 +156,104 @@ export function useEntries(userId: string) {
     [userId]
   )
 
+  const renameTag = React.useCallback(
+    async (oldTag: string, newTag: string) => {
+      const affectedEntries = entries.filter((entry) => {
+        try {
+          const content = JSON.parse(entry.content)
+          return (content.tags || []).includes(oldTag)
+        } catch {
+          return false
+        }
+      })
+
+      await Promise.all(
+        affectedEntries.map(async (entry) => {
+          const content = JSON.parse(entry.content)
+
+          await replaceEntry({
+            ...entry,
+            content: JSON.stringify({
+              ...content,
+              tags: (content.tags || []).map((tag: string) => (tag === oldTag ? newTag : tag)),
+            }),
+          })
+        })
+      )
+    },
+    [entries, replaceEntry]
+  )
+
+  const deleteTag = React.useCallback(
+    async (tagToDelete: string) => {
+      const affectedEntries = entries.filter((entry) => {
+        try {
+          const content = JSON.parse(entry.content)
+          return (content.tags || []).includes(tagToDelete)
+        } catch {
+          return false
+        }
+      })
+
+      await Promise.all(
+        affectedEntries.map(async (entry) => {
+          const content = JSON.parse(entry.content)
+
+          await replaceEntry({
+            ...entry,
+            content: JSON.stringify({
+              ...content,
+              tags: (content.tags || []).filter((tag: string) => tag !== tagToDelete),
+            }),
+          })
+        })
+      )
+    },
+    [entries, replaceEntry]
+  )
+
+  const addTagToEntries = React.useCallback(
+    async (entryIds: string[], tag: string) => {
+      const affectedEntries = entries.filter((entry) => entryIds.includes(entry.id))
+
+      await Promise.all(
+        affectedEntries.map(async (entry) => {
+          const content = JSON.parse(entry.content)
+
+          await replaceEntry({
+            ...entry,
+            content: JSON.stringify({
+              ...content,
+              tags: Array.from(new Set([...(content.tags || []), tag])),
+            }),
+          })
+        })
+      )
+    },
+    [entries, replaceEntry]
+  )
+
+  const removeTagFromEntries = React.useCallback(
+    async (entryIds: string[], tagToRemove: string) => {
+      const affectedEntries = entries.filter((entry) => entryIds.includes(entry.id))
+
+      await Promise.all(
+        affectedEntries.map(async (entry) => {
+          const content = JSON.parse(entry.content)
+
+          await replaceEntry({
+            ...entry,
+            content: JSON.stringify({
+              ...content,
+              tags: (content.tags || []).filter((tag: string) => tag !== tagToRemove),
+            }),
+          })
+        })
+      )
+    },
+    [entries, replaceEntry]
+  )
+
   const updateEntryDate = React.useCallback(
     async (id: string, date: string) => {
       if (!userId) {
@@ -204,5 +302,9 @@ export function useEntries(userId: string) {
     replaceEntry,
     deleteEntry,
     updateEntryDate,
+    renameTag,
+    deleteTag,
+    addTagToEntries,
+    removeTagFromEntries,
   }
 }

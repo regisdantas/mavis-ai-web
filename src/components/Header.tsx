@@ -162,6 +162,15 @@ const LogoutButton = styled.button`
 const HeaderPortal = styled.div`
   display: flex;
   flex-direction: row;
+
+  @media (max-width: 768px) {
+    flex: 1;
+    min-width: 0;
+    width: 0;
+    height: 100%;
+    margin: 0 36px 0 38px;
+    overflow: hidden;
+  }
 `
 
 const LogoImage = styled.img`
@@ -193,6 +202,10 @@ const LogoText = styled.h1<LogoTextProps>`
   align-items: center;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `
 
 const HeaderContainer = styled.header`

@@ -18,7 +18,11 @@ export function useTextareaCaret({ editing, textareaRef }: UseTextareaCaretProps
     textarea.focus()
     textarea.setSelectionRange(cursorPosition, cursorPosition)
 
-    requestAnimationFrame(() => {
+    const frame = requestAnimationFrame(() => {
+      if (!textarea.isConnected) {
+        return
+      }
+
       const mirror = document.createElement('div')
 
       const style = window.getComputedStyle(textarea)
@@ -27,12 +31,18 @@ export function useTextareaCaret({ editing, textareaRef }: UseTextareaCaretProps
       mirror.style.visibility = 'hidden'
       mirror.style.whiteSpace = 'pre-wrap'
       mirror.style.wordWrap = 'break-word'
+      mirror.style.boxSizing = style.boxSizing
       mirror.style.font = style.font
       mirror.style.lineHeight = style.lineHeight
+      mirror.style.letterSpacing = style.letterSpacing
+      mirror.style.wordSpacing = style.wordSpacing
+      mirror.style.textIndent = style.textIndent
+      mirror.style.tabSize = style.tabSize
       mirror.style.padding = style.padding
-      mirror.style.width = `${textarea.clientWidth}px`
+      mirror.style.border = style.border
+      mirror.style.width = style.width
 
-      mirror.textContent = textarea.value.substring(0, cursorPosition)
+      mirror.textContent = `${textarea.value.substring(0, cursorPosition)}\u200b`
 
       document.body.appendChild(mirror)
 
@@ -40,13 +50,39 @@ export function useTextareaCaret({ editing, textareaRef }: UseTextareaCaretProps
 
       document.body.removeChild(mirror)
 
-      const textareaTop = textarea.getBoundingClientRect().top + window.scrollY
+      const textareaTop = textarea.getBoundingClientRect().top
+      let scrollContainer = textarea.parentElement
+
+      while (scrollContainer) {
+        const overflowY = window.getComputedStyle(scrollContainer).overflowY
+
+        if (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') {
+          const containerTop = scrollContainer.getBoundingClientRect().top
+          const targetScrollTop =
+            scrollContainer.scrollTop +
+            textareaTop +
+            cursorTop -
+            containerTop -
+            scrollContainer.clientHeight / 2
+
+          scrollContainer.scrollTo({
+            top: Math.max(0, targetScrollTop),
+            behavior: 'smooth',
+          })
+
+          return
+        }
+
+        scrollContainer = scrollContainer.parentElement
+      }
 
       window.scrollTo({
-        top: textareaTop + cursorTop - window.innerHeight / 2,
+        top: Math.max(0, window.scrollY + textareaTop + cursorTop - window.innerHeight / 2),
         behavior: 'smooth',
       })
     })
+
+    return () => cancelAnimationFrame(frame)
   }, [editing, cursorPosition, textareaRef])
 
   const findBestCursorPosition = (clickedText: string, markdown: string) => {

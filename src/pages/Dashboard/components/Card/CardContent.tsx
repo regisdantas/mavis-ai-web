@@ -10,6 +10,7 @@ import rehypeKatex from 'rehype-katex'
 import remarkToc from 'remark-toc'
 import remarkBreaks from 'remark-breaks'
 import stringWidth from 'string-width'
+import { getSourceOffsetFromClick, rehypeAddSourceOffsets } from './markdownSourcePosition'
 
 interface ButtonCommandProps {
   label: string
@@ -34,7 +35,7 @@ interface CardContentProps {
   setEditing: (value: boolean) => void
 
   onSave: () => void
-  onMarkdownClick: (clickedText: string) => void
+  onMarkdownClick: (clickedText: string, sourceOffset: number | null) => void
 
   processMarkdown: (text: string) => string
   onExecuteExpression: (expression: string) => void
@@ -87,21 +88,31 @@ const CardContent: React.FC<CardContentProps> = ({
     )
   }
 
+  const renderedMarkdown = processMarkdown(value || '* ❓ What do you have for today?')
+
   return (
     <MarkdownContainer
       ref={markdownRef}
-      onClick={(e) => {
+      onClick={(event) => {
         if (locked) {
           return
         }
 
-        const target = e.target as HTMLElement
+        const target = event.target as HTMLElement
+        if (target.closest('button')) {
+          return
+        }
 
-        onMarkdownClick(target.innerText || target.textContent || '')
+        const sourceOffset =
+          renderedMarkdown === value
+            ? getSourceOffsetFromClick(event.currentTarget, event.clientX, event.clientY)
+            : null
+
+        onMarkdownClick(target.innerText || target.textContent || '', sourceOffset)
       }}
     >
       <ReactMarkdown
-        rehypePlugins={[rehypeRaw]}
+        rehypePlugins={[rehypeRaw, rehypeAddSourceOffsets]}
         components={{
           button(props) {
             const expression = decodeURIComponent(
@@ -133,7 +144,7 @@ const CardContent: React.FC<CardContentProps> = ({
           remarkFrontmatter,
         ]}
       >
-        {processMarkdown(value || '* ❓ What do you have for today?')}
+        {renderedMarkdown}
       </ReactMarkdown>
     </MarkdownContainer>
   )
@@ -142,6 +153,26 @@ const CardContent: React.FC<CardContentProps> = ({
 export default CardContent
 
 const MarkdownContainer = styled.div`
+  && {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    margin-left: 0;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scrollbar-width: thin;
+    scrollbar-color: #b0b0b5 transparent;
+  }
+
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #b0b0b5;
+    border-radius: 6px;
+  }
+
   padding: 20px;
   margin: 0;
   color: #000;
@@ -197,8 +228,11 @@ const MarkdownContainer = styled.div`
   }
 
   hr {
-    color: #919699;
     width: 100%;
+    border: 0;
+    border-top: 1px dashed rgba(0, 0, 0, 0.2);
+    margin-top: 6px;
+    margin-bottom: 10px;
   }
 
   h1,
@@ -306,8 +340,8 @@ const MarkdownContainer = styled.div`
     display: inline-table;
     width: auto;
 
-    border-top: 1px solid #919699;
-    border-left: 1px solid #919699;
+    border-top: 1px solid rgba(0, 0, 0, 0.2);
+    border-left: 1px solid rgba(0, 0, 0, 0.2);
     border-spacing: 0;
 
     margin: 0;
@@ -315,7 +349,8 @@ const MarkdownContainer = styled.div`
     margin-right: 10px;
 
     @media (max-width: 1260px) {
-      width: 100%;
+      width: max-content;
+      min-width: 100%;
     }
   }
 
@@ -324,8 +359,8 @@ const MarkdownContainer = styled.div`
     background: #e2e2e2;
     font-size: 12px;
 
-    border-bottom: 1px solid #919699;
-    border-right: 1px solid #919699;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    border-right: 1px solid rgba(0, 0, 0, 0.2);
 
     @media (max-width: 1260px) {
       font-size: 10px;
@@ -345,8 +380,8 @@ const MarkdownContainer = styled.div`
     font-size: 12px;
     vertical-align: top;
 
-    border-bottom: 1px solid #919699;
-    border-right: 1px solid #919699;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    border-right: 1px solid rgba(0, 0, 0, 0.2);
 
     @media (max-width: 1260px) {
       white-space: pre-wrap;
@@ -394,11 +429,30 @@ const MarkdownContainer = styled.div`
   }
 
   input[type='checkbox'] {
-    display: inline-block;
-    vertical-align: start;
-    margin: 0 6px 0 0;
+    appearance: none;
     width: 14px;
     height: 14px;
+    border: 1px solid #919699;
+    border-radius: 2px;
+    position: relative;
+    cursor: pointer;
+  }
+
+  input[type='checkbox']:checked {
+    background-color: #22c55e;
+    border: 1px solid #919699;
+  }
+
+  input[type='checkbox']:checked::after {
+    content: '✓';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    line-height: 1;
   }
 
   select {

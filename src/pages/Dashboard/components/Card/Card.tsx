@@ -7,8 +7,6 @@ import CardContent from './CardContent'
 import CardActions from './CardActions'
 import CardTags from './CardTags'
 
-import { useSpeechRecognition } from '../../../../hooks/useSpeechRecognition'
-import { useTextToSpeech } from '../../../../hooks/useTextToSpeech'
 import { TemplateOption } from '../../utils/cardUtils'
 import { processMacros } from '../../../../services/templateMacros'
 import { renderTemplate, executeExpression } from '../../../../services/templateEngine'
@@ -55,16 +53,18 @@ export const Card: React.FC<ICardProps> = ({
   onToggleSelection,
   templateOptions,
 }) => {
-  const { listening, transcript, startListening, stopListening } = useSpeechRecognition()
-  const { speak, speaking, stopSpeaking } = useTextToSpeech()
   const [editingContent, setEditingContent] = React.useState(false)
   const [showColorPicker, setShowColorPicker] = React.useState(false)
   const [showTemplatePicker, setShowTemplatePicker] = React.useState(false)
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
   const markdownRef = React.useRef<HTMLDivElement>(null)
   const tagPickerRef = React.useRef<HTMLDivElement>(null)
+  const otherTagsDropdownRef = React.useRef<HTMLDetailsElement>(null)
   const colorPickerRef = React.useRef<HTMLDivElement>(null)
   const templatePickerRef = React.useRef<HTMLDivElement>(null)
+  const tagDropdownRef = React.useRef<HTMLDivElement>(null)
+  const colorDropdownRef = React.useRef<HTMLDivElement>(null)
+  const templateDropdownRef = React.useRef<HTMLDivElement>(null)
   const [isMobile, setIsMobile] = React.useState(window.innerWidth < 1260)
   const { user } = UserAuth()
   const { temperature, weather, location } = useLocationData()
@@ -73,21 +73,25 @@ export const Card: React.FC<ICardProps> = ({
     textareaRef,
   })
 
-  // useCardClickOutside({
-  //   tagPickerRef,
-  //   colorPickerRef,
-  //   templatePickerRef,
-  //   closeTagPicker: () => {
-  //     setShowTagPicker(false)
-  //     setCreatingTag(false)
-  //   },
-  //   closeColorPicker: () => {
-  //     setShowColorPicker(false)
-  //   },
-  //   closeTemplatePicker: () => {
-  //     setShowTemplatePicker(false)
-  //   },
-  // })
+  useCardClickOutside({
+    tagPickerRef,
+    tagDropdownRef,
+    otherTagsDropdownRef,
+    colorPickerRef,
+    colorDropdownRef,
+    templatePickerRef,
+    templateDropdownRef,
+    closeTagPicker: () => {
+      setShowTagPicker(false)
+      setCreatingTag(false)
+    },
+    closeColorPicker: () => {
+      setShowColorPicker(false)
+    },
+    closeTemplatePicker: () => {
+      setShowTemplatePicker(false)
+    },
+  })
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -190,6 +194,8 @@ export const Card: React.FC<ICardProps> = ({
       )
       setValue(text)
     }
+
+    setShowTemplatePicker(false)
   }
 
   const processAndDisplayMarkdown = (text: string) =>
@@ -303,24 +309,6 @@ export const Card: React.FC<ICardProps> = ({
     )
   }
 
-  React.useEffect(() => {
-    if (!listening && transcript) {
-      pushHistory(value)
-
-      const updated = value + transcript
-
-      onChangeContent(
-        id,
-        JSON.stringify({
-          ...objContent,
-          text: updated,
-        })
-      )
-
-      setValue(updated)
-    }
-  }, [listening, transcript, value, id, objContent, pushHistory, onChangeContent])
-
   const isLocked = objContent.locked
 
   return (
@@ -332,10 +320,7 @@ export const Card: React.FC<ICardProps> = ({
           collapsed={objContent.collapsed}
           selected={selected}
           onToggleSelection={() => onToggleSelection(id)}
-          speaking={speaking}
           isFavorite={hasTag('favorite')}
-          speak={() => speak(value)}
-          stopSpeaking={stopSpeaking}
           copyFormattedContent={copyFormattedContent}
           onToggleFavorite={() => toggleTag('favorite')}
           onToggleLock={() =>
@@ -367,105 +352,98 @@ export const Card: React.FC<ICardProps> = ({
           }
         />
 
-        {!objContent.collapsed ? (
-          <>
-            <CardContent
-              value={value}
-              locked={objContent.locked}
-              editing={editingContent}
-              textareaRef={textareaRef}
-              markdownRef={markdownRef}
-              setValue={setValue}
-              setEditing={setEditingContent}
-              processMarkdown={processAndDisplayMarkdown}
-              onExecuteExpression={handleExecuteExpression}
-              onSave={() => onChangeMarkdownContent(id, value)}
-              onMarkdownClick={(clickedText) => {
-                pushHistory(value)
+        {!objContent.collapsed && (
+          <CardContent
+            value={value}
+            locked={objContent.locked}
+            editing={editingContent}
+            textareaRef={textareaRef}
+            markdownRef={markdownRef}
+            setValue={setValue}
+            setEditing={setEditingContent}
+            processMarkdown={processAndDisplayMarkdown}
+            onExecuteExpression={handleExecuteExpression}
+            onSave={() => onChangeMarkdownContent(id, value)}
+            onMarkdownClick={(clickedText, sourceOffset) => {
+              pushHistory(value)
 
-                const pos = findBestCursorPosition(clickedText, value)
+              const pos = sourceOffset ?? findBestCursorPosition(clickedText, value)
 
-                setCursorPosition(pos)
-                setEditingContent(true)
-              }}
-            />
-            <footer className="footer">
-              <span className="footbox">
-                <CardTags
-                  date={date}
-                  tags={objContent.tags}
-                  availableTags={tags}
-                  isLocked={isLocked}
-                  tagPickerRef={tagPickerRef}
-                  showTagPicker={showTagPicker}
-                  creatingTag={creatingTag}
-                  newTagName={newTagName}
-                  setShowTagPicker={setShowTagPicker}
-                  setCreatingTag={setCreatingTag}
-                  setNewTagName={setNewTagName}
-                  onDateChange={(newDate) => onChangeDate(id, newDate)}
-                  hasTag={hasTag}
-                  toggleTag={toggleTag}
-                  createTag={createTag}
-                  formatTag={formatTag}
-                  formatDate={formatDate}
-                />
-
-                <CardActions
-                  isLocked={isLocked}
-                  listening={listening}
-                  aiLoading={aiLoading}
-                  isArchived={hasTag('archive')}
-                  isTrash={hasTag('trash')}
-                  showColorPicker={showColorPicker}
-                  showTemplatePicker={showTemplatePicker}
-                  colorPickerRef={colorPickerRef}
-                  templatePickerRef={templatePickerRef}
-                  noteColors={noteColors}
-                  templateOptions={templateOptions}
-                  startListening={() => {
-                    if (!objContent.locked) {
-                      startListening()
-                    }
-                  }}
-                  stopListening={stopListening}
-                  undoLastChange={undoLastChange}
-                  handleAI={() => {
-                    if (!objContent.locked) {
-                      handleAI()
-                    }
-                  }}
-                  archiveNote={() => {
-                    if (!objContent.locked) {
-                      archiveNote()
-                    }
-                  }}
-                  trashNote={() => {
-                    if (!objContent.locked) {
-                      trashNote()
-                    }
-                  }}
-                  setShowColorPicker={setShowColorPicker}
-                  setShowTemplatePicker={setShowTemplatePicker}
-                  onColorSelected={(selectedColor) => {
-                    onChangeContent(
-                      id,
-                      JSON.stringify({
-                        ...objContent,
-                        color: selectedColor,
-                      })
-                    )
-
-                    setShowColorPicker(false)
-                  }}
-                  onTemplateSelected={setTemplate}
-                />
-              </span>
-            </footer>
-          </>
-        ) : (
-          <></>
+              setCursorPosition(pos)
+              setEditingContent(true)
+            }}
+          />
         )}
+        <footer className="footer">
+          <span className="footbox">
+            <CardTags
+              tagDropdownRef={tagDropdownRef}
+              otherTagsDropdownRef={otherTagsDropdownRef}
+              date={date}
+              tags={objContent.tags}
+              availableTags={tags}
+              isLocked={isLocked}
+              tagPickerRef={tagPickerRef}
+              showTagPicker={showTagPicker}
+              creatingTag={creatingTag}
+              newTagName={newTagName}
+              setShowTagPicker={setShowTagPicker}
+              setCreatingTag={setCreatingTag}
+              setNewTagName={setNewTagName}
+              onDateChange={(newDate) => onChangeDate(id, newDate)}
+              hasTag={hasTag}
+              toggleTag={toggleTag}
+              createTag={createTag}
+              formatTag={formatTag}
+              formatDate={formatDate}
+            />
+
+            <CardActions
+              colorDropdownRef={colorDropdownRef}
+              templateDropdownRef={templateDropdownRef}
+              isLocked={isLocked}
+              aiLoading={aiLoading}
+              isArchived={hasTag('archive')}
+              isTrash={hasTag('trash')}
+              showColorPicker={showColorPicker}
+              showTemplatePicker={showTemplatePicker}
+              colorPickerRef={colorPickerRef}
+              templatePickerRef={templatePickerRef}
+              noteColors={noteColors}
+              templateOptions={templateOptions}
+              undoLastChange={undoLastChange}
+              handleAI={() => {
+                if (!objContent.locked) {
+                  handleAI()
+                }
+              }}
+              archiveNote={() => {
+                if (!objContent.locked) {
+                  archiveNote()
+                }
+              }}
+              trashNote={() => {
+                if (!objContent.locked) {
+                  trashNote()
+                }
+              }}
+              setShowColorPicker={setShowColorPicker}
+              setShowTemplatePicker={setShowTemplatePicker}
+              onColorSelected={(selectedColor) => {
+                onChangeContent(
+                  id,
+                  JSON.stringify({
+                    ...objContent,
+                    color: selectedColor,
+                  })
+                )
+
+                setShowColorPicker(false)
+              }}
+              onTemplateSelected={setTemplate}
+            />
+          </span>
+        </footer>
       </div>
     </CardContainer>
   )
@@ -482,7 +460,6 @@ box-shadow: ${({ selected }) => (selected ? '0 0 0 3px #2563eb' : 'none')};  wid
   margin: 10px 0px 0px 0px;
 
   background-color: #757575;
-  border-radius: 5px;
 
   div {
     margin-left: 10px;
@@ -494,9 +471,10 @@ box-shadow: ${({ selected }) => (selected ? '0 0 0 3px #2563eb' : 'none')};  wid
     display: flex;
     flex-direction: column;
     align-items: center;
+    border-right: 1px solid rgba(0, 0, 0, 0.2);
 
     width: 100%;
-    border-radius: 5px 5px 0px 0px;
+    border-radius: 0px;
     margin: 0;
 
     .footer {
@@ -505,7 +483,7 @@ box-shadow: ${({ selected }) => (selected ? '0 0 0 3px #2563eb' : 'none')};  wid
       display: flex;
       flex-direction: row;
       justify-content: flex-end;
-      border-bottom: 1px solid lightgray;
+      border-bottom: 2px solid rgba(0, 0, 0, 0.2);
       padding: 10px;
 
       svg {

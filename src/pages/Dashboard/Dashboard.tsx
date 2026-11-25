@@ -7,6 +7,7 @@ import { useEntries } from './hooks/useEntries'
 import { UserAuth } from '../../context/AuthContext'
 import { HeaderPortal } from '../../components/HeaderPortal'
 import { defaultContent } from './utils/cardUtils'
+import { getTags } from '../../utils'
 import { useDashboard } from './context/DashboardContext'
 import { ExplorerSideBar } from './components/ExplorerSideBar'
 import { NotesList } from './components/NotesList'
@@ -21,12 +22,49 @@ interface DashboardProps {
   setExplorerExpanded: (expanded: boolean) => void
 }
 
+const loadUnpinnedTags = (userId: string): string[] => {
+  if (!userId) {
+    return []
+  }
+
+  try {
+    const storedTags = localStorage.getItem(`mavis-ai-web:unpinned-tags:${userId}`)
+    if (storedTags === null) {
+      return []
+    }
+
+    const parsed: unknown = JSON.parse(storedTags)
+    if (
+      !Array.isArray(parsed) ||
+      !parsed.every((tag: unknown): tag is string => typeof tag === 'string')
+    ) {
+      console.error('Stored tag pin preferences must be an array of strings.')
+      return []
+    }
+
+    return Array.from(new Set(parsed))
+  } catch (error) {
+    console.error('Failed to load tag pin preferences.', error)
+    return []
+  }
+}
+
 const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpanded }) => {
   const { selectedDate, setSelectedDate } = useDashboard()
   const { user } = UserAuth()
-  const { entries, fetchEntries, addEntry, updateEntry, deleteEntry, updateEntryDate } = useEntries(
-    user?.uid || ''
-  )
+  const userId = user?.uid ?? ''
+  const {
+    entries,
+    fetchEntries,
+    addEntry,
+    updateEntry,
+    deleteEntry,
+    updateEntryDate,
+    renameTag,
+    deleteTag,
+    addTagToEntries,
+    removeTagFromEntries,
+  } = useEntries(user?.uid || '')
   const {
     searchContent,
     setSearchContent,
@@ -38,6 +76,30 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
     visibleEntries,
   } = useEntryFilter(entries)
 
+  const storedUnpinnedTags = React.useMemo(() => loadUnpinnedTags(userId), [userId])
+  const [tagPinState, setTagPinState] = React.useState(() => ({
+    userId,
+    tags: storedUnpinnedTags,
+  }))
+  const unpinnedTags = tagPinState.userId === userId ? tagPinState.tags : storedUnpinnedTags
+
+  const saveUnpinnedTags = (tags: string[]) => {
+    const uniqueTags = Array.from(new Set(tags))
+
+    if (!userId) {
+      console.error('Cannot save tag pin preferences without an authenticated user.')
+      return
+    }
+
+    try {
+      localStorage.setItem(`mavis-ai-web:unpinned-tags:${userId}`, JSON.stringify(uniqueTags))
+    } catch (error) {
+      console.error('Failed to save tag pin preferences.', error)
+    }
+
+    setTagPinState({ userId, tags: uniqueTags })
+  }
+
   const { cardRefs, cardHeights, totalHeight } = useCardMeasurements([entries])
   const [hoveredCardId, setHoveredCardId] = React.useState<string | null>(null)
   const [selectedNoteIds, setSelectedNoteIds] = React.useState<string[]>([])
@@ -47,6 +109,19 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
   const [chatPanelWidth, setChatPanelWidth] = React.useState(0)
   const [notesMinimized, setNotesMinimized] = React.useState(false)
   const [chatMinimized, setChatMinimized] = React.useState(false)
+  const [chatSessionsExpanded, setChatSessionsExpanded] = React.useState(false)
+  const [activeMobileView, setActiveMobileView] = React.useState<'notes' | 'chat'>('notes')
+
+  const handlePanelScroll = React.useCallback((event: React.UIEvent<HTMLDivElement>) => {
+    const { clientWidth, scrollLeft } = event.currentTarget
+
+    if (clientWidth === 0) {
+      return
+    }
+
+    const nextView = scrollLeft >= clientWidth / 2 ? 'chat' : 'notes'
+    setActiveMobileView((currentView) => (currentView === nextView ? currentView : nextView))
+  }, [])
 
   const templateOptions = React.useMemo(() => {
     return entries
@@ -69,6 +144,16 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
         }
       })
   }, [entries])
+
+  const trashedEntryIds = React.useMemo(
+    () =>
+      entries.filter((entry) => getTags(entry.content).includes('trash')).map((entry) => entry.id),
+    [entries]
+  )
+  const selectedTrashEntryIds = React.useMemo(
+    () => selectedNoteIds.filter((id) => trashedEntryIds.includes(id)),
+    [selectedNoteIds, trashedEntryIds]
+  )
 
   React.useLayoutEffect(() => {
     const update = () => {
@@ -131,6 +216,50 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
       current.filter((id) => entries.some((entry) => entry.id === id))
     )
   }, [entries])
+
+  const handleRenameTag = async (oldTag: string, newTag: string) => {
+    await renameTag(oldTag, newTag)
+
+    if (unpinnedTags.includes(oldTag)) {
+      const renamedUnpinnedTags = unpinnedTags.filter((tag) => tag !== oldTag)
+      if (!renamedUnpinnedTags.includes(newTag)) {
+        renamedUnpinnedTags.push(newTag)
+      }
+      saveUnpinnedTags(renamedUnpinnedTags)
+    }
+
+    if (selectedTag === oldTag) {
+      setSelectedTag(newTag)
+    }
+  }
+
+  const handleDeleteTag = async (tag: string) => {
+    await deleteTag(tag)
+
+    if (unpinnedTags.includes(tag)) {
+      saveUnpinnedTags(unpinnedTags.filter((unpinnedTag) => unpinnedTag !== tag))
+    }
+
+    if (selectedTag === tag) {
+      setSelectedTag('all')
+    }
+  }
+
+  const handleToggleTagPin = (tag: string) => {
+    saveUnpinnedTags(
+      unpinnedTags.includes(tag)
+        ? unpinnedTags.filter((unpinnedTag) => unpinnedTag !== tag)
+        : [...unpinnedTags, tag]
+    )
+  }
+
+  const handleAddTagToSelected = async (tag: string) => {
+    await addTagToEntries(selectedNoteIds, tag)
+  }
+
+  const handleRemoveTagFromSelected = async (tag: string) => {
+    await removeTagFromEntries(selectedNoteIds, tag)
+  }
 
   const selectedNotesText = React.useMemo(() => {
     return entries
@@ -246,6 +375,62 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
     await deleteEntry(id)
   }
 
+  const handleDeleteSelectedNotes = async () => {
+    if (!selectedNoteIds.length) {
+      return
+    }
+
+    const selectedTrashIds = new Set(selectedTrashEntryIds)
+    const noteIdsToMoveToTrash = selectedNoteIds.filter((id) => !selectedTrashIds.has(id))
+
+    if (selectedTrashEntryIds.length) {
+      const selectedTrashLabel = `${selectedTrashEntryIds.length} selected ${
+        selectedTrashEntryIds.length === 1 ? 'note' : 'notes'
+      }`
+      const moveToTrashLabel = `${noteIdsToMoveToTrash.length} selected ${
+        noteIdsToMoveToTrash.length === 1 ? 'note' : 'notes'
+      }`
+      const confirmationMessage = noteIdsToMoveToTrash.length
+        ? `Move ${moveToTrashLabel} to Trash and permanently delete ${selectedTrashLabel} from Trash?`
+        : `Permanently delete ${selectedTrashLabel} from Trash?`
+
+      if (!window.confirm(confirmationMessage)) {
+        return
+      }
+    }
+
+    await Promise.all([
+      ...selectedTrashEntryIds.map((id) => deleteEntry(id)),
+      ...noteIdsToMoveToTrash.map((id) => handleDeleteEntry(id)),
+    ])
+  }
+
+  const handleRestoreSelectedTrash = async () => {
+    await removeTagFromEntries(selectedTrashEntryIds, 'trash')
+  }
+
+  const handleRestoreAllTrash = async () => {
+    await removeTagFromEntries(trashedEntryIds, 'trash')
+  }
+
+  const handleEmptyTrash = async () => {
+    if (!trashedEntryIds.length) {
+      return
+    }
+
+    const confirmed = window.confirm(
+      `Permanently delete all ${trashedEntryIds.length} note${
+        trashedEntryIds.length === 1 ? '' : 's'
+      } from Trash? This cannot be undone.`
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    await Promise.all(trashedEntryIds.map((id) => deleteEntry(id)))
+  }
+
   const availablePromptNotes = React.useMemo(() => {
     return entries
       .filter((entry) => {
@@ -308,9 +493,11 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
             onClearAll={clearSelectedNotes}
             selectedCount={selectedNoteIds.length}
             expanded={explorerExpanded}
+            setExplorerExpanded={setExplorerExpanded}
             panelWidth={notesPanelWidth}
             minimized={notesMinimized}
             setMinimized={setNotesMinimized}
+            mobileActive={activeMobileView === 'notes'}
           />
           <ChatToolbar
             onClearAll={clearSelectedNotes}
@@ -319,54 +506,81 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
             minimized={chatMinimized}
             setMinimized={setChatMinimized}
             notesMinimized={notesMinimized}
+            menuExpanded={chatSessionsExpanded}
+            setMenuExpanded={setChatSessionsExpanded}
+            mobileActive={activeMobileView === 'chat'}
           />
         </HeaderPortal>
-        <ExplorerSideBar
-          systemTags={systemTags}
-          customTags={availableTags}
-          selectedTag={selectedTag}
-          setSelectedTag={setSelectedTag}
-          explorerExpanded={explorerExpanded}
-          setExplorerExpanded={setExplorerExpanded}
-          minimized={notesMinimized}
-          setMinimized={setNotesMinimized}
-        />
-        {!notesMinimized && (
-          <NotesMiniMap
-            entries={visibleEntries}
-            hoveredCardId={hoveredCardId}
-            cardHeights={cardHeights}
-            totalHeight={totalHeight}
-            onScrollToCard={scrollToCard}
-          />
-        )}
-
-        <NotesPanel ref={notesPanelRef} minimized={notesMinimized}>
-          {!notesMinimized && (
-            <NotesList
-              entries={visibleEntries}
-              pickerTags={pickerTags}
-              cardRefs={cardRefs}
-              updateEntryDate={updateEntryDate}
-              onHoverCard={setHoveredCardId}
-              onDeleteEntry={handleDeleteEntry}
-              onChangeEntry={handleChangeEntry}
+        <PanelScroller onScroll={handlePanelScroll}>
+          <NotesView role="region" aria-label="Notes">
+            <ExplorerSideBar
+              systemTags={systemTags}
+              customTags={availableTags}
+              unpinnedTags={unpinnedTags}
+              onToggleTagPin={handleToggleTagPin}
+              selectedTag={selectedTag}
+              setSelectedTag={setSelectedTag}
+              explorerExpanded={explorerExpanded}
+              setExplorerExpanded={setExplorerExpanded}
+              minimized={notesMinimized}
+              setMinimized={setNotesMinimized}
               selectedNoteIds={selectedNoteIds}
-              onToggleSelection={toggleNoteSelection}
-              templateOptions={templateOptions}
+              onRenameTag={handleRenameTag}
+              onDeleteTag={handleDeleteTag}
+              onAddTagToSelected={handleAddTagToSelected}
+              onRemoveTagFromSelected={handleRemoveTagFromSelected}
+              trashCount={trashedEntryIds.length}
+              selectedTrashCount={selectedTrashEntryIds.length}
+              onDeleteSelectedNotes={handleDeleteSelectedNotes}
+              onRestoreSelectedTrash={handleRestoreSelectedTrash}
+              onRestoreAllTrash={handleRestoreAllTrash}
+              onEmptyTrash={handleEmptyTrash}
             />
-          )}
-        </NotesPanel>
-        <ChatPanel ref={chatPanelRef} minimized={chatMinimized}>
-          <Chat
-            uid={user?.uid || ''}
-            selectedNotesText={selectedNotesText}
-            noteTitles={selectedNoteTitles}
-            notesCount={selectedNoteIds.length}
-            clearSelectedNotes={clearSelectedNotes}
-          />
-        </ChatPanel>
-        <ChatSideBar minimized={chatMinimized} setMinimized={setChatMinimized} />
+            {!notesMinimized && (
+              <NotesMiniMap
+                entries={visibleEntries}
+                hoveredCardId={hoveredCardId}
+                cardHeights={cardHeights}
+                totalHeight={totalHeight}
+                onScrollToCard={scrollToCard}
+              />
+            )}
+
+            <NotesPanel ref={notesPanelRef} minimized={notesMinimized}>
+              {!notesMinimized && (
+                <NotesList
+                  entries={visibleEntries}
+                  pickerTags={pickerTags}
+                  cardRefs={cardRefs}
+                  updateEntryDate={updateEntryDate}
+                  onHoverCard={setHoveredCardId}
+                  onDeleteEntry={handleDeleteEntry}
+                  onChangeEntry={handleChangeEntry}
+                  selectedNoteIds={selectedNoteIds}
+                  onToggleSelection={toggleNoteSelection}
+                  templateOptions={templateOptions}
+                />
+              )}
+            </NotesPanel>
+          </NotesView>
+          <ChatView role="region" aria-label="AI sessions">
+            <ChatPanel ref={chatPanelRef} minimized={chatMinimized}>
+              <Chat
+                uid={user?.uid || ''}
+                selectedNotesText={selectedNotesText}
+                noteTitles={selectedNoteTitles}
+                notesCount={selectedNoteIds.length}
+                clearSelectedNotes={clearSelectedNotes}
+              />
+            </ChatPanel>
+            <ChatSideBar
+              minimized={chatMinimized}
+              setMinimized={setChatMinimized}
+              menuExpanded={chatSessionsExpanded}
+              setMenuExpanded={setChatSessionsExpanded}
+            />
+          </ChatView>
+        </PanelScroller>
       </ChatAiProvider>
     </Workspace>
   )
@@ -377,22 +591,85 @@ export default Dashboard
 const Workspace = styled.div`
   display: flex;
   flex-direction: row;
+  flex: 1 1 auto;
   width: 100%;
   height: 100%;
+  min-height: 0;
   overflow: hidden;
+`
+
+const PanelScroller = styled.div`
+  display: contents;
+
+  @media (max-width: 768px) {
+    display: flex;
+    flex: 1 1 0;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+`
+
+const NotesView = styled.div`
+  display: contents;
+
+  @media (max-width: 768px) {
+    position: relative;
+    display: flex;
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 100%;
+    height: 100%;
+    overflow: hidden;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+`
+
+const ChatView = styled.div`
+  display: contents;
+
+  @media (max-width: 768px) {
+    position: relative;
+    display: flex;
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 100%;
+    height: 100%;
+    overflow: hidden;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
 `
 
 const ChatPanel = styled.div<{ minimized: boolean }>`
   flex: ${({ minimized }) => (minimized ? '0' : '1')};
   width: ${({ minimized }) => (minimized ? '0' : 'auto')};
+  min-width: 0;
   flex-direction: column;
   overflow: hidden;
   background: #e0e0e5;
+
+  @media (max-width: 768px) {
+    flex: ${({ minimized }) => (minimized ? '0' : '1 1 0')};
+  }
 `
 
 const NotesPanel = styled.div<{ minimized: boolean }>`
   flex: ${({ minimized }) => (minimized ? '0 0 0' : '1.5')};
   width: ${({ minimized }) => (minimized ? '0' : 'auto')};
+  min-width: 0;
   margin-right: 10px;
   flex-direction: column;
   overflow: hidden;
@@ -417,5 +694,10 @@ const NotesPanel = styled.div<{ minimized: boolean }>`
 
   &::-webkit-scrollbar-thumb:hover {
     background: #909095;
+  }
+
+  @media (max-width: 768px) {
+    flex: ${({ minimized }) => (minimized ? '0 0 0' : '1 1 0')};
+    margin-right: 0;
   }
 `

@@ -7,9 +7,15 @@ import { useChatAi } from '../context/ChatAiContext'
 interface ChatSideBarProps {
   minimized?: boolean
   setMinimized: (minimized: boolean) => void
+  menuExpanded: boolean
+  setMenuExpanded: (expanded: boolean) => void
 }
-export const ChatSideBar: React.FC<ChatSideBarProps> = ({ minimized, setMinimized }) => {
-  const [menuExpanded, setMenuExpanded] = React.useState(false)
+export const ChatSideBar: React.FC<ChatSideBarProps> = ({
+  minimized,
+  setMinimized,
+  menuExpanded,
+  setMenuExpanded,
+}) => {
   const {
     sessions,
     currentSessionId,
@@ -18,9 +24,34 @@ export const ChatSideBar: React.FC<ChatSideBarProps> = ({ minimized, setMinimize
     deleteSession,
     removeSession,
   } = useChatAi()
+  const sidebarRef = React.useRef<HTMLDivElement>(null)
+
+  React.useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (window.innerWidth > 768 || !menuExpanded) {
+        return
+      }
+
+      const target = event.target
+
+      if (!(target instanceof Node) || sidebarRef.current?.contains(target)) {
+        return
+      }
+
+      if (target instanceof Element && target.closest('[data-sidebar-toggle="sessions"]')) {
+        return
+      }
+
+      setMenuExpanded(false)
+    }
+
+    document.addEventListener('click', handleOutsideClick)
+
+    return () => document.removeEventListener('click', handleOutsideClick)
+  }, [menuExpanded, setMenuExpanded])
 
   return (
-    <Container expanded={menuExpanded}>
+    <Container ref={sidebarRef} expanded={menuExpanded}>
       <IconButton
         expanded={menuExpanded}
         title="Menu"
@@ -80,11 +111,25 @@ const Container = styled.div<ContainerProps>`
   height: 100%;
   border-left: 1px solid #d0d0d0;
   padding: 4px;
-  overflow-y: none;
+  overflow-y: auto;
   overflow-x: visible;
   background: #f8f8f8;
   margin-left: 6px;
   transition: width 0.3s ease-in-out;
+
+  @media (max-width: 768px) {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 20;
+    width: ${({ expanded }) => (expanded ? 'min(82vw, 240px)' : '0')};
+    height: 100%;
+    margin: 0;
+    padding: ${({ expanded }) => (expanded ? '4px' : '0')};
+    overflow-x: hidden;
+    border-left: ${({ expanded }) => (expanded ? '1px solid #d0d0d0' : '0')};
+    box-shadow: ${({ expanded }) => (expanded ? '-4px 0 12px rgba(0, 0, 0, 0.15)' : 'none')};
+  }
 `
 
 const SessionsContainer = styled.div<{ disabled: boolean }>`

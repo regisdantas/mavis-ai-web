@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { FiCopy, FiStar, FiLock, FiUnlock, FiVolume2, FiVolumeX } from 'react-icons/fi'
+import { FiCopy, FiStar, FiLock, FiUnlock } from 'react-icons/fi'
 import { FaStar } from 'react-icons/fa'
 import { IoMdArrowDropdown, IoMdArrowDropleft } from 'react-icons/io'
 import { IconButton } from '../../../../styles/global'
@@ -9,13 +9,10 @@ interface CardHeaderProps {
   title: string
   locked: boolean
   collapsed: boolean
-  speaking: boolean
   isFavorite: boolean
   selected: boolean
   onToggleSelection: () => void
 
-  speak: () => void
-  stopSpeaking: () => void
   copyFormattedContent: () => void
 
   onToggleFavorite: () => void
@@ -28,12 +25,9 @@ const CardHeader: React.FC<CardHeaderProps> = ({
   title,
   locked,
   collapsed,
-  speaking,
   isFavorite,
   selected,
   onToggleSelection,
-  speak,
-  stopSpeaking,
   copyFormattedContent,
   onToggleFavorite,
   onToggleLock,
@@ -71,16 +65,6 @@ const CardHeader: React.FC<CardHeaderProps> = ({
       </TitleBox>
 
       <Toolbox>
-        {speaking ? (
-          <IconButton title="Stop hearing note" onClick={stopSpeaking}>
-            <FiVolumeX color="#2563eb" />
-          </IconButton>
-        ) : (
-          <IconButton title="Hear note" onClick={speak}>
-            <FiVolume2 />
-          </IconButton>
-        )}
-
         <IconButton title="Copy note" onClick={copyFormattedContent}>
           <FiCopy />
         </IconButton>
@@ -148,7 +132,7 @@ const HeaderContainer = styled.header`
 
   padding: 10px;
 
-  border-bottom: 1px solid #757575;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
 
   svg {
     cursor: pointer;
@@ -166,7 +150,7 @@ const TitleBox = styled.strong`
 
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 8px;
 
   margin: 0;
   padding: 0;

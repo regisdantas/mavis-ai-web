@@ -6,11 +6,20 @@ import { TemplateOption } from '../utils/cardUtils'
 interface FloatingTemplatePickerProps {
   options: TemplateOption[]
   onPicked: (option: TemplateOption) => void
+  dropdownRef: React.RefObject<HTMLDivElement>
 }
 
-const FloatingTemplatePicker: React.FC<FloatingTemplatePickerProps> = ({ options, onPicked }) => {
+const FloatingTemplatePicker: React.FC<FloatingTemplatePickerProps> = ({
+  options,
+  onPicked,
+  dropdownRef,
+}) => {
   return createPortal(
-    <TemplateDropdown onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+    <TemplateDropdown
+      ref={dropdownRef}
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+    >
       {options.map((option, index) => (
         <TemplateOptionItem
           key={index}

@@ -2,7 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import { createPortal } from 'react-dom'
 import { IoMdAddCircleOutline } from 'react-icons/io'
-import { FiTag } from 'react-icons/fi'
+import { FiChevronDown, FiTag } from 'react-icons/fi'
 
 interface CardTagsProps {
   date: string
@@ -11,6 +11,8 @@ interface CardTagsProps {
   isLocked: boolean
 
   tagPickerRef: React.RefObject<HTMLDivElement>
+  tagDropdownRef: React.RefObject<HTMLDivElement>
+  otherTagsDropdownRef: React.RefObject<HTMLDetailsElement>
 
   showTagPicker: boolean
   creatingTag: boolean
@@ -34,6 +36,8 @@ const CardTags: React.FC<CardTagsProps> = ({
   availableTags,
   isLocked,
   tagPickerRef,
+  tagDropdownRef,
+  otherTagsDropdownRef,
   showTagPicker,
   creatingTag,
   newTagName,
@@ -69,23 +73,43 @@ const CardTags: React.FC<CardTagsProps> = ({
             onChange={(e) => onDateChange(e.target.value)}
           />
         </>
-        {tags.map((tag) => (
-          <TagChip key={tag} onClick={() => !isLocked && toggleTag(tag)}>
-            {formatTag(tag)}
-          </TagChip>
-        ))}
       </TagList>
+
+      {tags.length > 0 && (
+        <AssignedTags ref={otherTagsDropdownRef}>
+          <AssignedTagsSummary
+            aria-label={`Show ${tags.length} note ${tags.length === 1 ? 'tag' : 'tags'}`}
+            title={`${tags.length} note ${tags.length === 1 ? 'tag' : 'tags'}`}
+          >
+            <FiTag />
+            <span>{tags.length}</span>
+            <FiChevronDown />
+          </AssignedTagsSummary>
+          <AssignedTagsList>
+            {tags.map((tag) => (
+              <TagChip key={tag} type="button" disabled={isLocked} onClick={() => toggleTag(tag)}>
+                {formatTag(tag)}
+              </TagChip>
+            ))}
+          </AssignedTagsList>
+        </AssignedTags>
+      )}
 
       <TagPicker ref={tagPickerRef}>
         {!isLocked && (
-          <TagPickerButton onClick={() => setShowTagPicker(!showTagPicker)}>
+          <TagPickerButton
+            type="button"
+            title="Add tag"
+            aria-label="Add tag"
+            onClick={() => setShowTagPicker(!showTagPicker)}
+          >
             <IoMdAddCircleOutline />
           </TagPickerButton>
         )}
 
         {showTagPicker &&
           createPortal(
-            <TagDropdown>
+            <TagDropdown ref={tagDropdownRef}>
               {availableTags.map((tag) => (
                 <TagOption
                   key={tag}
@@ -138,8 +162,13 @@ const CardTags: React.FC<CardTagsProps> = ({
 export default CardTags
 
 const Container = styled.div`
+  && {
+    width: fit-content;
+    margin-left: 0;
+  }
+
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   flex-direction: row !important;
   justify-content: flex-start !important;
   gap: 8px;
@@ -165,28 +194,84 @@ const DateChip = styled.span`
 `
 
 const TagList = styled.div`
+  && {
+    width: fit-content;
+    margin-left: 0;
+  }
+
   display: flex;
-  flex-wrap: wrap;
   flex-direction: row;
   align-items: center;
   justify-content: flex-start;
   width: fit-content;
-  gap: 6px;
-  width: fit-content;
-  margin-left: 10px;
+  margin-left: 0;
 `
 
-const TagChip = styled.span`
+const AssignedTags = styled.details`
+  position: relative;
+  flex: 0 0 auto;
+`
+
+const AssignedTagsSummary = styled.summary`
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  min-height: 22px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(79, 70, 229, 0.12);
+  color: #4338ca;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+
+  &::-webkit-details-marker {
+    display: none;
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+`
+
+const AssignedTagsList = styled.div`
+  && {
+    width: max-content;
+    margin-left: 0;
+  }
+
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  z-index: 20;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  width: max-content;
+  min-width: 120px;
+  max-width: min(280px, 80vw);
+  padding: 8px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
+`
+
+const TagChip = styled.button`
   display: flex;
   align-items: center;
 
   padding: 4px 10px;
+  border: 0;
 
   border-radius: 999px;
 
   background: rgba(79, 70, 229, 0.12);
   color: #4338ca;
 
+  font: inherit;
   font-size: 11px;
   font-weight: 600;
 
@@ -194,22 +279,33 @@ const TagChip = styled.span`
 
   transition: 0.2s;
 
-  &:hover {
+  &:hover:not(:disabled) {
     background: rgba(79, 70, 229, 0.2);
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.75;
   }
 `
 
 const TagPicker = styled.div`
+  && {
+    width: fit-content;
+    margin-left: 0;
+  }
+
   position: relative;
   flex: 0 0;
   width: fit-content;
   margin: 0;
 `
 
-const TagPickerButton = styled.span`
+const TagPickerButton = styled.button`
   display: flex;
   align-items: center;
   padding: 2px 10px;
+  border: 0;
 
   border-radius: 999px;
 

@@ -1,22 +1,10 @@
 import React from 'react'
 import styled from 'styled-components'
-import {
-  FiSend,
-  FiCopy,
-  FiTrash2,
-  FiMaximize2,
-  FiMinimize2,
-  FiX,
-  FiMic,
-  FiVolume2,
-  FiSquare,
-  FiCpu,
-} from 'react-icons/fi'
+import { FiSend, FiCopy, FiTrash2, FiMaximize2, FiMinimize2, FiX, FiCpu } from 'react-icons/fi'
 import { IconButton } from '../../../styles/global'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { useSpeechRecognition } from '../../../hooks/useSpeechRecognition'
-import { useTextToSpeech } from '../../../hooks/useTextToSpeech'
+import { useClickOutside } from '../../../hooks/useClickOutside'
 import { useChatAi } from '../context/ChatAiContext'
 import { MdOutlineLayersClear, MdHistoryToggleOff, MdOutlineSummarize } from 'react-icons/md'
 import { TbMessagesOff } from 'react-icons/tb'
@@ -40,8 +28,6 @@ export const Chat: React.FC<ChatProps> = ({
   clearSelectedNotes,
 }) => {
   const [isExpanded, setIsExpanded] = React.useState(false)
-  const { listening, transcript, startListening, stopListening } = useSpeechRecognition()
-  const { speak, speaking, stopSpeaking } = useTextToSpeech()
   const {
     prompt,
     setPrompt,
@@ -65,29 +51,22 @@ export const Chat: React.FC<ChatProps> = ({
 
   const [modelPickerOpen, setModelPickerOpen] = React.useState(false)
   const [promptPickerOpen, setPromptPickerOpen] = React.useState(false)
+  const modelPickerRef = React.useRef<HTMLDivElement>(null)
+  const promptPickerRef = React.useRef<HTMLDivElement>(null)
+
+  const closeModelPicker = React.useCallback(() => setModelPickerOpen(false), [])
+  const closePromptPicker = React.useCallback(() => setPromptPickerOpen(false), [])
+
+  useClickOutside(modelPickerRef, closeModelPicker)
+  useClickOutside(promptPickerRef, closePromptPicker)
 
   const handleModelPickerClick = () => {
-    const shouldOpen = !modelPickerOpen
-    setModelPickerOpen(shouldOpen)
+    setPromptPickerOpen(false)
+    setModelPickerOpen((isOpen) => !isOpen)
   }
-
-  React.useEffect(() => {
-    if (!listening && transcript) {
-      setPrompt((old) => (old.length > 0 ? `${old} ${transcript}` : transcript))
-    }
-  }, [listening, transcript, setPrompt])
 
   const handleClearMessages = () => {
     deleteMessage('all')
-  }
-
-  const handleSpeakMessage = (content: string) => {
-    if (speaking) {
-      stopSpeaking()
-      return
-    }
-
-    speak(content)
   }
 
   const handleCopyMessage = async (content: string) => {
@@ -122,9 +101,6 @@ export const Chat: React.FC<ChatProps> = ({
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
             </ChatMessageBubble>
             <MessageTools role={message.role}>
-              <IconButton title="Read message" onClick={() => handleSpeakMessage(message.content)}>
-                {speaking ? <FiSquare /> : <FiVolume2 />}
-              </IconButton>
               <IconButton
                 title="Copy message"
                 onClick={() => void handleCopyMessage(message.content)}
@@ -142,10 +118,13 @@ export const Chat: React.FC<ChatProps> = ({
       <ChatInputArea expanded={isExpanded}>
         <ChatInputContainer>
           <ChatInputHeader>
-            <PromptPicker>
+            <PromptPicker ref={promptPickerRef}>
               <FlatIconButton
                 title="Prompt presets"
-                onClick={() => setPromptPickerOpen(!promptPickerOpen)}
+                onClick={() => {
+                  setModelPickerOpen(false)
+                  setPromptPickerOpen((isOpen) => !isOpen)
+                }}
               >
                 <TbPrompt />
                 <IconButtonLabel>Prompts ({selectedPromptIds.length})</IconButtonLabel>
@@ -166,7 +145,7 @@ export const Chat: React.FC<ChatProps> = ({
                 </ModelDropdown>
               )}
             </PromptPicker>
-            <ModelPicker>
+            <ModelPicker ref={modelPickerRef}>
               <FlatIconButton
                 style={{ margin: '0px !important' }}
                 title="Selecionar modelo de IA"
@@ -224,15 +203,6 @@ export const Chat: React.FC<ChatProps> = ({
               <IconButton title="Clear chat history" onClick={() => handleClearMessages()}>
                 <TbMessagesOff />
               </IconButton>
-              {listening ? (
-                <IconButton title="Stop recording" onClick={stopListening}>
-                  <FiSquare color="#2563eb" />
-                </IconButton>
-              ) : (
-                <IconButton title="Voice input" onClick={startListening}>
-                  <FiMic />
-                </IconButton>
-              )}
               <IconButton
                 title={isExpanded ? 'Collapse' : 'Expand'}
                 onClick={() => setIsExpanded((old) => !old)}

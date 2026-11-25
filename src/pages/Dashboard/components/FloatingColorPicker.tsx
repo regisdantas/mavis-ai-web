@@ -5,11 +5,20 @@ import styled from 'styled-components'
 interface FloatingColorPickerProps {
   colors: string[]
   onColorClicked: (color: string) => void
+  dropdownRef: React.RefObject<HTMLDivElement>
 }
 
-const FloatingColorPicker: React.FC<FloatingColorPickerProps> = ({ colors, onColorClicked }) => {
+const FloatingColorPicker: React.FC<FloatingColorPickerProps> = ({
+  colors,
+  onColorClicked,
+  dropdownRef,
+}) => {
   return createPortal(
-    <ColorDropdown onMouseDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+    <ColorDropdown
+      ref={dropdownRef}
+      onMouseDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+    >
       {colors.map((color) => (
         <ColorOption
           key={color}

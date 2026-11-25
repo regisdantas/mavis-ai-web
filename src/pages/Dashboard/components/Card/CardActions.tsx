@@ -1,9 +1,8 @@
 import React from 'react'
 import styled from 'styled-components'
 
-import { FiTrash2, FiType, FiMic, FiArchive, FiCpu, FiRotateCcw, FiSend } from 'react-icons/fi'
+import { FiTrash2, FiType, FiArchive, FiCpu, FiRotateCcw } from 'react-icons/fi'
 import { MdOutlineColorLens } from 'react-icons/md'
-import { RxDividerVertical } from 'react-icons/rx'
 
 import FloatingColorPicker from '../FloatingColorPicker'
 import FloatingTemplatePicker from '../FloatingTemplatePicker'
@@ -13,7 +12,6 @@ import { TemplateOption } from '../../utils/cardUtils'
 
 interface CardActionsProps {
   isLocked: boolean
-  listening: boolean
   aiLoading: boolean
 
   isArchived: boolean
@@ -24,12 +22,11 @@ interface CardActionsProps {
 
   colorPickerRef: React.RefObject<HTMLDivElement>
   templatePickerRef: React.RefObject<HTMLDivElement>
+  colorDropdownRef: React.RefObject<HTMLDivElement>
+  templateDropdownRef: React.RefObject<HTMLDivElement>
 
   noteColors: string[]
   templateOptions: TemplateOption[]
-
-  startListening: () => void
-  stopListening: () => void
 
   undoLastChange: () => void
   handleAI: () => void
@@ -46,7 +43,6 @@ interface CardActionsProps {
 
 const CardActions: React.FC<CardActionsProps> = ({
   isLocked,
-  listening,
   aiLoading,
   isArchived,
   isTrash,
@@ -54,10 +50,10 @@ const CardActions: React.FC<CardActionsProps> = ({
   showTemplatePicker,
   colorPickerRef,
   templatePickerRef,
+  colorDropdownRef,
+  templateDropdownRef,
   noteColors,
   templateOptions,
-  startListening,
-  stopListening,
   undoLastChange,
   handleAI,
   archiveNote,
@@ -106,18 +102,6 @@ const CardActions: React.FC<CardActionsProps> = ({
           <FiRotateCcw />
         </IconButton>
 
-        {listening ? (
-          <IconButton disabled={isLocked} title="Stop listening" onClick={stopListening}>
-            <FiSend color="#2563eb" />
-          </IconButton>
-        ) : (
-          <IconButton disabled={isLocked} title="Listen note" onClick={startListening}>
-            <FiMic />
-          </IconButton>
-        )}
-
-        <RxDividerVertical />
-
         <IconButton
           disabled={isLocked}
           title={isArchived ? 'Unarchive note' : 'Archive note'}
@@ -137,13 +121,21 @@ const CardActions: React.FC<CardActionsProps> = ({
 
       {showColorPicker && (
         <ColorPickerWrapper ref={colorPickerRef}>
-          <FloatingColorPicker colors={noteColors} onColorClicked={onColorSelected} />
+          <FloatingColorPicker
+            colors={noteColors}
+            onColorClicked={onColorSelected}
+            dropdownRef={colorDropdownRef}
+          />
         </ColorPickerWrapper>
       )}
 
       {showTemplatePicker && (
         <TemplatePickerWrapper ref={templatePickerRef}>
-          <FloatingTemplatePicker options={templateOptions} onPicked={onTemplateSelected} />
+          <FloatingTemplatePicker
+            options={templateOptions}
+            onPicked={onTemplateSelected}
+            dropdownRef={templateDropdownRef}
+          />
         </TemplatePickerWrapper>
       )}
     </GeneralContainer>

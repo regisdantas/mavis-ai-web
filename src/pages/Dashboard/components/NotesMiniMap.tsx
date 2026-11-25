@@ -33,15 +33,23 @@ export const NotesMiniMap: React.FC<NotesMiniMapProps> = ({
             backgroundColor: getNoteColor(entry.content),
             height: `${Math.max(
               ((cardHeights[entry.id] || 40) / Math.max(totalHeight, 1)) * 100,
-              24
+              60
             )}px`,
           }}
         >
-          <IconButton title="Go to note top" onClick={() => onScrollToCard(entry.id, 'top')}>
+          <IconButton
+            style={{ padding: '0', margin: '0' }}
+            title="Go to note top"
+            onClick={() => onScrollToCard(entry.id, 'top')}
+          >
             <FiChevronUp />
           </IconButton>
 
-          <IconButton title="Go to note bottom" onClick={() => onScrollToCard(entry.id, 'bottom')}>
+          <IconButton
+            style={{ padding: '0', margin: '0' }}
+            title="Go to note bottom"
+            onClick={() => onScrollToCard(entry.id, 'bottom')}
+          >
             <FiChevronDown />
           </IconButton>
         </MiniMapItem>
@@ -52,13 +60,17 @@ export const NotesMiniMap: React.FC<NotesMiniMapProps> = ({
 
 const Container = styled.div`
   padding-top: 20px;
-  width: 60px;
+  width: 20px;
   height: 100%;
   overflow-y: hidden;
   display: flex;
   flex-direction: column;
   border-right: 1px solid #d0d0d0;
   background: #d0d0d0;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `
 
 const MiniMapItem = styled.div<{ $selected?: boolean }>`
@@ -68,13 +80,12 @@ const MiniMapItem = styled.div<{ $selected?: boolean }>`
   justify-content: center;
   align-items: center;
 
-  gap: 2px;
-
-  border-radius: 4px;
-
-  padding: 0 2px;
-
+  flex-direction: column;
+  gap: 0;
+  padding: 0 !important;
   border: ${({ $selected }) => ($selected ? '2px solid #2563eb' : '1px solid transparent')};
+  border-bottom: ${({ $selected }) =>
+    $selected ? '2px solid #2563eb' : '1px solid rgb(0, 0, 0, 0.2)'};
 
   button:hover {
     background: white;

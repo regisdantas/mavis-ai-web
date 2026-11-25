@@ -8,7 +8,9 @@ import mavis from './assets/mavis.png'
 import React from 'react'
 
 function App() {
-  const [explorerExpanded, setExplorerExpanded] = React.useState<boolean>(false)
+  const [explorerExpanded, setExplorerExpanded] = React.useState<boolean>(
+    () => window.innerWidth > 768
+  )
   return (
     <AuthContextProvider>
       <AppContainer>
@@ -27,6 +29,7 @@ export default App
 const AppContainer = styled.div`
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
 
   overflow: hidden;
 
