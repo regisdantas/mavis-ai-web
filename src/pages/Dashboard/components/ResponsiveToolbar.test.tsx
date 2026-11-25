@@ -51,14 +51,40 @@ describe('responsive dashboard toolbar menus', () => {
         menuExpanded={false}
         setMenuExpanded={setMenuExpanded}
         mobileActive
-        notesLocked
-        onToggleNotesLock={jest.fn()}
       />
     )
 
     fireEvent.click(screen.getByLabelText('Expand sessions menu'))
 
     expect(setMenuExpanded).toHaveBeenCalledWith(true)
+    expect(screen.queryByLabelText('Unlock note editing')).toBeNull()
+  })
+
+  it('marks the lock and selection actions active when notes are locked or selected', () => {
+    render(
+      <NotesToolbar
+        selectedTag="all"
+        selectedDate="2026-01-01"
+        searchContent=""
+        onSearchChange={jest.fn()}
+        onDateChange={jest.fn()}
+        onAddNote={jest.fn()}
+        onCopyAllNotes={jest.fn()}
+        onSelectAll={jest.fn()}
+        onClearAll={jest.fn()}
+        selectedCount={2}
+        expanded={false}
+        setExplorerExpanded={jest.fn()}
+        panelWidth={320}
+        setMinimized={jest.fn()}
+        mobileActive
+        notesLocked
+        onToggleNotesLock={jest.fn()}
+      />
+    )
+
+    expect(screen.getByLabelText('Unlock note editing').getAttribute('aria-pressed')).toBe('true')
+    expect(screen.getByTitle('Clear all notes').getAttribute('aria-pressed')).toBe('true')
   })
 
   it.each([390, 1440])(

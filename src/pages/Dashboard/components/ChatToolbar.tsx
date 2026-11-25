@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { FiCpu, FiLock, FiMaximize2, FiMenu, FiMinusSquare, FiUnlock } from 'react-icons/fi'
+import { FiCpu, FiMaximize2, FiMenu, FiMinusSquare } from 'react-icons/fi'
 import { IconButton } from '../../../styles/global'
 
 interface ChatToolbarProps {
@@ -13,8 +13,6 @@ interface ChatToolbarProps {
   menuExpanded: boolean
   setMenuExpanded: (expanded: boolean) => void
   mobileActive?: boolean
-  notesLocked: boolean
-  onToggleNotesLock: () => void
 }
 
 export const ChatToolbar: React.FC<ChatToolbarProps> = ({
@@ -26,8 +24,6 @@ export const ChatToolbar: React.FC<ChatToolbarProps> = ({
   menuExpanded,
   setMenuExpanded,
   mobileActive,
-  notesLocked,
-  onToggleNotesLock,
 }) => {
   const explorerWidth = expanded ? 208 : 52
   return (
@@ -43,15 +39,6 @@ export const ChatToolbar: React.FC<ChatToolbarProps> = ({
         Chat
       </SelectedPage>
       <ActionsContainer>
-        <EditLockButton
-          type="button"
-          title={notesLocked ? 'Unlock note editing' : 'Lock note editing'}
-          aria-label={notesLocked ? 'Unlock note editing' : 'Lock note editing'}
-          aria-pressed={notesLocked}
-          onClick={onToggleNotesLock}
-        >
-          {notesLocked ? <FiLock /> : <FiUnlock />}
-        </EditLockButton>
         <MobileMenuButton
           type="button"
           title={menuExpanded ? 'Collapse sessions menu' : 'Expand sessions menu'}
@@ -144,33 +131,6 @@ const ActionsContainer = styled.div`
 const PanelToggle = styled(IconButton)`
   @media (max-width: 768px) {
     display: none !important;
-  }
-`
-
-const EditLockButton = styled.button`
-  display: flex;
-  width: 30px;
-  height: 30px;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  margin: 2px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: #2e2e2e;
-  cursor: pointer;
-
-  &:hover {
-    background: rgba(128, 128, 128, 0.15);
-  }
-
-  @media (max-width: 768px) {
-    color: #fff;
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.15);
-    }
   }
 `
 

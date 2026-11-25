@@ -580,8 +580,6 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
             menuExpanded={chatSessionsExpanded}
             setMenuExpanded={setChatSessionsExpanded}
             mobileActive={activeMobileView === 'chat'}
-            notesLocked={notesLocked}
-            onToggleNotesLock={toggleNotesLock}
           />
         </HeaderPortal>
         <PanelScroller onScroll={handlePanelScroll}>

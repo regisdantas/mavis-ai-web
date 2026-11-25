@@ -143,6 +143,7 @@ export const NotesToolbar: React.FC<NotesToolbarProps> = ({
       <ActionsContainer>
         <EditLockButton
           type="button"
+          $active={notesLocked}
           title={notesLocked ? 'Unlock note editing' : 'Lock note editing'}
           aria-label={notesLocked ? 'Unlock note editing' : 'Lock note editing'}
           aria-pressed={notesLocked}
@@ -162,13 +163,25 @@ export const NotesToolbar: React.FC<NotesToolbarProps> = ({
         {!minimized && (
           <>
             {selectedCount > 0 ? (
-              <IconButton title="Clear all notes" onClick={onClearAll}>
+              <ToolbarActionButton
+                $active
+                role="button"
+                aria-pressed="true"
+                title="Clear all notes"
+                onClick={onClearAll}
+              >
                 <FiSquare />
-              </IconButton>
+              </ToolbarActionButton>
             ) : (
-              <IconButton title="Select all visible notes" onClick={onSelectAll}>
+              <ToolbarActionButton
+                $active={false}
+                role="button"
+                aria-pressed="false"
+                title="Select all visible notes"
+                onClick={onSelectAll}
+              >
                 <FiCheckSquare />
-              </IconButton>
+              </ToolbarActionButton>
             )}
             <IconButton title="Copy all visible notes" onClick={onCopyAllNotes}>
               <FiCopy />
@@ -421,7 +434,27 @@ const ActionsContainer = styled.div`
   }
 `
 
-const EditLockButton = styled.button`
+const ToolbarActionButton = styled(IconButton)<{ $active: boolean }>`
+  &&&& {
+    background: ${({ $active }) => ($active ? 'rgba(79, 70, 229, 0.12)' : 'transparent')};
+
+    svg {
+      color: ${({ $active }) => ($active ? '#4f46e5' : '#2e2e2e')} !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    &&&& svg {
+      color: ${({ $active }) => ($active ? '#4f46e5' : '#fff')} !important;
+    }
+
+    &&&&[aria-pressed='true'] {
+      background: rgba(79, 70, 229, 0.2);
+    }
+  }
+`
+
+const EditLockButton = styled.button<{ $active: boolean }>`
   display: flex;
   width: 30px;
   height: 30px;
@@ -431,16 +464,20 @@ const EditLockButton = styled.button`
   margin: 2px;
   border: 0;
   border-radius: 10px;
-  background: transparent;
-  color: #2e2e2e;
+  background: ${({ $active }) => ($active ? 'rgba(79, 70, 229, 0.12)' : 'transparent')};
+  color: ${({ $active }) => ($active ? '#4f46e5' : '#2e2e2e')};
   cursor: pointer;
+
+  svg {
+    color: inherit;
+  }
 
   &:hover {
     background: rgba(128, 128, 128, 0.15);
   }
 
   @media (max-width: 768px) {
-    color: #fff;
+    color: ${({ $active }) => ($active ? '#4f46e5' : '#fff')};
 
     &:hover {
       background: rgba(255, 255, 255, 0.15);
