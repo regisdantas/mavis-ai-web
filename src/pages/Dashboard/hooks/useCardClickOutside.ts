@@ -8,9 +8,12 @@ interface UseCardClickOutsideProps {
   colorDropdownRef: RefObject<HTMLDivElement>
   templatePickerRef: RefObject<HTMLDivElement>
   templateDropdownRef: RefObject<HTMLDivElement>
+  aiPromptRef: RefObject<HTMLDivElement>
+  aiPromptDropdownRef: RefObject<HTMLDivElement>
   closeTagPicker: () => void
   closeColorPicker: () => void
   closeTemplatePicker: () => void
+  closeAIPrompt: () => void
 }
 
 export function useCardClickOutside({
@@ -21,9 +24,12 @@ export function useCardClickOutside({
   colorDropdownRef,
   templatePickerRef,
   templateDropdownRef,
+  aiPromptRef,
+  aiPromptDropdownRef,
   closeTagPicker,
   closeColorPicker,
   closeTemplatePicker,
+  closeAIPrompt,
 }: UseCardClickOutsideProps) {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -55,6 +61,13 @@ export function useCardClickOutside({
       if (!insideTemplateTrigger && !insideTemplateDropdown) {
         closeTemplatePicker()
       }
+
+      const insideAIPromptTrigger = aiPromptRef.current?.contains(target) ?? false
+      const insideAIPromptDropdown = aiPromptDropdownRef.current?.contains(target) ?? false
+
+      if (!insideAIPromptTrigger && !insideAIPromptDropdown) {
+        closeAIPrompt()
+      }
     }
 
     document.addEventListener('pointerdown', handleClickOutside)
@@ -70,8 +83,11 @@ export function useCardClickOutside({
     colorDropdownRef,
     templatePickerRef,
     templateDropdownRef,
+    aiPromptRef,
+    aiPromptDropdownRef,
     closeTagPicker,
     closeColorPicker,
     closeTemplatePicker,
+    closeAIPrompt,
   ])
 }

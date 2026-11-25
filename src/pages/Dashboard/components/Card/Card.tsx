@@ -68,6 +68,8 @@ export const Card: React.FC<ICardProps> = ({
   const tagDropdownRef = React.useRef<HTMLDivElement>(null)
   const colorDropdownRef = React.useRef<HTMLDivElement>(null)
   const templateDropdownRef = React.useRef<HTMLDivElement>(null)
+  const aiPromptRef = React.useRef<HTMLDivElement>(null)
+  const aiPromptDropdownRef = React.useRef<HTMLDivElement>(null)
   const [isMobile, setIsMobile] = React.useState(window.innerWidth < 1260)
   const { user } = UserAuth()
   const { temperature, weather, location } = useLocationData()
@@ -84,6 +86,8 @@ export const Card: React.FC<ICardProps> = ({
     colorDropdownRef,
     templatePickerRef,
     templateDropdownRef,
+    aiPromptRef,
+    aiPromptDropdownRef,
     closeTagPicker: () => {
       setShowTagPicker(false)
       setCreatingTag(false)
@@ -93,6 +97,9 @@ export const Card: React.FC<ICardProps> = ({
     },
     closeTemplatePicker: () => {
       setShowTemplatePicker(false)
+    },
+    closeAIPrompt: () => {
+      closeAssistant()
     },
   })
 
@@ -279,7 +286,20 @@ export const Card: React.FC<ICardProps> = ({
     })
   }, [])
 
-  const { aiLoading, handleAI } = useNoteAI({
+  const {
+    aiLoading,
+    assistantOpen,
+    instruction,
+    setInstruction,
+    apiKeyInput,
+    setApiKeyInput,
+    requiresApiKey,
+    error: aiError,
+    openAssistant,
+    closeAssistant,
+    clearInstruction,
+    submitInstruction,
+  } = useNoteAI({
     userId: user?.uid,
     value,
     textareaRef,
@@ -499,6 +519,8 @@ export const Card: React.FC<ICardProps> = ({
             <CardActions
               colorDropdownRef={colorDropdownRef}
               templateDropdownRef={templateDropdownRef}
+              aiPromptRef={aiPromptRef}
+              aiPromptDropdownRef={aiPromptDropdownRef}
               readOnly={readOnly}
               aiLoading={aiLoading}
               isArchived={hasTag('archive')}
@@ -510,11 +532,21 @@ export const Card: React.FC<ICardProps> = ({
               noteColors={noteColors}
               templateOptions={templateOptions}
               undoLastChange={undoLastChange}
-              handleAI={() => {
+              assistantOpen={assistantOpen}
+              instruction={instruction}
+              setInstruction={setInstruction}
+              apiKeyInput={apiKeyInput}
+              setApiKeyInput={setApiKeyInput}
+              requiresApiKey={requiresApiKey}
+              aiError={aiError}
+              openAssistant={() => {
                 if (!readOnly) {
-                  handleAI()
+                  void openAssistant()
                 }
               }}
+              closeAssistant={closeAssistant}
+              clearInstruction={clearInstruction}
+              submitInstruction={submitInstruction}
               archiveNote={() => {
                 if (!readOnly) {
                   archiveNote()

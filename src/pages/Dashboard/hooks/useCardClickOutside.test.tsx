@@ -10,6 +10,8 @@ const DropdownHarness: React.FC = () => {
   const colorDropdownRef = React.useRef<HTMLDivElement>(null)
   const templatePickerRef = React.useRef<HTMLDivElement>(null)
   const templateDropdownRef = React.useRef<HTMLDivElement>(null)
+  const aiPromptRef = React.useRef<HTMLDivElement>(null)
+  const aiPromptDropdownRef = React.useRef<HTMLDivElement>(null)
 
   useCardClickOutside({
     tagPickerRef,
@@ -19,9 +21,12 @@ const DropdownHarness: React.FC = () => {
     colorDropdownRef,
     templatePickerRef,
     templateDropdownRef,
+    aiPromptRef,
+    aiPromptDropdownRef,
     closeTagPicker: jest.fn(),
     closeColorPicker: jest.fn(),
     closeTemplatePicker: jest.fn(),
+    closeAIPrompt: jest.fn(),
   })
 
   return (

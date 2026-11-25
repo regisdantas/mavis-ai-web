@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { executeAI } from '../../../services/aiService'
 import { getOpenAIKey, saveOpenAIKey } from '../../../services/openAIKeyService'
 
@@ -34,6 +34,7 @@ Rules:
 - Always use markdown.
 - If the code contains commands (@cmd or /cmd), keep them. Use them.
 `
+
 export function useNoteAI({
   userId,
   value,
@@ -42,46 +43,109 @@ export function useNoteAI({
   onContentChange,
 }: UseNoteAIProps) {
   const [aiLoading, setAiLoading] = useState(false)
+  const [assistantOpen, setAssistantOpen] = useState(false)
+  const [instruction, setInstruction] = useState('')
+  const [apiKeyInput, setApiKeyInput] = useState('')
+  const [requiresApiKey, setRequiresApiKey] = useState(false)
+  const [error, setError] = useState('')
+  const noteDraftRef = useRef<{
+    value: string
+    selectionStart: number | null
+    selectionEnd: number | null
+  }>({
+    value,
+    selectionStart: null,
+    selectionEnd: null,
+  })
 
-  const handleAI = async () => {
+  const openAssistant = async () => {
+    const textarea = textareaRef.current
+    const noteText = textarea?.value ?? value
+    const selectionStart = textarea?.selectionStart ?? null
+    const selectionEnd = textarea?.selectionEnd ?? null
+
+    noteDraftRef.current = {
+      value: noteText,
+      selectionStart,
+      selectionEnd,
+    }
+
+    setAssistantOpen(true)
+    setInstruction('')
+    setApiKeyInput('')
+    setError('')
+
     if (!userId) {
-      alert('User not authenticated')
+      setRequiresApiKey(false)
+      setError('Sign in to use the AI assistant.')
       return
     }
 
-    let apiKey = await getOpenAIKey(userId)
+    try {
+      const apiKey = await getOpenAIKey(userId)
+      setRequiresApiKey(!apiKey)
+    } catch (loadError) {
+      console.error('Failed to load the OpenAI API key.', loadError)
+      setRequiresApiKey(true)
+      setError('Could not load the saved API key. Enter it again to continue.')
+    }
+  }
 
-    if (!apiKey) {
-      apiKey =
-        window.prompt('OpenAI API Key not configured.\n\nEnter your OpenAI API Key:')?.trim() || ''
+  const closeAssistant = () => {
+    setAssistantOpen(false)
+    setInstruction('')
+    setApiKeyInput('')
+    setError('')
+  }
 
-      if (!apiKey) {
-        return
-      }
+  const clearInstruction = () => {
+    setInstruction('')
+    setError('')
+  }
 
-      await saveOpenAIKey(userId, apiKey)
+  const submitInstruction = async () => {
+    if (aiLoading) {
+      return
     }
 
-    const userInstruction = window.prompt(
-      'Examples:\n\nFix grammar\nSummarize\nRewrite professionally\nTranslate to Portuguese'
-    )
+    const userInstruction = instruction.trim()
 
-    if (!userInstruction?.trim()) {
+    if (!userInstruction) {
+      setError('Enter an instruction for the note.')
+      return
+    }
+
+    if (!userId) {
+      setError('Sign in to use the AI assistant.')
       return
     }
 
     setAiLoading(true)
+    setError('')
 
     try {
-      pushHistory(value)
+      let apiKey: string
 
-      const textarea = textareaRef.current
+      if (requiresApiKey) {
+        apiKey = apiKeyInput.trim()
 
-      if (textarea && textarea.selectionStart !== textarea.selectionEnd) {
-        const start = textarea.selectionStart
-        const end = textarea.selectionEnd
+        if (!apiKey) {
+          setError('Enter your OpenAI API key.')
+          return
+        }
 
-        const selectedText = value.substring(start, end)
+        await saveOpenAIKey(userId, apiKey)
+        setRequiresApiKey(false)
+        setApiKeyInput('')
+      } else {
+        apiKey = await getOpenAIKey(userId)
+      }
+
+      const { value: noteText, selectionStart, selectionEnd } = noteDraftRef.current
+      pushHistory(noteText)
+
+      if (selectionStart !== null && selectionEnd !== null && selectionStart !== selectionEnd) {
+        const selectedText = noteText.substring(selectionStart, selectionEnd)
 
         const result = await executeAI(
           userId,
@@ -92,29 +156,28 @@ export function useNoteAI({
           apiKey
         )
 
-        const updated = value.substring(0, start) + result.output_text.trim() + value.substring(end)
-
+        const updated =
+          noteText.substring(0, selectionStart) +
+          result.output_text.trim() +
+          noteText.substring(selectionEnd)
         onContentChange(updated)
+      } else {
+        const result = await executeAI(
+          userId,
+          systemPrompt,
+          userInstruction,
+          noteText,
+          'gpt-6-luna',
+          apiKey
+        )
 
-        return
+        onContentChange(`${noteText}\n\n${result.output_text.trim()}`)
       }
 
-      const result = await executeAI(
-        userId,
-        systemPrompt,
-        userInstruction,
-        value,
-        'gpt-6-luna',
-        apiKey
-      )
-
-      const updated = `${value}\n\n${result.output_text.trim()}`
-
-      onContentChange(updated)
-    } catch (error) {
-      console.error(error)
-
-      alert(error instanceof Error ? error.message : 'AI request failed')
+      closeAssistant()
+    } catch (requestError) {
+      console.error('AI note request failed.', requestError)
+      setError(requestError instanceof Error ? requestError.message : 'AI request failed.')
     } finally {
       setAiLoading(false)
     }
@@ -122,6 +185,16 @@ export function useNoteAI({
 
   return {
     aiLoading,
-    handleAI,
+    assistantOpen,
+    instruction,
+    setInstruction,
+    apiKeyInput,
+    setApiKeyInput,
+    requiresApiKey,
+    error,
+    openAssistant,
+    closeAssistant,
+    clearInstruction,
+    submitInstruction,
   }
 }

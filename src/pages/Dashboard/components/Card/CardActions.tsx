@@ -5,6 +5,7 @@ import { FiTrash2, FiType, FiArchive, FiCpu, FiRotateCcw } from 'react-icons/fi'
 import { MdOutlineColorLens } from 'react-icons/md'
 
 import FloatingColorPicker from '../FloatingColorPicker'
+import FloatingNoteAIPrompt from '../FloatingNoteAIPrompt'
 import FloatingTemplatePicker from '../FloatingTemplatePicker'
 
 import { IconButton } from '../../../../styles/global'
@@ -24,12 +25,24 @@ interface CardActionsProps {
   templatePickerRef: React.RefObject<HTMLDivElement>
   colorDropdownRef: React.RefObject<HTMLDivElement>
   templateDropdownRef: React.RefObject<HTMLDivElement>
+  aiPromptRef: React.RefObject<HTMLDivElement>
+  aiPromptDropdownRef: React.RefObject<HTMLDivElement>
 
   noteColors: string[]
   templateOptions: TemplateOption[]
 
   undoLastChange: () => void
-  handleAI: () => void
+  assistantOpen: boolean
+  instruction: string
+  setInstruction: (instruction: string) => void
+  apiKeyInput: string
+  setApiKeyInput: (apiKey: string) => void
+  requiresApiKey: boolean
+  aiError: string
+  openAssistant: () => void
+  closeAssistant: () => void
+  clearInstruction: () => void
+  submitInstruction: () => void
 
   archiveNote: () => void
   trashNote: () => void
@@ -52,10 +65,22 @@ const CardActions: React.FC<CardActionsProps> = ({
   templatePickerRef,
   colorDropdownRef,
   templateDropdownRef,
+  aiPromptRef,
+  aiPromptDropdownRef,
   noteColors,
   templateOptions,
   undoLastChange,
-  handleAI,
+  assistantOpen,
+  instruction,
+  setInstruction,
+  apiKeyInput,
+  setApiKeyInput,
+  requiresApiKey,
+  aiError,
+  openAssistant,
+  closeAssistant,
+  clearInstruction,
+  submitInstruction,
   archiveNote,
   trashNote,
   setShowColorPicker,
@@ -82,15 +107,18 @@ const CardActions: React.FC<CardActionsProps> = ({
           <FiType />
         </IconButton>
 
-        <IconButton
-          disabled={readOnly}
-          data-keepeditor="true"
-          title="AI assistant"
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={handleAI}
-        >
-          <FiCpu color={aiLoading ? '#2563eb' : undefined} />
-        </IconButton>
+        <AIPromptWrapper ref={aiPromptRef}>
+          <IconButton
+            disabled={readOnly}
+            data-keepeditor="true"
+            title="AI assistant"
+            aria-expanded={assistantOpen}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => (assistantOpen ? closeAssistant() : openAssistant())}
+          >
+            <FiCpu color={aiLoading ? '#2563eb' : undefined} />
+          </IconButton>
+        </AIPromptWrapper>
 
         <IconButton
           disabled={readOnly}
@@ -138,6 +166,22 @@ const CardActions: React.FC<CardActionsProps> = ({
           />
         </TemplatePickerWrapper>
       )}
+
+      {assistantOpen && (
+        <FloatingNoteAIPrompt
+          instruction={instruction}
+          setInstruction={setInstruction}
+          apiKeyInput={apiKeyInput}
+          setApiKeyInput={setApiKeyInput}
+          requiresApiKey={requiresApiKey}
+          error={aiError}
+          loading={aiLoading}
+          onClear={clearInstruction}
+          onSend={submitInstruction}
+          onClose={closeAssistant}
+          dropdownRef={aiPromptDropdownRef}
+        />
+      )}
     </GeneralContainer>
   )
 }
@@ -174,4 +218,15 @@ const ColorPickerWrapper = styled.div`
 const TemplatePickerWrapper = styled.div`
   position: relative;
   width: 100%;
+`
+
+const AIPromptWrapper = styled.div`
+  && {
+    width: fit-content;
+    margin-left: 0;
+  }
+
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
 `
