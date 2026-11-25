@@ -2,7 +2,6 @@ import React from 'react'
 import styled from 'styled-components'
 import { NotesToolbar } from './components/NotesToolbar'
 import { useEntryFilter } from './hooks/useEntryFilter'
-import { useCardMeasurements } from './hooks/useCardMeasurements'
 import { useEntries } from './hooks/useEntries'
 import { UserAuth } from '../../context/AuthContext'
 import { HeaderPortal } from '../../components/HeaderPortal'
@@ -12,7 +11,6 @@ import { getTagPinPreferences, saveTagPinPreferences } from '../../services/tagP
 import { useDashboard } from './context/DashboardContext'
 import { ExplorerSideBar } from './components/ExplorerSideBar'
 import { NotesList } from './components/NotesList'
-import { NotesMiniMap } from './components/NotesMiniMap'
 import { Chat } from './components/Chat'
 import { ChatToolbar } from './components/ChatToolbar'
 import { ChatSideBar } from './components/ChatSideBar'
@@ -134,7 +132,6 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
     setTagPinState({ userId, tags: uniqueTags, loaded: true })
   }
 
-  const { cardRefs, cardHeights, totalHeight } = useCardMeasurements([entries])
   const [hoveredCardId, setHoveredCardId] = React.useState<string | null>(null)
   const [selectedNoteIds, setSelectedNoteIds] = React.useState<string[]>([])
   const notesPanelRef = React.useRef<HTMLDivElement>(null)
@@ -386,8 +383,6 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
   }
 
   async function handleAddNewEntry() {
-    if (notesLocked) return
-
     const tags = selectedTag !== 'all' ? [selectedTag] : []
 
     await addEntry({
@@ -523,23 +518,6 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
 
   const handleChangeEntry = updateEntry
 
-  const scrollToCard = (id: string, position: 'top' | 'bottom') => {
-    const card = cardRefs.current[id]
-    const container = notesPanelRef.current
-
-    if (!card || !container) return
-
-    const cardTop = card.offsetTop
-
-    const target =
-      position === 'top' ? cardTop - 100 : cardTop - container.clientHeight + card.offsetHeight + 50
-
-    container.scrollTo({
-      top: Math.max(0, target),
-      behavior: 'smooth',
-    })
-  }
-
   return (
     <Workspace>
       <ChatAiProvider
@@ -609,22 +587,11 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
               actionsLocked={notesLocked}
               tagPreferencesLoading={!tagPreferencesLoaded}
             />
-            {!notesMinimized && (
-              <NotesMiniMap
-                entries={visibleEntries}
-                hoveredCardId={hoveredCardId}
-                cardHeights={cardHeights}
-                totalHeight={totalHeight}
-                onScrollToCard={scrollToCard}
-              />
-            )}
-
             <NotesPanel ref={notesPanelRef} minimized={notesMinimized}>
               {!notesMinimized && (
                 <NotesList
                   entries={visibleEntries}
                   pickerTags={pickerTags}
-                  cardRefs={cardRefs}
                   updateEntryDate={handleUpdateEntryDate}
                   onHoverCard={setHoveredCardId}
                   onDeleteEntry={handleDeleteEntry}

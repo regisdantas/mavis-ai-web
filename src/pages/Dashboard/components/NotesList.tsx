@@ -8,7 +8,6 @@ import { TemplateOption } from '../utils/cardUtils'
 interface NotesListProps {
   entries: IEntry[]
   pickerTags: string[]
-  cardRefs: React.MutableRefObject<Record<string, HTMLDivElement | null>>
   onHoverCard: (id: string | null) => void
   onDeleteEntry: (id: string, permanent?: boolean) => Promise<void>
   onChangeEntry: (id: string, content: string) => Promise<void>
@@ -22,7 +21,6 @@ interface NotesListProps {
 export const NotesList: React.FC<NotesListProps> = ({
   entries,
   pickerTags,
-  cardRefs,
   onHoverCard,
   onDeleteEntry,
   onChangeEntry,
@@ -37,9 +35,6 @@ export const NotesList: React.FC<NotesListProps> = ({
       {entries.map((entry, index) => (
         <div
           key={entry.id}
-          ref={(el) => {
-            cardRefs.current[entry.id] = el
-          }}
           onMouseEnter={() => onHoverCard(entry.id)}
           onMouseLeave={() => onHoverCard(null)}
         >

@@ -9,6 +9,7 @@ import { useChatAi } from '../context/ChatAiContext'
 import { MdOutlineLayersClear, MdHistoryToggleOff, MdOutlineSummarize } from 'react-icons/md'
 import { TbMessagesOff } from 'react-icons/tb'
 import { TbPrompt } from 'react-icons/tb'
+import { ChatMessage } from '../types/chat'
 
 const modelsAvailable = ['gpt-5-mini', 'gpt-6-luna', 'gpt-5.6-terra', 'gpt-5.6-sol']
 
@@ -53,6 +54,34 @@ export const Chat: React.FC<ChatProps> = ({
   const [promptPickerOpen, setPromptPickerOpen] = React.useState(false)
   const modelPickerRef = React.useRef<HTMLDivElement>(null)
   const promptPickerRef = React.useRef<HTMLDivElement>(null)
+  const chatHistoryRef = React.useRef<HTMLDivElement>(null)
+  const chatMessageRefs = React.useRef<Record<string, HTMLDivElement | null>>({})
+  const [chatScrollProgress, setChatScrollProgress] = React.useState(0)
+
+  const updateChatScrollProgress = React.useCallback((element: HTMLDivElement) => {
+    const maxScrollTop = element.scrollHeight - element.clientHeight
+    const progress = maxScrollTop > 0 ? element.scrollTop / maxScrollTop : 0
+
+    setChatScrollProgress(Math.min(1, Math.max(0, progress)))
+  }, [])
+
+  const handleChatHistoryScroll = React.useCallback(
+    (event: React.UIEvent<HTMLDivElement>) => {
+      updateChatScrollProgress(event.currentTarget)
+    },
+    [updateChatScrollProgress]
+  )
+
+  React.useLayoutEffect(() => {
+    const chatHistory = chatHistoryRef.current
+
+    if (!chatHistory) {
+      return
+    }
+
+    chatHistory.scrollTop = Math.max(0, chatHistory.scrollHeight - chatHistory.clientHeight)
+    updateChatScrollProgress(chatHistory)
+  }, [isLoading, messages, updateChatScrollProgress])
 
   const closeModelPicker = React.useCallback(() => setModelPickerOpen(false), [])
   const closePromptPicker = React.useCallback(() => setPromptPickerOpen(false), [])
@@ -85,36 +114,71 @@ export const Chat: React.FC<ChatProps> = ({
     setPrompt('')
   }
 
+  const scrollToChatMessage = React.useCallback((id: string) => {
+    const chatHistory = chatHistoryRef.current
+    const message = chatMessageRefs.current[id]
+
+    if (!chatHistory || !message) {
+      return
+    }
+
+    const chatHistoryTop = chatHistory.getBoundingClientRect().top
+    const messageTop = message.getBoundingClientRect().top
+
+    chatHistory.scrollTo({
+      top: Math.max(0, chatHistory.scrollTop + messageTop - chatHistoryTop - 12),
+      behavior: 'smooth',
+    })
+  }, [])
+
   return (
     <ChatContainer>
-      <ChatHistory>
-        {messages.map((message) => (
-          <MessageContainer key={message.id} role={message.role}>
-            <MessageInfo role={message.role}>
-              {message.tokens && (
-                <span>
-                  In: {message.tokens.input}tks Out: {message.tokens.output}tks
-                </span>
-              )}
-            </MessageInfo>
-            <ChatMessageBubble role={message.role}>
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
-            </ChatMessageBubble>
-            <MessageTools role={message.role}>
-              <IconButton
-                title="Copy message"
-                onClick={() => void handleCopyMessage(message.content)}
-              >
-                <FiCopy />
-              </IconButton>
-              <IconButton title="Delete message" onClick={() => deleteMessage(message.id)}>
-                <FiTrash2 />
-              </IconButton>
-            </MessageTools>
-          </MessageContainer>
-        ))}
-        {isLoading && <ChatMessageBubble role="assistant">Thinking...</ChatMessageBubble>}
-      </ChatHistory>
+      <ChatHistoryArea>
+        <ChatHistory
+          ref={chatHistoryRef}
+          role="log"
+          aria-label="Chat messages"
+          onScroll={handleChatHistoryScroll}
+        >
+          {messages.map((message) => (
+            <MessageContainer
+              key={message.id}
+              ref={(element) => {
+                chatMessageRefs.current[message.id] = element
+              }}
+              role={message.role}
+            >
+              <MessageInfo role={message.role}>
+                {message.tokens && (
+                  <span>
+                    In: {message.tokens.input}tks Out: {message.tokens.output}tks
+                  </span>
+                )}
+              </MessageInfo>
+              <ChatMessageBubble role={message.role}>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+              </ChatMessageBubble>
+              <MessageTools role={message.role}>
+                <IconButton
+                  title="Copy message"
+                  onClick={() => void handleCopyMessage(message.content)}
+                >
+                  <FiCopy />
+                </IconButton>
+                <IconButton title="Delete message" onClick={() => deleteMessage(message.id)}>
+                  <FiTrash2 />
+                </IconButton>
+              </MessageTools>
+            </MessageContainer>
+          ))}
+          {isLoading && <ChatMessageBubble role="assistant">Thinking...</ChatMessageBubble>}
+        </ChatHistory>
+        <ChatMiniMap
+          messages={messages}
+          scrollProgress={chatScrollProgress}
+          onScrollToMessage={scrollToChatMessage}
+        />
+      </ChatHistoryArea>
       <ChatInputArea expanded={isExpanded}>
         <ChatInputContainer>
           <ChatInputHeader>
@@ -241,6 +305,49 @@ export const Chat: React.FC<ChatProps> = ({
   )
 }
 
+interface ChatMiniMapProps {
+  messages: ChatMessage[]
+  scrollProgress: number
+  onScrollToMessage: (id: string) => void
+}
+
+const ChatMiniMap: React.FC<ChatMiniMapProps> = ({
+  messages,
+  scrollProgress,
+  onScrollToMessage,
+}) => {
+  const containerRef = React.useRef<HTMLDivElement>(null)
+
+  React.useLayoutEffect(() => {
+    const container = containerRef.current
+
+    if (!container) {
+      return
+    }
+
+    const maxScrollTop = container.scrollHeight - container.clientHeight
+    container.scrollTop = Math.max(0, maxScrollTop * scrollProgress)
+  }, [messages, scrollProgress])
+
+  return (
+    <ChatMiniMapContainer ref={containerRef} role="group" aria-label="Chat message minimap">
+      {messages.map((message, index) => (
+        <ChatMiniMapMessage
+          key={message.id}
+          type="button"
+          aria-label={`Go to ${message.role} message ${index + 1}`}
+          title={`${message.role === 'user' ? 'You' : 'Mavis'} message ${index + 1}`}
+          $role={message.role}
+          style={{
+            height: `${Math.min(Math.max(Math.ceil(message.content.length / 80) * 8, 8), 60)}px`,
+          }}
+          onClick={() => onScrollToMessage(message.id)}
+        />
+      ))}
+    </ChatMiniMapContainer>
+  )
+}
+
 const MessageContainer = styled.div<{ role: string }>`
   display: flex;
   flex-direction: column;
@@ -308,8 +415,17 @@ const ChatContainer = styled.div`
   height: 100%;
 `
 
+const ChatHistoryArea = styled.div`
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: hidden;
+`
+
 const ChatHistory = styled.div`
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -348,6 +464,43 @@ const ChatHistory = styled.div`
   h5,
   h6 {
     color: inherit;
+  }
+`
+
+const ChatMiniMapContainer = styled.div`
+  flex: 0 0 20px;
+  width: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 12px 3px;
+  overflow-y: auto;
+  border-left: 1px solid #d0d0d0;
+  background: #d0d0d0;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`
+
+const ChatMiniMapMessage = styled.button<{ $role: ChatMessage['role'] }>`
+  width: 100%;
+  min-height: 5px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: ${({ $role }) => ($role === 'user' ? '#7c3aed' : '#c4b5fd')};
+  opacity: 0.75;
+
+  &:hover {
+    opacity: 1;
   }
 `
 

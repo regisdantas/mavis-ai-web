@@ -60,7 +60,7 @@ describe('responsive dashboard toolbar menus', () => {
     expect(screen.queryByLabelText('Unlock note editing')).toBeNull()
   })
 
-  it('marks the lock and selection actions active when notes are locked or selected', () => {
+  it('shows lock and selection state with purple icons but no pressed fill', () => {
     render(
       <NotesToolbar
         selectedTag="all"
@@ -83,8 +83,44 @@ describe('responsive dashboard toolbar menus', () => {
       />
     )
 
-    expect(screen.getByLabelText('Unlock note editing').getAttribute('aria-pressed')).toBe('true')
-    expect(screen.getByTitle('Clear all notes').getAttribute('aria-pressed')).toBe('true')
+    const lockButton = screen.getByLabelText('Unlock note editing')
+    const selectionButton = screen.getByTitle('Clear all notes')
+
+    expect(lockButton.getAttribute('aria-pressed')).toBe('true')
+    expect(selectionButton.getAttribute('aria-pressed')).toBe('true')
+    expect(window.getComputedStyle(lockButton).backgroundColor).toBe('transparent')
+    expect(window.getComputedStyle(selectionButton).backgroundColor).toBe('transparent')
+    expect(window.getComputedStyle(lockButton).color).toBe('rgb(79, 70, 229)')
+  })
+
+  it('keeps Add note enabled while note editing is locked', () => {
+    const onAddNote = jest.fn()
+
+    render(
+      <NotesToolbar
+        selectedTag="all"
+        selectedDate="2026-01-01"
+        searchContent=""
+        onSearchChange={jest.fn()}
+        onDateChange={jest.fn()}
+        onAddNote={onAddNote}
+        onCopyAllNotes={jest.fn()}
+        onSelectAll={jest.fn()}
+        onClearAll={jest.fn()}
+        selectedCount={0}
+        expanded={false}
+        setExplorerExpanded={jest.fn()}
+        panelWidth={320}
+        setMinimized={jest.fn()}
+        mobileActive
+        notesLocked
+        onToggleNotesLock={jest.fn()}
+      />
+    )
+
+    fireEvent.click(screen.getByTitle('Add note'))
+
+    expect(onAddNote).toHaveBeenCalledTimes(1)
   })
 
   it.each([390, 1440])(

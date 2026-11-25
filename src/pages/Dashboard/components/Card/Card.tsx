@@ -451,15 +451,13 @@ export const Card: React.FC<ICardProps> = ({
             if (!readOnly) toggleTag('favorite')
           }}
           onToggleCollapse={() => {
-            if (!notesLocked) {
-              void onChangeContent(
-                id,
-                JSON.stringify({
-                  ...objContent,
-                  collapsed: !objContent.collapsed,
-                })
-              )
-            }
+            void onChangeContent(
+              id,
+              JSON.stringify({
+                ...objContent,
+                collapsed: !objContent.collapsed,
+              })
+            )
           }}
           onTitleChange={(title) => saveCurrentDraft(undefined, title)}
         />

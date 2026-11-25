@@ -71,11 +71,11 @@ const CardHeader: React.FC<CardHeaderProps> = ({
         </IconButton>
 
         {collapsed ? (
-          <IconButton disabled={readOnly} title="Expand note" onClick={onToggleCollapse}>
+          <IconButton title="Expand note" onClick={onToggleCollapse}>
             <IoMdArrowDropleft />
           </IconButton>
         ) : (
-          <IconButton disabled={readOnly} title="Collapse note" onClick={onToggleCollapse}>
+          <IconButton title="Collapse note" onClick={onToggleCollapse}>
             <IoMdArrowDropdown />
           </IconButton>
         )}
@@ -114,6 +114,9 @@ const SelectButton = styled.span`
 `
 
 const HeaderContainer = styled.header`
+  position: sticky;
+  top: 0;
+  z-index: 4;
   width: 100%;
   height: 44px;
 
@@ -122,6 +125,7 @@ const HeaderContainer = styled.header`
   justify-content: space-between;
 
   padding: 10px;
+  background: inherit;
 
   border-bottom: 1px solid rgba(0, 0, 0, 0.2);
 

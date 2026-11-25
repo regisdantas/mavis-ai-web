@@ -187,7 +187,7 @@ export const NotesToolbar: React.FC<NotesToolbarProps> = ({
               <FiCopy />
             </IconButton>
 
-            <IconButton disabled={notesLocked} title="Add note" onClick={onAddNote}>
+            <IconButton title="Add note" onClick={onAddNote}>
               <IoMdAddCircleOutline />
             </IconButton>
           </>
@@ -436,7 +436,7 @@ const ActionsContainer = styled.div`
 
 const ToolbarActionButton = styled(IconButton)<{ $active: boolean }>`
   &&&& {
-    background: ${({ $active }) => ($active ? 'rgba(79, 70, 229, 0.12)' : 'transparent')};
+    background: transparent;
 
     svg {
       color: ${({ $active }) => ($active ? '#4f46e5' : '#2e2e2e')} !important;
@@ -446,10 +446,6 @@ const ToolbarActionButton = styled(IconButton)<{ $active: boolean }>`
   @media (max-width: 768px) {
     &&&& svg {
       color: ${({ $active }) => ($active ? '#4f46e5' : '#fff')} !important;
-    }
-
-    &&&&[aria-pressed='true'] {
-      background: rgba(79, 70, 229, 0.2);
     }
   }
 `
@@ -464,7 +460,7 @@ const EditLockButton = styled.button<{ $active: boolean }>`
   margin: 2px;
   border: 0;
   border-radius: 10px;
-  background: ${({ $active }) => ($active ? 'rgba(79, 70, 229, 0.12)' : 'transparent')};
+  background: transparent;
   color: ${({ $active }) => ($active ? '#4f46e5' : '#2e2e2e')};
   cursor: pointer;
 

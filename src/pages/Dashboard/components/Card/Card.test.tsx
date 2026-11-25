@@ -92,6 +92,65 @@ const renderCard = (notesLocked: boolean, onChangeContent = jest.fn(async () => 
 }
 
 describe('Card global edit lock and draft autosave', () => {
+  it('keeps the note header sticky while scrolling its content', () => {
+    const { container } = renderCard(true)
+    const header = container.querySelector('header')
+
+    expect(header).not.toBeNull()
+    expect(window.getComputedStyle(header as HTMLElement).position).toBe('sticky')
+    expect(window.getComputedStyle(header as HTMLElement).top).toBe('0px')
+  })
+
+  it('allows expanding and collapsing while notes are locked', () => {
+    const content = JSON.stringify({
+      title: 'Test note',
+      text: 'Original text',
+      tags: [],
+      color: '#fff',
+      collapsed: false,
+    })
+    const onChangeContent = jest.fn(async (_id: string, _content: string) => {})
+    const props = {
+      id: 'note-1',
+      number: 1,
+      date: '2026-11-25',
+      content,
+      notesLocked: true,
+      onDeleteCard: jest.fn(),
+      onChangeContent,
+      onChangeDate: jest.fn(),
+      tags: [],
+      selected: false,
+      onToggleSelection: jest.fn(),
+      templateOptions: [],
+    }
+    const { rerender } = render(<Card {...props} />)
+
+    fireEvent.click(screen.getByTitle('Collapse note'))
+
+    expect(onChangeContent).toHaveBeenLastCalledWith(
+      'note-1',
+      expect.stringContaining('"collapsed":true')
+    )
+
+    rerender(
+      <Card
+        {...props}
+        content={JSON.stringify({
+          ...JSON.parse(content),
+          collapsed: true,
+        })}
+      />
+    )
+
+    fireEvent.click(screen.getByTitle('Expand note'))
+
+    expect(onChangeContent).toHaveBeenLastCalledWith(
+      'note-1',
+      expect.stringContaining('"collapsed":false')
+    )
+  })
+
   it('uses the dashboard lock instead of legacy per-note lock metadata', () => {
     const { container, rerender } = renderCard(false)
 
