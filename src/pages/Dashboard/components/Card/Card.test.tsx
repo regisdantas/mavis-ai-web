@@ -2,10 +2,39 @@ import React from 'react'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { Card } from './Card'
 
-jest.mock('react-markdown', () => ({
-  __esModule: true,
-  default: ({ children }: { children: React.ReactNode }) => children,
-}))
+jest.mock('react-markdown', () => {
+  const ReactRuntime = jest.requireActual('react')
+
+  return {
+    __esModule: true,
+    default: ({
+      children,
+      components,
+    }: {
+      children: React.ReactNode
+      components?: {
+        table?: (props: { node: unknown; children: React.ReactNode }) => React.ReactNode
+      }
+    }) => {
+      if (children !== 'Markdown table fixture' || !components?.table) {
+        return children
+      }
+
+      const headerCells = ['First', 'Second', 'Third', 'Fourth'].map((label) =>
+        ReactRuntime.createElement('th', { key: label }, label)
+      )
+
+      return components.table({
+        node: null,
+        children: ReactRuntime.createElement(
+          'tbody',
+          null,
+          ReactRuntime.createElement('tr', null, ...headerCells)
+        ),
+      })
+    },
+  }
+})
 jest.mock('rehype-raw', () => ({ __esModule: true, default: jest.fn() }))
 jest.mock('remark-gfm', () => ({ __esModule: true, default: jest.fn() }))
 jest.mock('remark-frontmatter', () => ({ __esModule: true, default: jest.fn() }))
@@ -58,10 +87,14 @@ jest.mock('../../hooks/useCardClickOutside', () => ({
   useCardClickOutside: jest.fn(),
 }))
 
-const renderCard = (notesLocked: boolean, onChangeContent = jest.fn(async () => {})) => {
+const renderCard = (
+  notesLocked: boolean,
+  onChangeContent = jest.fn(async () => {}),
+  noteText = 'Original text'
+) => {
   const content = JSON.stringify({
     title: 'Test note',
-    text: 'Original text',
+    text: noteText,
     tags: [],
     color: '#fff',
     locked: true,
@@ -89,6 +122,34 @@ const renderCard = (notesLocked: boolean, onChangeContent = jest.fn(async () => 
 }
 
 describe('Card global edit lock and draft autosave', () => {
+  it('uses content-sized columns inside a scrollable table wrapper', () => {
+    renderCard(true, undefined, 'Markdown table fixture')
+
+    const table = screen.getByRole('table')
+    const scrollWrapper = table.parentElement as HTMLElement
+    const headerCell = table.querySelector('th') as HTMLElement
+
+    expect(window.getComputedStyle(scrollWrapper).overflowX).toBe('auto')
+    expect(window.getComputedStyle(table).tableLayout).toBe('auto')
+    expect(window.getComputedStyle(headerCell).minWidth).toBe('8rem')
+    expect(window.getComputedStyle(headerCell).overflowWrap).toBe('anywhere')
+  })
+
+  it('prevents horizontal scrolling in Markdown quotes and code blocks', () => {
+    renderCard(true)
+    const markdownContainer = screen.getByText('Original text')
+    const quote = document.createElement('blockquote')
+    const codeBlock = document.createElement('pre')
+
+    markdownContainer.append(quote, codeBlock)
+
+    expect(window.getComputedStyle(quote).overflowX).toBe('hidden')
+    expect(window.getComputedStyle(quote).overflowWrap).toBe('anywhere')
+    expect(window.getComputedStyle(codeBlock).overflowX).toBe('hidden')
+    expect(window.getComputedStyle(codeBlock).whiteSpace).toBe('pre-wrap')
+    expect(window.getComputedStyle(codeBlock).overflowWrap).toBe('anywhere')
+  })
+
   it('keeps the note header sticky while scrolling its content', () => {
     const { container } = renderCard(true)
     const header = container.querySelector('header')

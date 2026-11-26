@@ -8,10 +8,39 @@ jest.mock('../context/ChatAiContext', () => ({
   useChatAi: jest.fn(),
 }))
 
-jest.mock('react-markdown', () => ({
-  __esModule: true,
-  default: ({ children }: { children: string }) => children,
-}))
+jest.mock('react-markdown', () => {
+  const ReactRuntime = jest.requireActual('react')
+
+  return {
+    __esModule: true,
+    default: ({
+      children,
+      components,
+    }: {
+      children: string
+      components?: {
+        table?: (props: { node: unknown; children: React.ReactNode }) => React.ReactNode
+      }
+    }) => {
+      if (children !== 'Markdown table fixture' || !components?.table) {
+        return children
+      }
+
+      const headerCells = ['First', 'Second', 'Third', 'Fourth'].map((label) =>
+        ReactRuntime.createElement('th', { key: label }, label)
+      )
+
+      return components.table({
+        node: null,
+        children: ReactRuntime.createElement(
+          'tbody',
+          null,
+          ReactRuntime.createElement('tr', null, ...headerCells)
+        ),
+      })
+    },
+  }
+})
 
 jest.mock('remark-gfm', () => jest.fn())
 
@@ -81,5 +110,57 @@ describe('Chat', () => {
     fireEvent.scroll(chatHistory)
 
     expect(minimap.scrollTop).toBe(400)
+  })
+
+  it('prevents horizontal scrolling in Markdown quotes and code blocks', () => {
+    mockUseChatAi.mockReturnValue(
+      makeChatAiValue([{ id: 'assistant-1', role: 'assistant', content: 'Markdown style fixture' }])
+    )
+
+    const props = {
+      uid: 'user-id',
+      selectedNotesText: '',
+      noteTitles: [],
+      notesCount: 0,
+      clearSelectedNotes: jest.fn(),
+    }
+    const { getByText } = render(<Chat {...props} />)
+    const bubble = getByText('Markdown style fixture')
+    const quote = document.createElement('blockquote')
+    const codeBlock = document.createElement('pre')
+
+    bubble.append(quote, codeBlock)
+
+    expect(window.getComputedStyle(quote).overflowX).toBe('hidden')
+    expect(window.getComputedStyle(quote).overflowWrap).toBe('anywhere')
+    expect(window.getComputedStyle(codeBlock).overflowX).toBe('hidden')
+    expect(window.getComputedStyle(codeBlock).whiteSpace).toBe('pre-wrap')
+    expect(window.getComputedStyle(codeBlock).overflowWrap).toBe('anywhere')
+  })
+
+  it('uses content-sized columns inside a scrollable table wrapper', () => {
+    mockUseChatAi.mockReturnValue(
+      makeChatAiValue([
+        { id: 'assistant-table', role: 'assistant', content: 'Markdown table fixture' },
+      ])
+    )
+
+    const props = {
+      uid: 'user-id',
+      selectedNotesText: '',
+      noteTitles: [],
+      notesCount: 0,
+      clearSelectedNotes: jest.fn(),
+    }
+    render(<Chat {...props} />)
+
+    const table = screen.getByRole('table')
+    const scrollWrapper = table.parentElement as HTMLElement
+    const headerCell = table.querySelector('th') as HTMLElement
+
+    expect(window.getComputedStyle(scrollWrapper).overflowX).toBe('auto')
+    expect(window.getComputedStyle(table).tableLayout).toBe('auto')
+    expect(window.getComputedStyle(headerCell).minWidth).toBe('8rem')
+    expect(window.getComputedStyle(headerCell).overflowWrap).toBe('anywhere')
   })
 })

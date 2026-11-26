@@ -3,3 +3,5 @@ build
 android
 ios
 .env
+backups/
+gemini-backups/

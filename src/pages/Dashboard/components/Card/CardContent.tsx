@@ -149,13 +149,6 @@ const CardContent: React.FC<CardContentProps> = ({
               </MarkdownScrollWrapper>
             )
           },
-          pre({ node: _node, children, ...props }) {
-            return (
-              <MarkdownScrollWrapper>
-                <pre {...props}>{children}</pre>
-              </MarkdownScrollWrapper>
-            )
-          },
           img({ node: _node, ...props }) {
             return (
               <MarkdownInlineScrollWrapper>
@@ -222,6 +215,13 @@ const MarkdownContainer = styled.div`
     text-decoration: underline;
   }
 
+  blockquote {
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
   * html code {
     font-size: 100%;
   }
@@ -246,11 +246,12 @@ const MarkdownContainer = styled.div`
     margin: 20px 0;
     padding: 8px;
     text-align: left;
-    width: max-content;
-    max-width: none;
-    white-space: pre;
-    word-break: normal;
-    overflow-wrap: normal;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-wrap: anywhere;
   }
 
   hr {
@@ -363,9 +364,9 @@ const MarkdownContainer = styled.div`
   }
 
   table {
-    width: max-content;
+    width: 100%;
     min-width: 100%;
-    max-width: none;
+    table-layout: auto;
 
     border-top: 1px solid rgba(0, 0, 0, 0.2);
     border-left: 1px solid rgba(0, 0, 0, 0.2);
@@ -373,7 +374,14 @@ const MarkdownContainer = styled.div`
 
     margin: 0;
     margin-bottom: 20px;
-    margin-right: 10px;
+  }
+
+  table th,
+  table td {
+    width: fit-content;
+    min-width: 8rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   table th {
@@ -404,11 +412,6 @@ const MarkdownContainer = styled.div`
 
     border-bottom: 1px solid rgba(0, 0, 0, 0.2);
     border-right: 1px solid rgba(0, 0, 0, 0.2);
-
-    @media (max-width: 1260px) {
-      white-space: pre-wrap;
-      overflow-wrap: break-word;
-    }
   }
 
   table td p {

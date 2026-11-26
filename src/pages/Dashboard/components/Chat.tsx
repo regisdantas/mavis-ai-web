@@ -156,7 +156,20 @@ export const Chat: React.FC<ChatProps> = ({
                 )}
               </MessageInfo>
               <ChatMessageBubble role={message.role}>
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    table({ node: _node, children, ...props }) {
+                      return (
+                        <ChatTableScrollWrapper>
+                          <table {...props}>{children}</table>
+                        </ChatTableScrollWrapper>
+                      )
+                    },
+                  }}
+                >
+                  {message.content}
+                </ReactMarkdown>
               </ChatMessageBubble>
               <MessageTools role={message.role}>
                 <IconButton
@@ -504,8 +517,28 @@ const ChatMiniMapMessage = styled.button<{ $role: ChatMessage['role'] }>`
   }
 `
 
+const ChatTableScrollWrapper = styled.div`
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #b0b0b5 transparent;
+
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #b0b0b5;
+    border-radius: 6px;
+  }
+`
+
 const ChatMessageBubble = styled.div<{ role: string }>`
   max-width: 100%;
+  min-width: 0;
   padding: 10px 14px;
   border-radius: 12px;
   white-space: pre-wrap;
@@ -537,6 +570,13 @@ const ChatMessageBubble = styled.div<{ role: string }>`
     text-decoration: underline;
   }
 
+  blockquote {
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
   * html code {
     font-size: 100%;
   }
@@ -561,9 +601,11 @@ const ChatMessageBubble = styled.div<{ role: string }>`
     margin: 20px 0;
     padding: 8px;
     text-align: left;
+    max-width: 100%;
+    overflow-x: hidden;
     white-space: pre-wrap;
     word-break: break-word;
-    overflow-wrap: break-word;
+    overflow-wrap: anywhere;
   }
 
   hr {
@@ -671,18 +713,22 @@ const ChatMessageBubble = styled.div<{ role: string }>`
   }
 
   table {
-    display: inline-table;
-    width: auto;
+    width: 100%;
+    min-width: 100%;
+    table-layout: auto;
     border-top: 1px solid #919699;
     border-left: 1px solid #919699;
     border-spacing: 0;
     margin: 0;
     margin-bottom: 20px;
-    margin-right: 10px;
+  }
 
-    @media (max-width: 1260px) {
-      width: 100%;
-    }
+  table th,
+  table td {
+    width: fit-content;
+    min-width: 8rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
   }
 
   table th {
@@ -710,11 +756,6 @@ const ChatMessageBubble = styled.div<{ role: string }>`
     vertical-align: top;
     border-bottom: 1px solid #919699;
     border-right: 1px solid #919699;
-
-    @media (max-width: 1260px) {
-      white-space: pre-wrap;
-      overflow-wrap: break-word;
-    }
   }
 
   table td p {

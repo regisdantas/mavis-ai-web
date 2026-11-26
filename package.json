@@ -48,6 +48,9 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
+    "backup": "npm run backup:firestore && npm run backup:gemini",
+    "backup:firestore": "node --env-file-if-exists=.env scripts/backup-firestore.js",
+    "backup:gemini": "node --env-file-if-exists=.env scripts/backup-firestore-gemini.js",
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
@@ -84,6 +87,7 @@
     "eslint-plugin-prettier": "^4.2.5",
     "eslint-plugin-react": "^7.31.1",
     "eslint-plugin-react-hooks": "^4.6.0",
+    "firebase-admin": "^14.5.1",
     "gh-pages": "^6.3.0",
     "prettier": "^2.8.8"
   }
