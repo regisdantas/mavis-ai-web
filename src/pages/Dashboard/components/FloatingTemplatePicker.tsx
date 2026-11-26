@@ -1,5 +1,4 @@
 import React from 'react'
-import { createPortal } from 'react-dom'
 import styled from 'styled-components'
 import { TemplateOption } from '../utils/cardUtils'
 
@@ -14,7 +13,7 @@ const FloatingTemplatePicker: React.FC<FloatingTemplatePickerProps> = ({
   onPicked,
   dropdownRef,
 }) => {
-  return createPortal(
+  return (
     <TemplateDropdown
       ref={dropdownRef}
       onMouseDown={(e) => e.stopPropagation()}
@@ -23,6 +22,7 @@ const FloatingTemplatePicker: React.FC<FloatingTemplatePickerProps> = ({
       {options.map((option, index) => (
         <TemplateOptionItem
           key={index}
+          type="button"
           onMouseDown={(e) => {
             e.preventDefault()
             e.stopPropagation()
@@ -34,19 +34,19 @@ const FloatingTemplatePicker: React.FC<FloatingTemplatePickerProps> = ({
           </TemplateContent>
         </TemplateOptionItem>
       ))}
-    </TemplateDropdown>,
-    document.body
+    </TemplateDropdown>
   )
 }
 
 export default FloatingTemplatePicker
 
 const TemplateDropdown = styled.div`
-  position: absolute;
+  && {
+    width: max-content;
+    margin: 0;
+  }
 
-  top: 120px;
-  right: 50%;
-
+  position: relative;
   min-width: 220px;
   max-width: 320px;
   max-height: 320px;
@@ -93,6 +93,11 @@ const TemplateOptionItem = styled.button`
   }
 `
 const TemplateContent = styled.div`
+  && {
+    width: 100%;
+    margin: 0;
+  }
+
   display: flex;
   flex-direction: column;
   gap: 2px;

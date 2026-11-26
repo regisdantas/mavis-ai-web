@@ -25,6 +25,12 @@ export interface IEntry {
   createdAt: string
 }
 
+interface EntryHistoryAction {
+  ids: string[]
+  before: IEntry[]
+  after: IEntry[]
+}
+
 const sortEntries = (entries: IEntry[]) => {
   return [...entries].sort((a, b) => {
     if (a.date > b.date) return -1
@@ -56,15 +62,134 @@ const findEntryDocuments = async (
 
 export function useEntries(userId: string) {
   const [entries, setEntries] = React.useState<IEntry[]>([])
+  const entriesRef = React.useRef(entries)
+  const undoStackRef = React.useRef<EntryHistoryAction[]>([])
+  const redoStackRef = React.useRef<EntryHistoryAction[]>([])
+  const [, setHistoryRevision] = React.useState(0)
+  const writeQueueRef = React.useRef<Promise<void>>(Promise.resolve())
+  const previousUserIdRef = React.useRef(userId)
+
+  React.useEffect(() => {
+    if (previousUserIdRef.current === userId) {
+      return
+    }
+
+    previousUserIdRef.current = userId
+    entriesRef.current = []
+    setEntries([])
+    undoStackRef.current = []
+    redoStackRef.current = []
+    setHistoryRevision((revision) => revision + 1)
+  }, [userId])
+
+  const persistEntryChanges = React.useCallback(
+    (ids: string[], updatedEntries: IEntry[]) => {
+      if (!userId) {
+        return Promise.resolve()
+      }
+
+      const task = writeQueueRef.current.then(async () => {
+        const updatedEntriesById = new Map(updatedEntries.map((entry) => [entry.id, entry]))
+
+        await Promise.all(
+          ids.map(async (id) => {
+            const updatedEntry = updatedEntriesById.get(id)
+            const documents = await findEntryDocuments(userId, id)
+
+            if (!updatedEntry) {
+              await Promise.all(
+                documents.map((document) =>
+                  deleteDoc(doc(database, `users/${userId}/entries/${document.id}`))
+                )
+              )
+              return
+            }
+
+            if (!documents.length) {
+              await addDoc(getEntriesCollection(userId), updatedEntry)
+              return
+            }
+
+            await Promise.all(
+              documents.map((document) =>
+                setDoc(doc(database, `users/${userId}/entries/${document.id}`), updatedEntry)
+              )
+            )
+          })
+        )
+      })
+
+      writeQueueRef.current = task.catch(() => {})
+      return task
+    },
+    [userId]
+  )
+
+  const applyEntries = React.useCallback(
+    async (updatedEntries: IEntry[], deletedIds: string[] = [], recordHistory = true) => {
+      if (!userId) {
+        return
+      }
+
+      const ids = Array.from(new Set([...updatedEntries.map((entry) => entry.id), ...deletedIds]))
+
+      if (!ids.length) {
+        return
+      }
+
+      const affectedIds = new Set(ids)
+      const before = entriesRef.current.filter((entry) => affectedIds.has(entry.id))
+      const updatedEntriesById = new Map(
+        updatedEntries
+          .filter((entry) => affectedIds.has(entry.id))
+          .map((entry) => [entry.id, entry])
+      )
+      const after = Array.from(updatedEntriesById.values())
+
+      const areEqual =
+        before.length === after.length &&
+        before.every((entry) => {
+          const nextEntry = updatedEntriesById.get(entry.id)
+
+          return (
+            nextEntry !== undefined &&
+            entry.uid === nextEntry.uid &&
+            entry.content === nextEntry.content &&
+            entry.date === nextEntry.date &&
+            entry.createdAt === nextEntry.createdAt
+          )
+        })
+
+      if (areEqual) {
+        return
+      }
+
+      const nextEntries = sortEntries([
+        ...entriesRef.current.filter((entry) => !affectedIds.has(entry.id)),
+        ...after,
+      ])
+      entriesRef.current = nextEntries
+      setEntries(nextEntries)
+
+      if (recordHistory) {
+        undoStackRef.current.push({ ids, before, after })
+        redoStackRef.current = []
+        setHistoryRevision((revision) => revision + 1)
+      }
+
+      await persistEntryChanges(ids, after)
+    },
+    [persistEntryChanges, userId]
+  )
 
   const fetchEntries = React.useCallback(async () => {
     if (!userId) {
       return
     }
 
-    const entriesRef = getEntriesCollection(userId)
+    const entriesCollectionRef = getEntriesCollection(userId)
 
-    const snapshot = await getDocs(entriesRef)
+    const snapshot = await getDocs(entriesCollectionRef)
 
     const fetchedEntries: IEntry[] = snapshot.docs.map((document) => {
       const entry = document.data() as IEntry
@@ -75,7 +200,9 @@ export function useEntries(userId: string) {
       }
     })
 
-    setEntries(sortEntries(fetchedEntries))
+    const sortedEntries = sortEntries(fetchedEntries)
+    entriesRef.current = sortedEntries
+    setEntries(sortedEntries)
   }, [userId])
 
   const addEntry = React.useCallback(
@@ -92,13 +219,11 @@ export function useEntries(userId: string) {
         createdAt: new Date().toISOString(),
       }
 
-      setEntries((current) => sortEntries([...current, newEntry]))
-
-      await addDoc(getEntriesCollection(userId), newEntry)
+      await applyEntries([newEntry])
 
       return newEntry
     },
-    [userId]
+    [applyEntries, userId]
   )
 
   const updateEntry = React.useCallback(
@@ -107,30 +232,15 @@ export function useEntries(userId: string) {
         return
       }
 
-      const existingEntry = entries.find((entry) => entry.id === id)
+      const existingEntry = entriesRef.current.find((entry) => entry.id === id)
 
       if (!existingEntry) {
         return
       }
 
-      const updatedEntry: IEntry = {
-        ...existingEntry,
-        content,
-      }
-
-      setEntries((current) =>
-        sortEntries(current.map((entry) => (entry.id === id ? updatedEntry : entry)))
-      )
-
-      const documents = await findEntryDocuments(userId, id)
-
-      await Promise.all(
-        documents.map((document) =>
-          setDoc(doc(database, `users/${userId}/entries/${document.id}`), updatedEntry)
-        )
-      )
+      await applyEntries([{ ...existingEntry, content }])
     },
-    [entries, userId]
+    [applyEntries, userId]
   )
 
   const replaceEntry = React.useCallback(
@@ -139,26 +249,18 @@ export function useEntries(userId: string) {
         return
       }
 
-      setEntries((current) =>
-        sortEntries(
-          current.map((currentEntry) => (currentEntry.id === entry.id ? entry : currentEntry))
-        )
-      )
+      if (!entriesRef.current.some((currentEntry) => currentEntry.id === entry.id)) {
+        return
+      }
 
-      const documents = await findEntryDocuments(userId, entry.id)
-
-      await Promise.all(
-        documents.map((document) =>
-          setDoc(doc(database, `users/${userId}/entries/${document.id}`), entry)
-        )
-      )
+      await applyEntries([entry])
     },
-    [userId]
+    [applyEntries, userId]
   )
 
   const renameTag = React.useCallback(
     async (oldTag: string, newTag: string) => {
-      const affectedEntries = entries.filter((entry) => {
+      const affectedEntries = entriesRef.current.filter((entry) => {
         try {
           const content = JSON.parse(entry.content)
           return (content.tags || []).includes(oldTag)
@@ -167,26 +269,26 @@ export function useEntries(userId: string) {
         }
       })
 
-      await Promise.all(
-        affectedEntries.map(async (entry) => {
-          const content = JSON.parse(entry.content)
+      const updatedEntries = affectedEntries.map((entry) => {
+        const content = JSON.parse(entry.content)
 
-          await replaceEntry({
-            ...entry,
-            content: JSON.stringify({
-              ...content,
-              tags: (content.tags || []).map((tag: string) => (tag === oldTag ? newTag : tag)),
-            }),
-          })
-        })
-      )
+        return {
+          ...entry,
+          content: JSON.stringify({
+            ...content,
+            tags: (content.tags || []).map((tag: string) => (tag === oldTag ? newTag : tag)),
+          }),
+        }
+      })
+
+      await applyEntries(updatedEntries)
     },
-    [entries, replaceEntry]
+    [applyEntries]
   )
 
   const deleteTag = React.useCallback(
     async (tagToDelete: string) => {
-      const affectedEntries = entries.filter((entry) => {
+      const affectedEntries = entriesRef.current.filter((entry) => {
         try {
           const content = JSON.parse(entry.content)
           return (content.tags || []).includes(tagToDelete)
@@ -195,63 +297,63 @@ export function useEntries(userId: string) {
         }
       })
 
-      await Promise.all(
-        affectedEntries.map(async (entry) => {
-          const content = JSON.parse(entry.content)
+      const updatedEntries = affectedEntries.map((entry) => {
+        const content = JSON.parse(entry.content)
 
-          await replaceEntry({
-            ...entry,
-            content: JSON.stringify({
-              ...content,
-              tags: (content.tags || []).filter((tag: string) => tag !== tagToDelete),
-            }),
-          })
-        })
-      )
+        return {
+          ...entry,
+          content: JSON.stringify({
+            ...content,
+            tags: (content.tags || []).filter((tag: string) => tag !== tagToDelete),
+          }),
+        }
+      })
+
+      await applyEntries(updatedEntries)
     },
-    [entries, replaceEntry]
+    [applyEntries]
   )
 
   const addTagToEntries = React.useCallback(
     async (entryIds: string[], tag: string) => {
-      const affectedEntries = entries.filter((entry) => entryIds.includes(entry.id))
+      const affectedEntries = entriesRef.current.filter((entry) => entryIds.includes(entry.id))
 
-      await Promise.all(
-        affectedEntries.map(async (entry) => {
-          const content = JSON.parse(entry.content)
+      const updatedEntries = affectedEntries.map((entry) => {
+        const content = JSON.parse(entry.content)
 
-          await replaceEntry({
-            ...entry,
-            content: JSON.stringify({
-              ...content,
-              tags: Array.from(new Set([...(content.tags || []), tag])),
-            }),
-          })
-        })
-      )
+        return {
+          ...entry,
+          content: JSON.stringify({
+            ...content,
+            tags: Array.from(new Set([...(content.tags || []), tag])),
+          }),
+        }
+      })
+
+      await applyEntries(updatedEntries)
     },
-    [entries, replaceEntry]
+    [applyEntries]
   )
 
   const removeTagFromEntries = React.useCallback(
     async (entryIds: string[], tagToRemove: string) => {
-      const affectedEntries = entries.filter((entry) => entryIds.includes(entry.id))
+      const affectedEntries = entriesRef.current.filter((entry) => entryIds.includes(entry.id))
 
-      await Promise.all(
-        affectedEntries.map(async (entry) => {
-          const content = JSON.parse(entry.content)
+      const updatedEntries = affectedEntries.map((entry) => {
+        const content = JSON.parse(entry.content)
 
-          await replaceEntry({
-            ...entry,
-            content: JSON.stringify({
-              ...content,
-              tags: (content.tags || []).filter((tag: string) => tag !== tagToRemove),
-            }),
-          })
-        })
-      )
+        return {
+          ...entry,
+          content: JSON.stringify({
+            ...content,
+            tags: (content.tags || []).filter((tag: string) => tag !== tagToRemove),
+          }),
+        }
+      })
+
+      await applyEntries(updatedEntries)
     },
-    [entries, replaceEntry]
+    [applyEntries]
   )
 
   const updateEntryDate = React.useCallback(
@@ -260,18 +362,15 @@ export function useEntries(userId: string) {
         return
       }
 
-      const existingEntry = entries.find((entry) => entry.id === id)
+      const existingEntry = entriesRef.current.find((entry) => entry.id === id)
 
       if (!existingEntry) {
         return
       }
 
-      await replaceEntry({
-        ...existingEntry,
-        date,
-      })
+      await applyEntries([{ ...existingEntry, date }])
     },
-    [entries, replaceEntry, userId]
+    [applyEntries, userId]
   )
 
   const deleteEntry = React.useCallback(
@@ -280,22 +379,48 @@ export function useEntries(userId: string) {
         return
       }
 
-      setEntries((current) => current.filter((entry) => entry.id !== id))
-
-      const documents = await findEntryDocuments(userId, id)
-
-      await Promise.all(
-        documents.map((document) =>
-          deleteDoc(doc(database, `users/${userId}/entries/${document.id}`))
-        )
-      )
+      await applyEntries([], [id])
     },
-    [userId]
+    [applyEntries, userId]
   )
+
+  const undoLastChange = React.useCallback(async () => {
+    const action = undoStackRef.current.pop()
+
+    if (!action) {
+      return
+    }
+
+    redoStackRef.current.push(action)
+    setHistoryRevision((revision) => revision + 1)
+    const entriesToDelete = action.ids.filter(
+      (id) => !action.before.some((entry) => entry.id === id)
+    )
+
+    await applyEntries(action.before, entriesToDelete, false)
+  }, [applyEntries])
+
+  const redoLastChange = React.useCallback(async () => {
+    const action = redoStackRef.current.pop()
+
+    if (!action) {
+      return
+    }
+
+    undoStackRef.current.push(action)
+    setHistoryRevision((revision) => revision + 1)
+    const entriesToDelete = action.ids.filter(
+      (id) => !action.after.some((entry) => entry.id === id)
+    )
+
+    await applyEntries(action.after, entriesToDelete, false)
+  }, [applyEntries])
+
+  const canUndo = undoStackRef.current.length > 0
+  const canRedo = redoStackRef.current.length > 0
 
   return {
     entries,
-    setEntries,
     fetchEntries,
     addEntry,
     updateEntry,
@@ -306,5 +431,10 @@ export function useEntries(userId: string) {
     deleteTag,
     addTagToEntries,
     removeTagFromEntries,
+    applyEntries,
+    undoLastChange,
+    redoLastChange,
+    canUndo,
+    canRedo,
   }
 }

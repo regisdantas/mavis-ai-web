@@ -37,6 +37,15 @@ const renderExplorer = (props: Partial<React.ComponentProps<typeof ExplorerSideB
   )
 
 describe('ExplorerSideBar fixed-tag menus', () => {
+  it('opens the notes explorer from its side-menu control', () => {
+    const setExplorerExpanded = jest.fn()
+    renderExplorer({ explorerExpanded: false, setExplorerExpanded })
+
+    fireEvent.click(screen.getByTitle('Menu'))
+
+    expect(setExplorerExpanded).toHaveBeenCalledWith(true)
+  })
+
   it('offers selected-note actions without rename or delete for regular system tags', () => {
     renderExplorer()
 

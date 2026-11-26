@@ -1,28 +1,19 @@
 import React from 'react'
 import styled from 'styled-components'
-import { UserAuth } from '../../../../context/AuthContext'
 import { isJsonString, formatDate } from '../../../../utils'
 import CardHeader from './CardHeader'
 import CardContent from './CardContent'
-import CardActions from './CardActions'
 import CardTags from './CardTags'
 
 import { TemplateOption } from '../../utils/cardUtils'
 import { processMacros } from '../../../../services/templateMacros'
 import { renderTemplate, executeExpression } from '../../../../services/templateEngine'
 
-import {
-  noteColors,
-  parseNoteContent,
-  getArchiveTags,
-  getTrashTags,
-  formatTag,
-} from '../../utils/cardUtils'
+import { noteColors, parseNoteContent, formatTag } from '../../utils/cardUtils'
 
 import { useLocationData } from '../../hooks/useLocationData'
 import { useCardClickOutside } from '../../hooks/useCardClickOutside'
 import { useTextareaCaret } from '../../hooks/useTextareaCaret'
-import { useNoteAI } from '../../hooks/useNoteAI'
 import { useNoteTags } from '../../hooks/useNoteTags'
 
 interface ICardProps {
@@ -32,7 +23,6 @@ interface ICardProps {
   content: string
   notesLocked: boolean
 
-  onDeleteCard: (id: string, permanent?: boolean) => void
   onChangeContent: (id: string, content: string) => Promise<void>
   onChangeDate: (id: string, date: string) => void
 
@@ -40,6 +30,8 @@ interface ICardProps {
   selected: boolean
   onToggleSelection: (id: string) => void
   templateOptions: TemplateOption[]
+  onEditorFocus: (id: string, textarea: HTMLTextAreaElement) => void
+  onEditorBlur: (id: string, textarea: HTMLTextAreaElement) => void
 }
 
 export const Card: React.FC<ICardProps> = ({
@@ -47,31 +39,30 @@ export const Card: React.FC<ICardProps> = ({
   date,
   content,
   notesLocked,
-  onDeleteCard,
   onChangeContent,
   onChangeDate,
   tags,
   selected,
   onToggleSelection,
   templateOptions,
+  onEditorFocus,
+  onEditorBlur,
 }) => {
   const [editingContent, setEditingContent] = React.useState(false)
+  const [toolboxOpen, setToolboxOpen] = React.useState(false)
   const [showColorPicker, setShowColorPicker] = React.useState(false)
   const [showTemplatePicker, setShowTemplatePicker] = React.useState(false)
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
   const markdownRef = React.useRef<HTMLDivElement>(null)
   const titleRef = React.useRef<HTMLSpanElement>(null)
   const tagPickerRef = React.useRef<HTMLDivElement>(null)
-  const otherTagsDropdownRef = React.useRef<HTMLDetailsElement>(null)
   const colorPickerRef = React.useRef<HTMLDivElement>(null)
   const templatePickerRef = React.useRef<HTMLDivElement>(null)
+  const toolboxRef = React.useRef<HTMLDivElement>(null)
   const tagDropdownRef = React.useRef<HTMLDivElement>(null)
   const colorDropdownRef = React.useRef<HTMLDivElement>(null)
   const templateDropdownRef = React.useRef<HTMLDivElement>(null)
-  const aiPromptRef = React.useRef<HTMLDivElement>(null)
-  const aiPromptDropdownRef = React.useRef<HTMLDivElement>(null)
   const [isMobile, setIsMobile] = React.useState(window.innerWidth < 1260)
-  const { user } = UserAuth()
   const { temperature, weather, location } = useLocationData()
   const { setCursorPosition, findBestCursorPosition } = useTextareaCaret({
     editing: editingContent,
@@ -81,13 +72,11 @@ export const Card: React.FC<ICardProps> = ({
   useCardClickOutside({
     tagPickerRef,
     tagDropdownRef,
-    otherTagsDropdownRef,
     colorPickerRef,
     colorDropdownRef,
     templatePickerRef,
     templateDropdownRef,
-    aiPromptRef,
-    aiPromptDropdownRef,
+    toolboxRef,
     closeTagPicker: () => {
       setShowTagPicker(false)
       setCreatingTag(false)
@@ -98,8 +87,8 @@ export const Card: React.FC<ICardProps> = ({
     closeTemplatePicker: () => {
       setShowTemplatePicker(false)
     },
-    closeAIPrompt: () => {
-      closeAssistant()
+    closeToolbox: () => {
+      setToolboxOpen(false)
     },
   })
 
@@ -112,20 +101,6 @@ export const Card: React.FC<ICardProps> = ({
 
     return () => window.removeEventListener('resize', handleResize)
   }, [])
-
-  const archiveNote = () => {
-    if (notesLocked) return
-
-    const updatedTags = getArchiveTags(objContent.tags)
-
-    onChangeContent(
-      id,
-      JSON.stringify({
-        ...objContent,
-        tags: updatedTags,
-      })
-    )
-  }
 
   const objContent = React.useMemo(() => parseNoteContent(content, isJsonString), [content])
   const readOnly = notesLocked
@@ -174,7 +149,7 @@ export const Card: React.FC<ICardProps> = ({
   )
 
   const [value, setValue] = React.useState(objContent.text || '')
-  const [history, setHistory] = React.useState<string[]>([])
+  const previousPersistedTextRef = React.useRef(objContent.text || '')
   const savedDraftRef = React.useRef({
     text: objContent.text || '',
     title: objContent.title || '',
@@ -186,6 +161,15 @@ export const Card: React.FC<ICardProps> = ({
       title: objContent.title || '',
     }
   }, [objContent.text, objContent.title])
+
+  React.useEffect(() => {
+    const persistedText = objContent.text || ''
+
+    if (previousPersistedTextRef.current !== persistedText) {
+      previousPersistedTextRef.current = persistedText
+      setValue(persistedText)
+    }
+  }, [objContent.text])
 
   const saveCurrentDraft = React.useCallback(
     (nextText?: string, nextTitle?: string) => {
@@ -259,10 +243,7 @@ export const Card: React.FC<ICardProps> = ({
     setShowTemplatePicker(false)
     setShowTagPicker(false)
     setCreatingTag(false)
-
-    if (otherTagsDropdownRef.current) {
-      otherTagsDropdownRef.current.open = false
-    }
+    setToolboxOpen(false)
 
     if (editingContent) {
       textareaRef.current?.blur()
@@ -274,55 +255,12 @@ export const Card: React.FC<ICardProps> = ({
     setShowTagPicker,
     setShowColorPicker,
     setShowTemplatePicker,
+    setToolboxOpen,
   ])
-
-  const pushHistory = React.useCallback((currentText: string) => {
-    setHistory((h) => {
-      if (h[h.length - 1] === currentText) {
-        return h
-      }
-
-      return [...h, currentText]
-    })
-  }, [])
-
-  const {
-    aiLoading,
-    assistantOpen,
-    instruction,
-    setInstruction,
-    apiKeyInput,
-    setApiKeyInput,
-    requiresApiKey,
-    error: aiError,
-    openAssistant,
-    closeAssistant,
-    clearInstruction,
-    submitInstruction,
-  } = useNoteAI({
-    userId: user?.uid,
-    value,
-    textareaRef,
-    pushHistory,
-    onContentChange: (updated) => {
-      if (readOnly) return
-
-      setValue(updated)
-
-      onChangeContent(
-        id,
-        JSON.stringify({
-          ...objContent,
-          text: updated,
-        })
-      )
-    },
-  })
 
   const setTemplate = (option: TemplateOption) => {
     if (readOnly) return
 
-    pushHistory(value)
     let text = option.text.replace(/\\\$\{/g, '${')
     text = localProcessMacros(text)
 
@@ -342,6 +280,7 @@ export const Card: React.FC<ICardProps> = ({
     setValue(text)
 
     setShowTemplatePicker(false)
+    setToolboxOpen(false)
   }
 
   const processAndDisplayMarkdown = (text: string) =>
@@ -359,7 +298,6 @@ export const Card: React.FC<ICardProps> = ({
   const handleExecuteExpression = (expression: string) => {
     if (readOnly) return
 
-    pushHistory(value)
     const newText = executeExpression(value, expression, {
       temperature,
       weather,
@@ -374,25 +312,6 @@ export const Card: React.FC<ICardProps> = ({
       JSON.stringify({
         ...objContent,
         text: newText,
-      })
-    )
-  }
-
-  const trashNote = () => {
-    if (readOnly) return
-
-    if (hasTag('trash')) {
-      onDeleteCard(id, true)
-      return
-    }
-
-    const updatedTags = getTrashTags(objContent.tags)
-
-    onChangeContent(
-      id,
-      JSON.stringify({
-        ...objContent,
-        tags: updatedTags,
       })
     )
   }
@@ -413,28 +332,6 @@ export const Card: React.FC<ICardProps> = ({
     ])
   }
 
-  const undoLastChange = () => {
-    if (readOnly) return
-
-    const previous = history[history.length - 1]
-
-    if (!previous) {
-      return
-    }
-
-    setHistory((h) => h.slice(0, -1))
-
-    setValue(previous)
-
-    onChangeContent(
-      id,
-      JSON.stringify({
-        ...objContent,
-        text: previous,
-      })
-    )
-  }
-
   return (
     <CardContainer key={id} selected={selected}>
       <div className="ContentContainer" style={{ backgroundColor: objContent.color || '#eee' }}>
@@ -445,6 +342,33 @@ export const Card: React.FC<ICardProps> = ({
           collapsed={objContent.collapsed}
           selected={selected}
           onToggleSelection={() => onToggleSelection(id)}
+          toolboxOpen={toolboxOpen}
+          setToolboxOpen={setToolboxOpen}
+          showColorPicker={showColorPicker}
+          showTemplatePicker={showTemplatePicker}
+          setShowColorPicker={setShowColorPicker}
+          setShowTemplatePicker={setShowTemplatePicker}
+          toolboxRef={toolboxRef}
+          colorPickerRef={colorPickerRef}
+          templatePickerRef={templatePickerRef}
+          colorDropdownRef={colorDropdownRef}
+          templateDropdownRef={templateDropdownRef}
+          noteColors={noteColors}
+          templateOptions={templateOptions}
+          onColorSelected={(selectedColor) => {
+            if (readOnly) return
+
+            void onChangeContent(
+              id,
+              JSON.stringify({
+                ...objContent,
+                color: selectedColor,
+              })
+            )
+            setShowColorPicker(false)
+            setToolboxOpen(false)
+          }}
+          onTemplateSelected={setTemplate}
           isFavorite={hasTag('favorite')}
           copyFormattedContent={copyFormattedContent}
           onToggleFavorite={() => {
@@ -467,6 +391,8 @@ export const Card: React.FC<ICardProps> = ({
             value={value}
             readOnly={readOnly}
             editing={editingContent}
+            onEditorFocus={(textarea) => onEditorFocus(id, textarea)}
+            onEditorBlur={(textarea) => onEditorBlur(id, textarea)}
             textareaRef={textareaRef}
             markdownRef={markdownRef}
             setValue={setValue}
@@ -476,8 +402,6 @@ export const Card: React.FC<ICardProps> = ({
             onSave={() => saveCurrentDraft(textareaRef.current?.value ?? value)}
             onMarkdownClick={(clickedText, sourceOffset) => {
               if (readOnly) return
-
-              pushHistory(value)
 
               const pos = sourceOffset ?? findBestCursorPosition(clickedText, value)
 
@@ -490,7 +414,6 @@ export const Card: React.FC<ICardProps> = ({
           <span className="footbox">
             <CardTags
               tagDropdownRef={tagDropdownRef}
-              otherTagsDropdownRef={otherTagsDropdownRef}
               date={date}
               tags={objContent.tags}
               availableTags={tags}
@@ -512,65 +435,6 @@ export const Card: React.FC<ICardProps> = ({
               createTag={createTag}
               formatTag={formatTag}
               formatDate={formatDate}
-            />
-
-            <CardActions
-              colorDropdownRef={colorDropdownRef}
-              templateDropdownRef={templateDropdownRef}
-              aiPromptRef={aiPromptRef}
-              aiPromptDropdownRef={aiPromptDropdownRef}
-              readOnly={readOnly}
-              aiLoading={aiLoading}
-              isArchived={hasTag('archive')}
-              isTrash={hasTag('trash')}
-              showColorPicker={showColorPicker}
-              showTemplatePicker={showTemplatePicker}
-              colorPickerRef={colorPickerRef}
-              templatePickerRef={templatePickerRef}
-              noteColors={noteColors}
-              templateOptions={templateOptions}
-              undoLastChange={undoLastChange}
-              assistantOpen={assistantOpen}
-              instruction={instruction}
-              setInstruction={setInstruction}
-              apiKeyInput={apiKeyInput}
-              setApiKeyInput={setApiKeyInput}
-              requiresApiKey={requiresApiKey}
-              aiError={aiError}
-              openAssistant={() => {
-                if (!readOnly) {
-                  void openAssistant()
-                }
-              }}
-              closeAssistant={closeAssistant}
-              clearInstruction={clearInstruction}
-              submitInstruction={submitInstruction}
-              archiveNote={() => {
-                if (!readOnly) {
-                  archiveNote()
-                }
-              }}
-              trashNote={() => {
-                if (!readOnly) {
-                  trashNote()
-                }
-              }}
-              setShowColorPicker={setShowColorPicker}
-              setShowTemplatePicker={setShowTemplatePicker}
-              onColorSelected={(selectedColor) => {
-                if (readOnly) return
-
-                onChangeContent(
-                  id,
-                  JSON.stringify({
-                    ...objContent,
-                    color: selectedColor,
-                  })
-                )
-
-                setShowColorPicker(false)
-              }}
-              onTemplateSelected={setTemplate}
             />
           </span>
         </footer>
@@ -609,9 +473,11 @@ box-shadow: ${({ selected }) => (selected ? '0 0 0 3px #2563eb' : 'none')};  wid
 
     .footer {
       width: 100%;
-      height: 44px;
+      min-height: 44px;
+      height: auto;
       display: flex;
       flex-direction: row;
+      align-items: center;
       justify-content: flex-end;
       border-bottom: 2px solid rgba(0, 0, 0, 0.2);
       padding: 10px;

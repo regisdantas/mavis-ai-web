@@ -235,8 +235,10 @@ const ClearButton = styled.button`
   }
 
   &:disabled {
+    background: #e5e7eb;
+    color: #9ca3af;
     cursor: not-allowed;
-    opacity: 0.55;
+    opacity: 1;
   }
 `
 
@@ -260,7 +262,9 @@ const SendButton = styled.button`
   }
 
   &:disabled {
+    background: #9ca3af;
+    color: #fff;
     cursor: not-allowed;
-    opacity: 0.55;
+    opacity: 1;
   }
 `

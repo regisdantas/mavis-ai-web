@@ -44,6 +44,14 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  color: #9ca3af;
+}
+
+button:disabled svg {
+  color: inherit;
+}
+
 a{
   color: inherit;
   text-decoration: none;
@@ -71,15 +79,17 @@ export const IconButton = styled.div<IconButtonProps>`
 
   border-radius: 10px;
 
-  opacity: ${({ disabled }) => (disabled ? 0.4 : 1)};
+  opacity: ${({ disabled }) => (disabled ? 0.6 : 1)};
   pointer-events: ${({ disabled }) => (disabled ? 'none' : 'auto')};
   cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
+  color: ${({ disabled }) => (disabled ? '#9ca3af' : 'inherit')};
 
   transition: all 0.2s;
 
   svg {
     flex-shrink: 0;
-    color: ${({ selected }) => (selected ? '#2563eb' : '#2e2e2e;')} !important;
+    color: ${({ disabled, selected }) =>
+      disabled ? '#9ca3af' : selected ? '#2563eb' : '#2e2e2e;'} !important;
   }
 
   span {

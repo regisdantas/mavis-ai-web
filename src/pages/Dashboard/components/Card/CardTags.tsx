@@ -2,7 +2,7 @@ import React from 'react'
 import styled from 'styled-components'
 import { createPortal } from 'react-dom'
 import { IoMdAddCircleOutline } from 'react-icons/io'
-import { FiChevronDown, FiTag } from 'react-icons/fi'
+import { FiTag } from 'react-icons/fi'
 
 interface CardTagsProps {
   date: string
@@ -12,7 +12,6 @@ interface CardTagsProps {
 
   tagPickerRef: React.RefObject<HTMLDivElement>
   tagDropdownRef: React.RefObject<HTMLDivElement>
-  otherTagsDropdownRef: React.RefObject<HTMLDetailsElement>
 
   showTagPicker: boolean
   creatingTag: boolean
@@ -37,7 +36,6 @@ const CardTags: React.FC<CardTagsProps> = ({
   readOnly,
   tagPickerRef,
   tagDropdownRef,
-  otherTagsDropdownRef,
   showTagPicker,
   creatingTag,
   newTagName,
@@ -54,50 +52,32 @@ const CardTags: React.FC<CardTagsProps> = ({
   const dateInputRef = React.useRef<HTMLInputElement>(null)
   return (
     <Container>
-      <TagList>
-        <>
-          <DateChip
-            $disabled={readOnly}
-            aria-disabled={readOnly}
-            onClick={() => {
-              if (readOnly) return
+      <DateChip
+        $disabled={readOnly}
+        aria-disabled={readOnly}
+        onClick={() => {
+          if (readOnly) return
 
-              dateInputRef.current?.showPicker?.()
-              dateInputRef.current?.click()
-            }}
-          >
-            {formatDate(date)}
-          </DateChip>
+          dateInputRef.current?.showPicker?.()
+          dateInputRef.current?.click()
+        }}
+      >
+        {formatDate(date)}
+      </DateChip>
 
-          <input
-            ref={dateInputRef}
-            type="date"
-            value={date}
-            style={{ display: 'none' }}
-            onChange={(e) => onDateChange(e.target.value)}
-          />
-        </>
-      </TagList>
+      <input
+        ref={dateInputRef}
+        type="date"
+        value={date}
+        style={{ display: 'none' }}
+        onChange={(e) => onDateChange(e.target.value)}
+      />
 
-      {tags.length > 0 && (
-        <AssignedTags ref={otherTagsDropdownRef}>
-          <AssignedTagsSummary
-            aria-label={`Show ${tags.length} note ${tags.length === 1 ? 'tag' : 'tags'}`}
-            title={`${tags.length} note ${tags.length === 1 ? 'tag' : 'tags'}`}
-          >
-            <FiTag />
-            <span>{tags.length}</span>
-            <FiChevronDown />
-          </AssignedTagsSummary>
-          <AssignedTagsList>
-            {tags.map((tag) => (
-              <TagChip key={tag} type="button" disabled={readOnly} onClick={() => toggleTag(tag)}>
-                {formatTag(tag)}
-              </TagChip>
-            ))}
-          </AssignedTagsList>
-        </AssignedTags>
-      )}
+      {tags.map((tag) => (
+        <TagChip key={tag} type="button" disabled={readOnly} onClick={() => toggleTag(tag)}>
+          {formatTag(tag)}
+        </TagChip>
+      ))}
 
       <TagPicker ref={tagPickerRef}>
         {!readOnly && (
@@ -177,15 +157,17 @@ export default CardTags
 
 const Container = styled.div`
   && {
-    width: fit-content;
+    width: 100%;
+    min-width: 0;
     margin-left: 0;
   }
 
   display: flex;
   align-items: center;
-  flex-direction: row !important;
-  justify-content: flex-start !important;
-  gap: 8px;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 6px;
 `
 
 const DateChip = styled.span<{ $disabled: boolean }>`
@@ -205,72 +187,6 @@ const DateChip = styled.span<{ $disabled: boolean }>`
   cursor: ${({ $disabled }) => ($disabled ? 'default' : 'pointer')};
 
   transition: 0.2s;
-`
-
-const TagList = styled.div`
-  && {
-    width: fit-content;
-    margin-left: 0;
-  }
-
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-start;
-  width: fit-content;
-  margin-left: 0;
-`
-
-const AssignedTags = styled.details`
-  position: relative;
-  flex: 0 0 auto;
-`
-
-const AssignedTagsSummary = styled.summary`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  height: 22px;
-  min-height: 22px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: rgba(79, 70, 229, 0.12);
-  color: #4338ca;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
-  list-style: none;
-
-  &::-webkit-details-marker {
-    display: none;
-  }
-
-  svg {
-    width: 14px;
-    height: 14px;
-  }
-`
-
-const AssignedTagsList = styled.div`
-  && {
-    width: max-content;
-    margin-left: 0;
-  }
-
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 0;
-  z-index: 20;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  width: max-content;
-  min-width: 120px;
-  max-width: min(280px, 80vw);
-  padding: 8px;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.08);
 `
 
 const TagChip = styled.button`
@@ -298,8 +214,9 @@ const TagChip = styled.button`
   }
 
   &:disabled {
+    background: rgba(156, 163, 175, 0.12);
+    color: #9ca3af;
     cursor: default;
-    opacity: 0.75;
   }
 `
 
@@ -310,7 +227,7 @@ const TagPicker = styled.div`
   }
 
   position: relative;
-  flex: 0 0;
+  flex: 0 0 auto;
   width: fit-content;
   margin: 0;
 `

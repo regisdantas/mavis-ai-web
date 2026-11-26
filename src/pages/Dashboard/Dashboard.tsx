@@ -5,8 +5,8 @@ import { useEntryFilter } from './hooks/useEntryFilter'
 import { useEntries } from './hooks/useEntries'
 import { UserAuth } from '../../context/AuthContext'
 import { HeaderPortal } from '../../components/HeaderPortal'
-import { defaultContent } from './utils/cardUtils'
-import { getTags } from '../../utils'
+import { defaultContent, getArchiveTags, parseNoteContent } from './utils/cardUtils'
+import { getTags, isJsonString } from '../../utils'
 import { getTagPinPreferences, saveTagPinPreferences } from '../../services/tagPinPreferences'
 import { useDashboard } from './context/DashboardContext'
 import { ExplorerSideBar } from './components/ExplorerSideBar'
@@ -15,6 +15,7 @@ import { Chat } from './components/Chat'
 import { ChatToolbar } from './components/ChatToolbar'
 import { ChatSideBar } from './components/ChatSideBar'
 import { ChatAiProvider } from './context/ChatAiContext'
+import { useNoteAI } from './hooks/useNoteAI'
 
 interface DashboardProps {
   explorerExpanded: boolean
@@ -57,12 +58,16 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
     fetchEntries,
     addEntry,
     updateEntry,
-    deleteEntry,
     updateEntryDate,
     renameTag,
     deleteTag,
     addTagToEntries,
     removeTagFromEntries,
+    applyEntries,
+    undoLastChange,
+    redoLastChange,
+    canUndo,
+    canRedo,
   } = useEntries(user?.uid || '')
   const {
     searchContent,
@@ -134,10 +139,16 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
 
   const [hoveredCardId, setHoveredCardId] = React.useState<string | null>(null)
   const [selectedNoteIds, setSelectedNoteIds] = React.useState<string[]>([])
+  const activeEditorRef = React.useRef<{
+    id: string
+    textarea: HTMLTextAreaElement
+  } | null>(null)
   const notesPanelRef = React.useRef<HTMLDivElement>(null)
   const [notesPanelWidth, setNotesPanelWidth] = React.useState(0)
+  const [notesToolbarOffset, setNotesToolbarOffset] = React.useState(0)
   const chatPanelRef = React.useRef<HTMLDivElement>(null)
   const [chatPanelWidth, setChatPanelWidth] = React.useState(0)
+  const [chatToolbarOffset, setChatToolbarOffset] = React.useState(0)
   const [notesMinimized, setNotesMinimized] = React.useState(false)
   const [chatMinimized, setChatMinimized] = React.useState(false)
   const [chatSessionsExpanded, setChatSessionsExpanded] = React.useState(false)
@@ -204,7 +215,14 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
 
   React.useLayoutEffect(() => {
     const update = () => {
-      setChatPanelWidth(chatPanelRef.current?.offsetWidth ?? 0)
+      const panel = chatPanelRef.current
+      const headerPortal = document.getElementById('header-portal')
+      setChatPanelWidth(panel?.offsetWidth ?? 0)
+      setChatToolbarOffset(
+        panel && headerPortal
+          ? panel.getBoundingClientRect().left - headerPortal.getBoundingClientRect().left
+          : 0
+      )
     }
 
     update()
@@ -221,11 +239,18 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
       resizeObserver.disconnect()
       window.removeEventListener('resize', update)
     }
-  }, [])
+  }, [explorerExpanded, notesMinimized, chatMinimized, chatSessionsExpanded])
 
   React.useLayoutEffect(() => {
     const update = () => {
-      setNotesPanelWidth(notesPanelRef.current?.offsetWidth ?? 0)
+      const panel = notesPanelRef.current
+      const headerPortal = document.getElementById('header-portal')
+      setNotesPanelWidth(panel?.offsetWidth ?? 0)
+      setNotesToolbarOffset(
+        panel && headerPortal
+          ? panel.getBoundingClientRect().left - headerPortal.getBoundingClientRect().left
+          : 0
+      )
     }
 
     update()
@@ -242,7 +267,7 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
       resizeObserver.disconnect()
       window.removeEventListener('resize', update)
     }
-  }, [])
+  }, [explorerExpanded, notesMinimized, chatMinimized, chatSessionsExpanded])
 
   const toggleNoteSelection = React.useCallback((id: string) => {
     setSelectedNoteIds((current) =>
@@ -349,6 +374,81 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
       })
   }, [entries, selectedNoteIds])
 
+  const handleEditorFocus = React.useCallback((id: string, textarea: HTMLTextAreaElement) => {
+    activeEditorRef.current = { id, textarea }
+  }, [])
+
+  const handleEditorBlur = React.useCallback((id: string, textarea: HTMLTextAreaElement) => {
+    const activeEditor = activeEditorRef.current
+
+    if (activeEditor?.id === id && activeEditor.textarea === textarea) {
+      activeEditorRef.current = null
+    }
+  }, [])
+
+  const getAssistantNoteContext = React.useCallback(() => {
+    const activeEditor = activeEditorRef.current
+
+    if (activeEditor?.textarea.isConnected) {
+      return {
+        entryId: activeEditor.id,
+        value: activeEditor.textarea.value,
+        textarea: activeEditor.textarea,
+      }
+    }
+
+    const selectedEntry = entries.find((entry) => entry.id === selectedNoteIds[0])
+
+    if (!selectedEntry) {
+      return null
+    }
+
+    const content = parseNoteContent(selectedEntry.content, isJsonString)
+
+    return {
+      entryId: selectedEntry.id,
+      value: content.text || '',
+      textarea: null,
+    }
+  }, [entries, selectedNoteIds])
+
+  const handleAssistantContentChange = React.useCallback(
+    async (id: string, text: string) => {
+      if (notesLocked) {
+        throw new Error('Unlock note editing before using the AI assistant.')
+      }
+
+      const entry = entries.find((currentEntry) => currentEntry.id === id)
+
+      if (!entry) {
+        throw new Error('The note selected for AI editing could not be found.')
+      }
+
+      const parsedContent = isJsonString(entry.content)
+        ? JSON.parse(entry.content)
+        : { ...defaultContent, text: entry.content }
+      const content =
+        parsedContent && typeof parsedContent === 'object'
+          ? parsedContent
+          : { ...defaultContent, text: entry.content }
+
+      await updateEntry(
+        id,
+        JSON.stringify({
+          ...content,
+          text,
+        })
+      )
+    },
+    [entries, notesLocked, updateEntry]
+  )
+
+  const noteAssistant = useNoteAI({
+    userId: user?.uid,
+    getNoteContext: getAssistantNoteContext,
+    onContentChange: handleAssistantContentChange,
+  })
+
   const handleCopyAllNotes = async () => {
     const text =
       selectedNotesText.length > 0
@@ -407,36 +507,6 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
     })
   }
 
-  const handleDeleteEntry = async (id: string, permanent = false) => {
-    if (notesLocked) return
-
-    if (!permanent) {
-      const entry = entries.find((e) => e.id === id)
-
-      if (!entry) {
-        return
-      }
-
-      const content = JSON.parse(entry.content)
-
-      const tags = Array.from(
-        new Set([...(content.tags || []).filter((tag: string) => tag !== 'archive'), 'trash'])
-      )
-
-      await updateEntry(
-        id,
-        JSON.stringify({
-          ...content,
-          tags,
-        })
-      )
-
-      return
-    }
-
-    await deleteEntry(id)
-  }
-
   const handleDeleteSelectedNotes = async () => {
     if (notesLocked || !selectedNoteIds.length) {
       return
@@ -461,10 +531,46 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
       }
     }
 
-    await Promise.all([
-      ...selectedTrashEntryIds.map((id) => deleteEntry(id)),
-      ...noteIdsToMoveToTrash.map((id) => handleDeleteEntry(id)),
-    ])
+    const updatedEntries = entries
+      .filter((entry) => noteIdsToMoveToTrash.includes(entry.id))
+      .map((entry) => {
+        const content = parseNoteContent(entry.content, isJsonString)
+        const tags = Array.from(
+          new Set([...content.tags.filter((tag) => tag !== 'archive'), 'trash'])
+        )
+
+        return {
+          ...entry,
+          content: JSON.stringify({
+            ...content,
+            tags,
+          }),
+        }
+      })
+
+    await applyEntries(updatedEntries, selectedTrashEntryIds)
+  }
+
+  const handleArchiveSelectedNotes = async () => {
+    if (notesLocked || !selectedNoteIds.length) {
+      return
+    }
+
+    const updatedEntries = entries
+      .filter((entry) => selectedNoteIds.includes(entry.id))
+      .map((entry) => {
+        const content = parseNoteContent(entry.content, isJsonString)
+
+        return {
+          ...entry,
+          content: JSON.stringify({
+            ...content,
+            tags: getArchiveTags(content.tags),
+          }),
+        }
+      })
+
+    await applyEntries(updatedEntries)
   }
 
   const handleRestoreSelectedTrash = async () => {
@@ -485,14 +591,14 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
     const confirmed = window.confirm(
       `Permanently delete all ${trashedEntryIds.length} note${
         trashedEntryIds.length === 1 ? '' : 's'
-      } from Trash? This cannot be undone.`
+      } from Trash? You can undo this while the notes view is open.`
     )
 
     if (!confirmed) {
       return
     }
 
-    await Promise.all(trashedEntryIds.map((id) => deleteEntry(id)))
+    await applyEntries([], trashedEntryIds)
   }
 
   const availablePromptNotes = React.useMemo(() => {
@@ -517,6 +623,37 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
   }, [entries])
 
   const handleChangeEntry = updateEntry
+  const handleArchiveSelectedFromToolbar = async () => {
+    try {
+      await handleArchiveSelectedNotes()
+    } catch (error) {
+      console.error('Failed to archive selected notes.', error)
+    }
+  }
+
+  const handleDeleteSelectedFromToolbar = async () => {
+    try {
+      await handleDeleteSelectedNotes()
+    } catch (error) {
+      console.error('Failed to delete selected notes.', error)
+    }
+  }
+
+  const handleUndoChange = async () => {
+    try {
+      await undoLastChange()
+    } catch (error) {
+      console.error('Failed to undo the last note change.', error)
+    }
+  }
+
+  const handleRedoChange = async () => {
+    try {
+      await redoLastChange()
+    } catch (error) {
+      console.error('Failed to redo the last note change.', error)
+    }
+  }
 
   return (
     <Workspace>
@@ -538,10 +675,18 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
             onCopyAllNotes={handleCopyAllNotes}
             onSelectAll={selectAllNotes}
             onClearAll={clearSelectedNotes}
+            onArchiveSelected={handleArchiveSelectedFromToolbar}
+            onDeleteSelected={handleDeleteSelectedFromToolbar}
+            onUndo={handleUndoChange}
+            onRedo={handleRedoChange}
+            canUndo={canUndo}
+            canRedo={canRedo}
+            noteAssistant={noteAssistant}
             selectedCount={selectedNoteIds.length}
-            expanded={explorerExpanded}
+            explorerExpanded={explorerExpanded}
             setExplorerExpanded={setExplorerExpanded}
             panelWidth={notesPanelWidth}
+            toolbarOffset={notesToolbarOffset}
             minimized={notesMinimized}
             setMinimized={setNotesMinimized}
             mobileActive={activeMobileView === 'notes'}
@@ -550,11 +695,10 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
           />
           <ChatToolbar
             onClearAll={clearSelectedNotes}
-            expanded={explorerExpanded}
             panelWidth={chatPanelWidth}
+            toolbarOffset={chatToolbarOffset}
             minimized={chatMinimized}
             setMinimized={setChatMinimized}
-            notesMinimized={notesMinimized}
             menuExpanded={chatSessionsExpanded}
             setMenuExpanded={setChatSessionsExpanded}
             mobileActive={activeMobileView === 'chat'}
@@ -587,25 +731,30 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
               actionsLocked={notesLocked}
               tagPreferencesLoading={!tagPreferencesLoaded}
             />
-            <NotesPanel ref={notesPanelRef} minimized={notesMinimized}>
+            <NotesPanel
+              ref={notesPanelRef}
+              minimized={notesMinimized}
+              otherMinimized={chatMinimized}
+            >
               {!notesMinimized && (
                 <NotesList
                   entries={visibleEntries}
                   pickerTags={pickerTags}
                   updateEntryDate={handleUpdateEntryDate}
                   onHoverCard={setHoveredCardId}
-                  onDeleteEntry={handleDeleteEntry}
                   onChangeEntry={handleChangeEntry}
                   selectedNoteIds={selectedNoteIds}
                   onToggleSelection={toggleNoteSelection}
                   templateOptions={templateOptions}
                   notesLocked={notesLocked}
+                  onEditorFocus={handleEditorFocus}
+                  onEditorBlur={handleEditorBlur}
                 />
               )}
             </NotesPanel>
           </NotesView>
           <ChatView role="region" aria-label="AI sessions">
-            <ChatPanel ref={chatPanelRef} minimized={chatMinimized}>
+            <ChatPanel ref={chatPanelRef} minimized={chatMinimized} otherMinimized={notesMinimized}>
               <Chat
                 uid={user?.uid || ''}
                 selectedNotesText={selectedNotesText}
@@ -632,11 +781,16 @@ export default Dashboard
 const Workspace = styled.div`
   display: flex;
   flex-direction: row;
+  justify-content: center;
   flex: 1 1 auto;
   width: 100%;
   height: 100%;
   min-height: 0;
   overflow: hidden;
+
+  @media (max-width: 768px) {
+    justify-content: flex-start;
+  }
 `
 
 const PanelScroller = styled.div`
@@ -694,24 +848,32 @@ const ChatView = styled.div`
   }
 `
 
-const ChatPanel = styled.div<{ minimized: boolean }>`
+const ChatPanel = styled.div<{ minimized: boolean; otherMinimized: boolean }>`
   flex: ${({ minimized }) => (minimized ? '0' : '1')};
   width: ${({ minimized }) => (minimized ? '0' : 'auto')};
   min-width: 0;
+  max-width: 1024px;
+  margin-left: ${({ minimized, otherMinimized }) => (!minimized && otherMinimized ? 'auto' : '0')};
+  margin-right: ${({ minimized, otherMinimized }) => (!minimized && otherMinimized ? 'auto' : '0')};
   flex-direction: column;
   overflow: hidden;
   background: #e0e0e5;
 
   @media (max-width: 768px) {
     flex: ${({ minimized }) => (minimized ? '0' : '1 1 0')};
+    max-width: none;
+    margin: 0;
   }
 `
 
-const NotesPanel = styled.div<{ minimized: boolean }>`
+const NotesPanel = styled.div<{ minimized: boolean; otherMinimized: boolean }>`
   flex: ${({ minimized }) => (minimized ? '0 0 0' : '1.5')};
   width: ${({ minimized }) => (minimized ? '0' : 'auto')};
   min-width: 0;
-  margin-right: 10px;
+  max-width: 1024px;
+  margin-left: ${({ minimized, otherMinimized }) => (!minimized && otherMinimized ? 'auto' : '0')};
+  margin-right: ${({ minimized, otherMinimized }) =>
+    !minimized && otherMinimized ? 'auto' : '10px'};
   flex-direction: column;
   overflow: hidden;
   background: #e0e0e5;
@@ -739,6 +901,7 @@ const NotesPanel = styled.div<{ minimized: boolean }>`
 
   @media (max-width: 768px) {
     flex: ${({ minimized }) => (minimized ? '0 0 0' : '1 1 0')};
-    margin-right: 0;
+    max-width: none;
+    margin: 0;
   }
 `

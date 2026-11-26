@@ -5,49 +5,45 @@ import { IconButton } from '../../../styles/global'
 
 interface ChatToolbarProps {
   onClearAll: () => void
-  expanded: boolean
   panelWidth: number
+  toolbarOffset: number
   minimized: boolean
   setMinimized: (value: boolean) => void
-  notesMinimized: boolean
   menuExpanded: boolean
   setMenuExpanded: (expanded: boolean) => void
   mobileActive?: boolean
 }
 
 export const ChatToolbar: React.FC<ChatToolbarProps> = ({
-  expanded,
   panelWidth,
+  toolbarOffset,
   minimized,
   setMinimized,
-  notesMinimized,
   menuExpanded,
   setMenuExpanded,
   mobileActive,
 }) => {
-  const explorerWidth = expanded ? 208 : 52
   return (
     <ToolbarContainer
-      explorerWidth={explorerWidth}
-      notesMinimized={notesMinimized}
+      toolbarOffset={toolbarOffset}
       barWidth={panelWidth}
       minimized={minimized}
       mobileActive={mobileActive}
     >
+      <MobileMenuButton
+        type="button"
+        title={menuExpanded ? 'Collapse sessions menu' : 'Expand sessions menu'}
+        aria-label={menuExpanded ? 'Collapse sessions menu' : 'Expand sessions menu'}
+        data-sidebar-toggle="sessions"
+        onClick={() => setMenuExpanded(!menuExpanded)}
+      >
+        <FiMenu />
+      </MobileMenuButton>
       <SelectedPage>
         <FiCpu />
         Chat
       </SelectedPage>
       <ActionsContainer>
-        <MobileMenuButton
-          type="button"
-          title={menuExpanded ? 'Collapse sessions menu' : 'Expand sessions menu'}
-          aria-label={menuExpanded ? 'Collapse sessions menu' : 'Expand sessions menu'}
-          data-sidebar-toggle="sessions"
-          onClick={() => setMenuExpanded(!menuExpanded)}
-        >
-          <FiMenu />
-        </MobileMenuButton>
         <PanelToggle
           title={minimized ? 'Restore chat panel' : 'Minimize chat panel'}
           onClick={() => setMinimized(!minimized)}
@@ -60,32 +56,33 @@ export const ChatToolbar: React.FC<ChatToolbarProps> = ({
 }
 
 interface ToolbarContainerProps {
-  explorerWidth: number
+  toolbarOffset: number
   barWidth: number
   minimized?: boolean
-  notesMinimized: boolean
   mobileActive?: boolean
 }
 
 const ToolbarContainer = styled.div<ToolbarContainerProps>`
   display: ${({ minimized }) => (minimized ? 'none' : 'flex')};
+  position: absolute;
+  left: ${({ toolbarOffset }) => `${toolbarOffset}px`};
+  top: 10px;
   width: ${({ barWidth }) => `${barWidth}px`};
-  margin-left: ${({ explorerWidth, notesMinimized }) =>
-    `${notesMinimized ? explorerWidth + 10 : 10}px`} !important;
   flex-direction: row;
   align-items: center;
   height: 32px;
   padding: 0;
-  margin-left: 10px;
-  margin-top: 10px;
+  margin: 0;
   border-bottom: 1px solid #d0d0d0;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
   background: #e0e0e5;
-  position: relative;
 
   @media (max-width: 768px) {
     display: ${({ mobileActive }) => (mobileActive ? 'flex' : 'none')};
+    position: relative;
+    top: auto;
+    left: auto;
     flex: 1 1 auto;
     width: 100%;
     min-width: 0;
@@ -95,7 +92,7 @@ const ToolbarContainer = styled.div<ToolbarContainerProps>`
     border: 0;
     border-radius: 0;
     background: transparent;
-    justify-content: flex-end;
+    justify-content: flex-start;
 
     && ${IconButton} svg {
       color: #fff !important;
@@ -136,23 +133,24 @@ const PanelToggle = styled(IconButton)`
 
 const MobileMenuButton = styled.button`
   display: none;
-  width: 30px;
+  width: 20px;
   height: 30px;
-  flex-shrink: 0;
+  flex: 0 0 20px;
   align-items: center;
   justify-content: center;
-  margin: 2px;
+  margin: 0;
+  padding: 0;
   border: 0;
-  border-radius: 10px;
+  border-radius: 7px;
   background: transparent;
-  color: #2e2e2e;
+  color: #fff;
 
   &:hover {
-    background: rgba(128, 128, 128, 0.15);
+    background: rgba(255, 255, 255, 0.15);
   }
 
   @media (max-width: 768px) {
     display: flex;
-    color: #fff;
+    margin-left: 20px;
   }
 `

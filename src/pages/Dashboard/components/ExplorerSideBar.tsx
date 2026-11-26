@@ -345,14 +345,14 @@ export const ExplorerSideBar: React.FC<ExplorerSideBarProps> = ({
       </IconButton>
 
       {minimized && (
-        <IconButton
+        <RestoreExplorerButton
           expanded={explorerExpanded}
           title="Expand Notes Explorer"
           onClick={() => setMinimized(!minimized)}
         >
           <FaRegNoteSticky />
           {explorerExpanded && <span>Expand Notes Explorer</span>}
-        </IconButton>
+        </RestoreExplorerButton>
       )}
 
       {systemTags.filter((tag) => tag.position === 'top').map(renderSystemTag)}
@@ -414,6 +414,12 @@ const TagRow = styled.div<{ $active?: boolean }>`
 
 const MenuWrapper = styled.div`
   position: relative;
+`
+
+const RestoreExplorerButton = styled(IconButton)`
+  && svg {
+    color: #4b5563 !important;
+  }
 `
 
 const MenuButton = styled.button`

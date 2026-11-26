@@ -17,17 +17,19 @@ jest.mock('../../../services/openAIKeyService', () => ({
 
 interface HookHarnessProps {
   value: string
-  pushHistory: (text: string) => void
-  onContentChange: (text: string) => void
+  onContentChange: (entryId: string, text: string) => Promise<void>
+  editing?: boolean
 }
 
-const HookHarness: React.FC<HookHarnessProps> = ({ value, pushHistory, onContentChange }) => {
+const HookHarness: React.FC<HookHarnessProps> = ({ value, onContentChange, editing = true }) => {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
   const assistant = useNoteAI({
     userId: 'user-1',
-    value,
-    textareaRef,
-    pushHistory,
+    getNoteContext: () => ({
+      entryId: 'note-1',
+      value,
+      textarea: editing ? textareaRef.current : null,
+    }),
     onContentChange,
   })
 
@@ -62,15 +64,8 @@ describe('useNoteAI', () => {
   })
 
   it('replaces selected note text using the existing assistant instructions', async () => {
-    const pushHistory = jest.fn()
     const onContentChange = jest.fn()
-    render(
-      <HookHarness
-        value="before SELECT after"
-        pushHistory={pushHistory}
-        onContentChange={onContentChange}
-      />
-    )
+    render(<HookHarness value="before SELECT after" onContentChange={onContentChange} />)
 
     const noteText = screen.getByLabelText('Note text') as HTMLTextAreaElement
     noteText.setSelectionRange(7, 13)
@@ -82,10 +77,9 @@ describe('useNoteAI', () => {
     fireEvent.click(screen.getByText('Send instruction'))
 
     await waitFor(() => {
-      expect(onContentChange).toHaveBeenCalledWith('before REPLACED after')
+      expect(onContentChange).toHaveBeenCalledWith('note-1', 'before REPLACED after')
     })
 
-    expect(pushHistory).toHaveBeenCalledWith('before SELECT after')
     expect(mockExecuteAI).toHaveBeenCalledWith(
       'user-1',
       expect.stringContaining('You are a text editor assistant.'),
@@ -98,9 +92,7 @@ describe('useNoteAI', () => {
 
   it('appends the generated text when no note selection was made', async () => {
     const onContentChange = jest.fn()
-    render(
-      <HookHarness value="Whole note" pushHistory={jest.fn()} onContentChange={onContentChange} />
-    )
+    render(<HookHarness value="Whole note" onContentChange={onContentChange} />)
 
     fireEvent.click(screen.getByText('Open AI assistant'))
     fireEvent.change(screen.getByLabelText('AI instruction'), {
@@ -109,7 +101,22 @@ describe('useNoteAI', () => {
     fireEvent.click(screen.getByText('Send instruction'))
 
     await waitFor(() => {
-      expect(onContentChange).toHaveBeenCalledWith('Whole note\n\nREPLACED')
+      expect(onContentChange).toHaveBeenCalledWith('note-1', 'Whole note\n\nREPLACED')
+    })
+  })
+
+  it('uses the selected note when no note is being edited', async () => {
+    const onContentChange = jest.fn()
+    render(<HookHarness value="Selected note" editing={false} onContentChange={onContentChange} />)
+
+    fireEvent.click(screen.getByText('Open AI assistant'))
+    fireEvent.change(screen.getByLabelText('AI instruction'), {
+      target: { value: 'Add a summary' },
+    })
+    fireEvent.click(screen.getByText('Send instruction'))
+
+    await waitFor(() => {
+      expect(onContentChange).toHaveBeenCalledWith('note-1', 'Selected note\n\nREPLACED')
     })
   })
 })

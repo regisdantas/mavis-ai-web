@@ -9,26 +9,28 @@ interface NotesListProps {
   entries: IEntry[]
   pickerTags: string[]
   onHoverCard: (id: string | null) => void
-  onDeleteEntry: (id: string, permanent?: boolean) => Promise<void>
   onChangeEntry: (id: string, content: string) => Promise<void>
   updateEntryDate: (id: string, date: string) => Promise<void>
   selectedNoteIds: string[]
   onToggleSelection: (id: string) => void
   templateOptions: TemplateOption[]
   notesLocked: boolean
+  onEditorFocus: (id: string, textarea: HTMLTextAreaElement) => void
+  onEditorBlur: (id: string, textarea: HTMLTextAreaElement) => void
 }
 
 export const NotesList: React.FC<NotesListProps> = ({
   entries,
   pickerTags,
   onHoverCard,
-  onDeleteEntry,
   onChangeEntry,
   updateEntryDate,
   selectedNoteIds,
   onToggleSelection,
   templateOptions,
   notesLocked,
+  onEditorFocus,
+  onEditorBlur,
 }) => {
   return (
     <EntryList>
@@ -43,7 +45,6 @@ export const NotesList: React.FC<NotesListProps> = ({
             date={entry.date}
             number={index + 1}
             content={entry.content}
-            onDeleteCard={onDeleteEntry}
             onChangeContent={onChangeEntry}
             onChangeDate={updateEntryDate}
             tags={pickerTags}
@@ -51,6 +52,8 @@ export const NotesList: React.FC<NotesListProps> = ({
             onToggleSelection={onToggleSelection}
             templateOptions={templateOptions}
             notesLocked={notesLocked}
+            onEditorFocus={onEditorFocus}
+            onEditorBlur={onEditorBlur}
           />
         </div>
       ))}

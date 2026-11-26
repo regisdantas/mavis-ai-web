@@ -1,9 +1,13 @@
 import React from 'react'
 import styled from 'styled-components'
-import { FiCopy, FiStar } from 'react-icons/fi'
+import { FiCopy, FiSliders, FiStar, FiType } from 'react-icons/fi'
 import { FaStar } from 'react-icons/fa'
 import { IoMdArrowDropdown, IoMdArrowDropleft } from 'react-icons/io'
+import { MdOutlineColorLens } from 'react-icons/md'
 import { IconButton } from '../../../../styles/global'
+import FloatingColorPicker from '../FloatingColorPicker'
+import FloatingTemplatePicker from '../FloatingTemplatePicker'
+import { TemplateOption } from '../../utils/cardUtils'
 
 interface CardHeaderProps {
   title: string
@@ -13,6 +17,22 @@ interface CardHeaderProps {
   isFavorite: boolean
   selected: boolean
   onToggleSelection: () => void
+
+  toolboxOpen: boolean
+  setToolboxOpen: React.Dispatch<React.SetStateAction<boolean>>
+  showColorPicker: boolean
+  showTemplatePicker: boolean
+  setShowColorPicker: React.Dispatch<React.SetStateAction<boolean>>
+  setShowTemplatePicker: React.Dispatch<React.SetStateAction<boolean>>
+  toolboxRef: React.RefObject<HTMLDivElement>
+  colorPickerRef: React.RefObject<HTMLDivElement>
+  templatePickerRef: React.RefObject<HTMLDivElement>
+  colorDropdownRef: React.RefObject<HTMLDivElement>
+  templateDropdownRef: React.RefObject<HTMLDivElement>
+  noteColors: string[]
+  templateOptions: TemplateOption[]
+  onColorSelected: (color: string) => void
+  onTemplateSelected: (option: TemplateOption) => void
 
   copyFormattedContent: () => void
 
@@ -29,6 +49,21 @@ const CardHeader: React.FC<CardHeaderProps> = ({
   isFavorite,
   selected,
   onToggleSelection,
+  toolboxOpen,
+  setToolboxOpen,
+  showColorPicker,
+  showTemplatePicker,
+  setShowColorPicker,
+  setShowTemplatePicker,
+  toolboxRef,
+  colorPickerRef,
+  templatePickerRef,
+  colorDropdownRef,
+  templateDropdownRef,
+  noteColors,
+  templateOptions,
+  onColorSelected,
+  onTemplateSelected,
   copyFormattedContent,
   onToggleFavorite,
   onToggleCollapse,
@@ -66,6 +101,73 @@ const CardHeader: React.FC<CardHeaderProps> = ({
       </TitleBox>
 
       <Toolbox>
+        <ToolboxWrapper ref={toolboxRef}>
+          <ToolboxToggle
+            type="button"
+            disabled={readOnly}
+            title="Open note toolbox"
+            aria-label="Open note toolbox"
+            aria-haspopup="menu"
+            aria-expanded={toolboxOpen}
+            onClick={() => setToolboxOpen((open) => !open)}
+          >
+            <FiSliders />
+          </ToolboxToggle>
+
+          {toolboxOpen && (
+            <ToolboxDropdown role="menu" aria-label="Note toolbox">
+              <ToolboxMenuButton
+                type="button"
+                role="menuitem"
+                title="Change note background color"
+                disabled={readOnly}
+                onClick={() => {
+                  setShowColorPicker(true)
+                  setShowTemplatePicker(false)
+                  setToolboxOpen(false)
+                }}
+              >
+                <MdOutlineColorLens />
+                <span>Color</span>
+              </ToolboxMenuButton>
+              <ToolboxMenuButton
+                type="button"
+                role="menuitem"
+                title="Apply template"
+                disabled={readOnly || templateOptions.length === 0}
+                onClick={() => {
+                  setShowColorPicker(false)
+                  setShowTemplatePicker(true)
+                  setToolboxOpen(false)
+                }}
+              >
+                <FiType />
+                <span>Template</span>
+              </ToolboxMenuButton>
+            </ToolboxDropdown>
+          )}
+
+          {showColorPicker && (
+            <PickerAnchor ref={colorPickerRef}>
+              <FloatingColorPicker
+                colors={noteColors}
+                onColorClicked={onColorSelected}
+                dropdownRef={colorDropdownRef}
+              />
+            </PickerAnchor>
+          )}
+
+          {showTemplatePicker && (
+            <PickerAnchor ref={templatePickerRef}>
+              <FloatingTemplatePicker
+                options={templateOptions}
+                onPicked={onTemplateSelected}
+                dropdownRef={templateDropdownRef}
+              />
+            </PickerAnchor>
+          )}
+        </ToolboxWrapper>
+
         <IconButton title="Copy note" onClick={copyFormattedContent}>
           <FiCopy />
         </IconButton>
@@ -187,4 +289,104 @@ const Toolbox = styled.span`
   padding: 0;
 
   z-index: 8;
+`
+
+const ToolboxWrapper = styled.div`
+  && {
+    width: auto;
+    margin: 0;
+  }
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+`
+
+const ToolboxToggle = styled.button`
+  display: flex;
+  width: 30px;
+  height: 30px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #2e2e2e;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: rgba(128, 128, 128, 0.15);
+  }
+
+  &:disabled {
+    color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 1;
+  }
+`
+
+const ToolboxDropdown = styled.div`
+  && {
+    width: 210px;
+    margin: 0;
+  }
+
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  min-width: 210px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 5px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
+`
+
+const ToolboxMenuButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 6px 9px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #2e2e2e;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: #f1f1f4;
+  }
+
+  &:disabled {
+    color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 1;
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+`
+
+const PickerAnchor = styled.div`
+  && {
+    width: max-content;
+    margin: 0;
+  }
+
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 21;
+  width: max-content;
 `

@@ -3,33 +3,29 @@ import { RefObject, useEffect } from 'react'
 interface UseCardClickOutsideProps {
   tagPickerRef: RefObject<HTMLDivElement>
   tagDropdownRef: RefObject<HTMLDivElement>
-  otherTagsDropdownRef: RefObject<HTMLDetailsElement>
   colorPickerRef: RefObject<HTMLDivElement>
   colorDropdownRef: RefObject<HTMLDivElement>
   templatePickerRef: RefObject<HTMLDivElement>
   templateDropdownRef: RefObject<HTMLDivElement>
-  aiPromptRef: RefObject<HTMLDivElement>
-  aiPromptDropdownRef: RefObject<HTMLDivElement>
+  toolboxRef: RefObject<HTMLDivElement>
   closeTagPicker: () => void
   closeColorPicker: () => void
   closeTemplatePicker: () => void
-  closeAIPrompt: () => void
+  closeToolbox: () => void
 }
 
 export function useCardClickOutside({
   tagPickerRef,
   tagDropdownRef,
-  otherTagsDropdownRef,
   colorPickerRef,
   colorDropdownRef,
   templatePickerRef,
   templateDropdownRef,
-  aiPromptRef,
-  aiPromptDropdownRef,
+  toolboxRef,
   closeTagPicker,
   closeColorPicker,
   closeTemplatePicker,
-  closeAIPrompt,
+  closeToolbox,
 }: UseCardClickOutsideProps) {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -40,12 +36,6 @@ export function useCardClickOutside({
 
       if (!insideTagTrigger && !insideTagDropdown) {
         closeTagPicker()
-      }
-
-      const insideOtherTagsDropdown = otherTagsDropdownRef.current?.contains(target) ?? false
-
-      if (!insideOtherTagsDropdown && otherTagsDropdownRef.current) {
-        otherTagsDropdownRef.current.open = false
       }
 
       const insideColorTrigger = colorPickerRef.current?.contains(target) ?? false
@@ -62,11 +52,10 @@ export function useCardClickOutside({
         closeTemplatePicker()
       }
 
-      const insideAIPromptTrigger = aiPromptRef.current?.contains(target) ?? false
-      const insideAIPromptDropdown = aiPromptDropdownRef.current?.contains(target) ?? false
+      const insideToolbox = toolboxRef.current?.contains(target) ?? false
 
-      if (!insideAIPromptTrigger && !insideAIPromptDropdown) {
-        closeAIPrompt()
+      if (!insideToolbox) {
+        closeToolbox()
       }
     }
 
@@ -78,16 +67,14 @@ export function useCardClickOutside({
   }, [
     tagPickerRef,
     tagDropdownRef,
-    otherTagsDropdownRef,
     colorPickerRef,
     colorDropdownRef,
     templatePickerRef,
     templateDropdownRef,
-    aiPromptRef,
-    aiPromptDropdownRef,
+    toolboxRef,
     closeTagPicker,
     closeColorPicker,
     closeTemplatePicker,
-    closeAIPrompt,
+    closeToolbox,
   ])
 }

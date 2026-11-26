@@ -1,12 +1,24 @@
 import React from 'react'
 import styled from 'styled-components'
-import { FiMenu, FiMinusSquare, FiMaximize2, FiSearch, FiLock, FiUnlock } from 'react-icons/fi'
-import { IconButton } from '../../../styles/global'
-
+import {
+  FiArchive,
+  FiCheckSquare,
+  FiCopy,
+  FiCpu,
+  FiLock,
+  FiMenu,
+  FiMinusSquare,
+  FiRotateCcw,
+  FiRotateCw,
+  FiSearch,
+  FiSquare,
+  FiTrash2,
+  FiUnlock,
+} from 'react-icons/fi'
 import { IoMdAddCircleOutline } from 'react-icons/io'
 import { MdOutlineClear } from 'react-icons/md'
-import { FiCheckSquare } from 'react-icons/fi'
-import { FiCopy, FiSquare } from 'react-icons/fi'
+import FloatingNoteAIPrompt from './FloatingNoteAIPrompt'
+import { NoteAIControls } from '../hooks/useNoteAI'
 
 interface NotesToolbarProps {
   selectedTag: string
@@ -20,10 +32,18 @@ interface NotesToolbarProps {
   onCopyAllNotes: () => void
   onSelectAll: () => void
   onClearAll: () => void
+  onArchiveSelected: () => void
+  onDeleteSelected: () => void
+  onUndo: () => void
+  onRedo: () => void
+  canUndo: boolean
+  canRedo: boolean
+  noteAssistant: NoteAIControls
   selectedCount: number
-  expanded: boolean
+  explorerExpanded: boolean
   setExplorerExpanded: (expanded: boolean) => void
   panelWidth: number
+  toolbarOffset: number
   minimized?: boolean
   setMinimized: (value: boolean) => void
   mobileActive?: boolean
@@ -39,22 +59,31 @@ export const NotesToolbar: React.FC<NotesToolbarProps> = ({
   onDateChange,
   onAddNote,
   onCopyAllNotes,
-  selectedCount,
   onSelectAll,
   onClearAll,
-  expanded,
+  onArchiveSelected,
+  onDeleteSelected,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
+  noteAssistant,
+  selectedCount,
+  explorerExpanded,
   setExplorerExpanded,
   panelWidth,
+  toolbarOffset,
   minimized,
   setMinimized,
   mobileActive,
   notesLocked,
   onToggleNotesLock,
 }) => {
-  const explorerWidth = expanded ? 208 : 52
   const [searchExpanded, setSearchExpanded] = React.useState(false)
   const searchContainerRef = React.useRef<HTMLDivElement>(null)
   const searchInputRef = React.useRef<HTMLInputElement>(null)
+  const assistantButtonRef = React.useRef<HTMLButtonElement>(null)
+  const assistantPromptRef = React.useRef<HTMLDivElement>(null)
 
   React.useEffect(() => {
     if (!searchExpanded) {
@@ -86,30 +115,72 @@ export const NotesToolbar: React.FC<NotesToolbarProps> = ({
     }
   }, [mobileActive])
 
+  React.useEffect(() => {
+    if (!noteAssistant.assistantOpen) {
+      return
+    }
+
+    const handleOutsidePointerDown = (event: PointerEvent) => {
+      const target = event.target
+
+      if (
+        !(target instanceof Node) ||
+        (!assistantButtonRef.current?.contains(target) &&
+          !assistantPromptRef.current?.contains(target))
+      ) {
+        noteAssistant.closeAssistant()
+      }
+    }
+
+    document.addEventListener('pointerdown', handleOutsidePointerDown)
+
+    return () => document.removeEventListener('pointerdown', handleOutsidePointerDown)
+  }, [noteAssistant])
+
+  const selectOrClearAll = selectedCount > 0 ? onClearAll : onSelectAll
+  const selectedPage =
+    searchContent.trim() === ''
+      ? selectedTag.charAt(0).toUpperCase() + selectedTag.slice(1)
+      : 'Search'
+
   return (
     <ToolbarContainer
-      explorerWidth={explorerWidth}
+      role="toolbar"
+      aria-label={`${selectedPage} notes tools`}
+      title={`${selectedPage} notes`}
+      toolbarOffset={toolbarOffset}
       barWidth={panelWidth}
       minimized={minimized}
       mobileActive={mobileActive}
     >
-      <SelectedPage>
-        {minimized
-          ? 'Explorer'
-          : searchContent.trim() === ''
-          ? selectedTag.charAt(0).toUpperCase() + selectedTag.slice(1)
-          : 'Search'}
-      </SelectedPage>
-      {!minimized && (
-        <>
-          {selectedTag === 'journal' && (
-            <DateContainer>
-              <input title="Select date" type="date" value={selectedDate} onChange={onDateChange} />
-            </DateContainer>
-          )}
+      <LeftActions $searchExpanded={searchExpanded}>
+        {!minimized && (
+          <PanelToggle
+            type="button"
+            title="Minimize notes panel"
+            aria-label="Minimize notes panel"
+            onClick={() => setMinimized(true)}
+          >
+            <FiMinusSquare />
+          </PanelToggle>
+        )}
+        {!minimized && <SelectedPage>{selectedPage}</SelectedPage>}
+      </LeftActions>
 
+      <RightActions>
+        <ToolbarTools $minimized={minimized} data-search-expanded={searchExpanded}>
+          <MobileMenuButton
+            type="button"
+            title={explorerExpanded ? 'Collapse notes menu' : 'Expand notes menu'}
+            aria-label={explorerExpanded ? 'Collapse notes menu' : 'Expand notes menu'}
+            data-sidebar-toggle="notes"
+            onClick={() => setExplorerExpanded(!explorerExpanded)}
+          >
+            <FiMenu />
+          </MobileMenuButton>
           <SearchContainer ref={searchContainerRef} $searchExpanded={searchExpanded}>
             <SearchToggleButton
+              $searchExpanded={searchExpanded}
               type="button"
               aria-label="Open search"
               aria-expanded={searchExpanded}
@@ -124,7 +195,7 @@ export const NotesToolbar: React.FC<NotesToolbarProps> = ({
               tabIndex={searchExpanded ? 0 : -1}
               placeholder="Search"
               value={searchContent}
-              onChange={(e) => onSearchChange(e.target.value)}
+              onChange={(event) => onSearchChange(event.target.value)}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' || event.key === 'Escape') {
                   event.preventDefault()
@@ -133,78 +204,153 @@ export const NotesToolbar: React.FC<NotesToolbarProps> = ({
                 }
               }}
             />
-
-            <IconButton title="Clear search" onClick={() => onSearchChange('')}>
+            <SearchClearButton
+              $searchExpanded={searchExpanded}
+              type="button"
+              aria-label="Clear search"
+              title="Clear search"
+              tabIndex={searchExpanded ? 0 : -1}
+              disabled={!searchContent}
+              onClick={() => onSearchChange('')}
+            >
               <MdOutlineClear />
-            </IconButton>
+            </SearchClearButton>
           </SearchContainer>
-        </>
-      )}
-      <ActionsContainer>
-        <EditLockButton
-          type="button"
-          $active={notesLocked}
-          title={notesLocked ? 'Unlock note editing' : 'Lock note editing'}
-          aria-label={notesLocked ? 'Unlock note editing' : 'Lock note editing'}
-          aria-pressed={notesLocked}
-          onClick={onToggleNotesLock}
-        >
-          {notesLocked ? <FiLock /> : <FiUnlock />}
-        </EditLockButton>
-        <MobileMenuButton
-          type="button"
-          title={expanded ? 'Collapse notes menu' : 'Expand notes menu'}
-          aria-label={expanded ? 'Collapse notes menu' : 'Expand notes menu'}
-          data-sidebar-toggle="notes"
-          onClick={() => setExplorerExpanded(!expanded)}
-        >
-          <FiMenu />
-        </MobileMenuButton>
-        {!minimized && (
-          <>
-            {selectedCount > 0 ? (
-              <ToolbarActionButton
-                $active
-                role="button"
-                aria-pressed="true"
-                title="Clear all notes"
-                onClick={onClearAll}
-              >
-                <FiSquare />
-              </ToolbarActionButton>
-            ) : (
-              <ToolbarActionButton
-                $active={false}
-                role="button"
-                aria-pressed="false"
-                title="Select all visible notes"
-                onClick={onSelectAll}
-              >
-                <FiCheckSquare />
-              </ToolbarActionButton>
-            )}
-            <IconButton title="Copy all visible notes" onClick={onCopyAllNotes}>
-              <FiCopy />
-            </IconButton>
+          <EditLockButton
+            type="button"
+            $active={notesLocked}
+            title={notesLocked ? 'Unlock note editing' : 'Lock note editing'}
+            aria-label={notesLocked ? 'Unlock note editing' : 'Lock note editing'}
+            aria-pressed={notesLocked}
+            onClick={onToggleNotesLock}
+          >
+            {notesLocked ? <FiLock /> : <FiUnlock />}
+          </EditLockButton>
+          <ToolbarButton
+            type="button"
+            $selected={selectedCount > 0}
+            $tone="select"
+            title={selectedCount > 0 ? 'Deselect all notes' : 'Select all visible notes'}
+            aria-label={selectedCount > 0 ? 'Deselect all notes' : 'Select all visible notes'}
+            aria-pressed={selectedCount > 0}
+            onClick={selectOrClearAll}
+          >
+            {selectedCount > 0 ? <FiSquare /> : <FiCheckSquare />}
+          </ToolbarButton>
+          <ToolbarButton
+            type="button"
+            $tone="copy"
+            title="Copy selected or visible notes"
+            aria-label="Copy selected or visible notes"
+            onClick={onCopyAllNotes}
+          >
+            <FiCopy />
+          </ToolbarButton>
+          {selectedTag === 'journal' && (
+            <DateContainer>
+              <input
+                title="Select date"
+                aria-label="Select date"
+                type="date"
+                value={selectedDate}
+                onChange={onDateChange}
+              />
+            </DateContainer>
+          )}
+          <ToolbarButton
+            type="button"
+            $tone="add"
+            title="Add note"
+            aria-label="Add note"
+            onClick={onAddNote}
+          >
+            <IoMdAddCircleOutline />
+          </ToolbarButton>
+          <ToolbarButton
+            ref={assistantButtonRef}
+            type="button"
+            $tone="ai"
+            title="AI assistant"
+            aria-label="AI assistant"
+            aria-expanded={noteAssistant.assistantOpen}
+            disabled={notesLocked}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => {
+              if (noteAssistant.assistantOpen) {
+                noteAssistant.closeAssistant()
+              } else {
+                void noteAssistant.openAssistant()
+              }
+            }}
+          >
+            <FiCpu />
+          </ToolbarButton>
+          <ToolbarButton
+            type="button"
+            $tone="redo"
+            title="Redo last note change"
+            aria-label="Redo last note change"
+            disabled={notesLocked || !canRedo}
+            onClick={onRedo}
+          >
+            <FiRotateCw />
+          </ToolbarButton>
+          <ToolbarButton
+            type="button"
+            $tone="undo"
+            title="Undo last note change"
+            aria-label="Undo last note change"
+            disabled={notesLocked || !canUndo}
+            onClick={onUndo}
+          >
+            <FiRotateCcw />
+          </ToolbarButton>
+          <ToolbarSeparator aria-hidden="true" />
+          <ToolbarButton
+            type="button"
+            $tone="archive"
+            title="Archive selected notes"
+            aria-label="Archive selected notes"
+            disabled={notesLocked || selectedCount === 0}
+            onClick={onArchiveSelected}
+          >
+            <FiArchive />
+          </ToolbarButton>
+          <ToolbarButton
+            type="button"
+            $tone="trash"
+            $rightSpace
+            title="Delete selected notes"
+            aria-label="Delete selected notes"
+            disabled={notesLocked || selectedCount === 0}
+            onClick={onDeleteSelected}
+          >
+            <FiTrash2 />
+          </ToolbarButton>
+        </ToolbarTools>
+      </RightActions>
 
-            <IconButton title="Add note" onClick={onAddNote}>
-              <IoMdAddCircleOutline />
-            </IconButton>
-          </>
-        )}
-        <PanelToggle
-          title={minimized ? 'Restore notes panel' : 'Minimize notes panel'}
-          onClick={() => setMinimized(!minimized)}
-        >
-          {minimized ? <FiMaximize2 /> : <FiMinusSquare />}
-        </PanelToggle>
-      </ActionsContainer>
+      {noteAssistant.assistantOpen && (
+        <FloatingNoteAIPrompt
+          instruction={noteAssistant.instruction}
+          setInstruction={noteAssistant.setInstruction}
+          apiKeyInput={noteAssistant.apiKeyInput}
+          setApiKeyInput={noteAssistant.setApiKeyInput}
+          requiresApiKey={noteAssistant.requiresApiKey}
+          error={noteAssistant.error}
+          loading={noteAssistant.aiLoading}
+          onClear={noteAssistant.clearInstruction}
+          onSend={() => void noteAssistant.submitInstruction()}
+          onClose={noteAssistant.closeAssistant}
+          dropdownRef={assistantPromptRef}
+        />
+      )}
     </ToolbarContainer>
   )
 }
 
 interface ToolbarContainerProps {
-  explorerWidth: number
+  toolbarOffset: number
   barWidth: number
   minimized?: boolean
   mobileActive?: boolean
@@ -212,40 +358,380 @@ interface ToolbarContainerProps {
 
 const ToolbarContainer = styled.div<ToolbarContainerProps>`
   display: ${({ minimized }) => (minimized ? 'none' : 'flex')};
+  position: absolute;
+  left: ${({ toolbarOffset }) => `${toolbarOffset}px`};
+  top: 10px;
+  width: ${({ barWidth, minimized }) => (minimized ? '42px' : `${barWidth}px`)};
+  min-width: ${({ minimized }) => (minimized ? '42px' : '0')};
   height: 32px;
-  min-width: 100px;
-  width: ${({ barWidth }) => `${barWidth + 20}px`};
   flex-direction: row;
   align-items: center;
+  margin: 0;
   padding: 0;
-  margin-left: ${({ explorerWidth }) => `${explorerWidth}px`};
-  margin-top: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
   border-bottom: 1px solid #d0d0d0;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
   background: #e0e0e5;
-  position: relative;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 
   @media (max-width: 768px) {
     display: ${({ mobileActive }) => (mobileActive ? 'flex' : 'none')};
+    position: relative;
+    top: auto;
+    left: auto;
     flex: 1 1 auto;
     width: 100%;
     min-width: 0;
     height: 40px;
     margin: 0;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
     border: 0;
     border-radius: 0;
     background: transparent;
-    justify-content: flex-end;
+  }
+`
 
-    && ${IconButton} svg {
-      color: #fff !important;
+const SearchContainer = styled.div<{ $searchExpanded: boolean }>`
+  display: flex;
+  flex: ${({ $searchExpanded }) => ($searchExpanded ? '0 0 250px' : '0 0 30px')};
+  width: ${({ $searchExpanded }) => ($searchExpanded ? '250px' : '30px')};
+  height: 30px;
+  align-items: center;
+  margin: 0 4px;
+  overflow: hidden;
+  border-radius: ${({ $searchExpanded }) => ($searchExpanded ? '0 0 10px 10px' : '10px')};
+  background: ${({ $searchExpanded }) => ($searchExpanded ? '#231f20' : 'transparent')};
+  transition: width 240ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 180ms ease,
+    border-radius 200ms ease;
+
+  input {
+    order: 1;
+    display: block;
+    flex: ${({ $searchExpanded }) => ($searchExpanded ? '1 1 0%' : '0 0 0px')};
+    width: 0;
+    min-width: 0;
+    height: 100%;
+    padding: ${({ $searchExpanded }) => ($searchExpanded ? '0 10px' : '0')};
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #fff;
+    opacity: ${({ $searchExpanded }) => ($searchExpanded ? 1 : 0)};
+    pointer-events: ${({ $searchExpanded }) => ($searchExpanded ? 'auto' : 'none')};
+    transition: flex-grow 220ms ease, opacity 160ms ease, padding 220ms ease;
+  }
+
+  @media (max-width: 1260px) {
+    flex-basis: ${({ $searchExpanded }) => ($searchExpanded ? '160px' : '30px')};
+    width: ${({ $searchExpanded }) => ($searchExpanded ? '160px' : '30px')};
+  }
+
+  @media (max-width: 768px) {
+    position: ${({ $searchExpanded }) => ($searchExpanded ? 'absolute' : 'relative')};
+    top: ${({ $searchExpanded }) => ($searchExpanded ? '2px' : 'auto')};
+    left: ${({ $searchExpanded }) => ($searchExpanded ? '20px' : 'auto')};
+    z-index: ${({ $searchExpanded }) => ($searchExpanded ? 20 : 'auto')};
+    flex-basis: ${({ $searchExpanded }) => ($searchExpanded ? 'calc(100% - 40px)' : '17px')};
+    width: ${({ $searchExpanded }) => ($searchExpanded ? 'calc(100% - 40px)' : '17px')};
+    min-width: ${({ $searchExpanded }) => ($searchExpanded ? '0' : '17px')};
+    height: ${({ $searchExpanded }) => ($searchExpanded ? '36px' : '30px')};
+    margin: ${({ $searchExpanded }) => ($searchExpanded ? '0' : '2px 0')};
+    background: ${({ $searchExpanded }) => ($searchExpanded ? '#fff' : 'transparent')};
+    box-shadow: ${({ $searchExpanded }) =>
+      $searchExpanded ? '0 4px 12px rgba(0, 0, 0, 0.15)' : 'none'};
+
+    input {
+      padding: ${({ $searchExpanded }) => ($searchExpanded ? '0 10px' : '0')};
+      color: #231f20;
     }
 
-    && ${IconButton}:hover {
+    input::placeholder {
+      color: rgba(35, 31, 32, 0.6);
+    }
+  }
+
+  @media (max-width: 350px) {
+    flex-basis: ${({ $searchExpanded }) => ($searchExpanded ? 'calc(100% - 40px)' : '16px')};
+    width: ${({ $searchExpanded }) => ($searchExpanded ? 'calc(100% - 40px)' : '16px')};
+    min-width: ${({ $searchExpanded }) => ($searchExpanded ? '0' : '16px')};
+  }
+`
+
+const SearchToggleButton = styled.button<{ $searchExpanded: boolean }>`
+  order: 2;
+  display: flex;
+  width: ${({ $searchExpanded }) => ($searchExpanded ? '0' : '30px')};
+  height: 30px;
+  flex: ${({ $searchExpanded }) => ($searchExpanded ? '0 0 0' : '0 0 30px')};
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #2563eb;
+  opacity: ${({ $searchExpanded }) => ($searchExpanded ? 0 : 1)};
+  pointer-events: ${({ $searchExpanded }) => ($searchExpanded ? 'none' : 'auto')};
+  cursor: pointer;
+
+  @media (max-width: 768px) {
+    width: ${({ $searchExpanded }) => ($searchExpanded ? '0' : '17px')};
+    flex-basis: ${({ $searchExpanded }) => ($searchExpanded ? '0' : '17px')};
+    color: #60a5fa;
+  }
+
+  @media (max-width: 350px) {
+    width: ${({ $searchExpanded }) => ($searchExpanded ? '0' : '16px')};
+    flex-basis: ${({ $searchExpanded }) => ($searchExpanded ? '0' : '16px')};
+  }
+`
+
+const SearchClearButton = styled.button<{ $searchExpanded: boolean }>`
+  order: 3;
+  display: flex;
+  width: ${({ $searchExpanded }) => ($searchExpanded ? '30px' : '0')};
+  min-width: ${({ $searchExpanded }) => ($searchExpanded ? '30px' : '0')};
+  height: 30px;
+  flex: ${({ $searchExpanded }) => ($searchExpanded ? '0 0 30px' : '0 0 0')};
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #2563eb;
+  opacity: ${({ $searchExpanded }) => ($searchExpanded ? 1 : 0)};
+  pointer-events: ${({ $searchExpanded }) => ($searchExpanded ? 'auto' : 'none')};
+  transition: flex-basis 220ms ease, opacity 160ms ease, margin 220ms ease;
+
+  &:disabled {
+    color: #9ca3af;
+    cursor: default;
+  }
+
+  @media (max-width: 768px) {
+    color: #60a5fa;
+  }
+`
+
+const LeftActions = styled.div<{ $searchExpanded: boolean }>`
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  height: 30px;
+  white-space: nowrap;
+
+  @media (max-width: 768px) {
+    display: ${({ $searchExpanded }) => ($searchExpanded ? 'none' : 'flex')};
+  }
+`
+
+const SelectedPage = styled.div`
+  display: flex;
+  min-width: 0;
+  max-width: 160px;
+  flex: 0 1 auto;
+  align-items: center;
+  margin: 0 8px;
+  overflow: hidden;
+  color: #4b4b50;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  @media (max-width: 1260px) {
+    display: none;
+  }
+`
+
+const RightActions = styled.div`
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  height: 30px;
+  margin-left: auto;
+  white-space: nowrap;
+
+  @media (max-width: 768px) {
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    height: 30px;
+    margin-left: 0;
+  }
+`
+
+const ToolbarTools = styled.div<{ $minimized?: boolean }>`
+  display: ${({ $minimized }) => ($minimized ? 'none' : 'flex')};
+  flex: 0 0 auto;
+  align-items: center;
+  height: 30px;
+
+  @media (max-width: 768px) {
+    display: flex;
+    flex: 1 1 auto;
+    width: 100%;
+    min-width: 0;
+    justify-content: space-between;
+    padding-left: 20px;
+
+    &[data-search-expanded='true'] > :not(:nth-child(2)) {
+      display: none;
+    }
+  }
+`
+
+type ToolbarTone =
+  | 'undo'
+  | 'redo'
+  | 'archive'
+  | 'trash'
+  | 'ai'
+  | 'add'
+  | 'search'
+  | 'copy'
+  | 'select'
+
+const getToolbarButtonColor = (tone?: ToolbarTone, selected?: boolean, mobile = false) => {
+  if (tone === 'undo') return mobile ? '#f87171' : '#dc2626'
+  if (tone === 'redo') return mobile ? '#4ade80' : '#16a34a'
+  if (tone === 'archive') return mobile ? '#4ade80' : '#16a34a'
+  if (tone === 'trash') return mobile ? '#f87171' : '#dc2626'
+  if (tone === 'ai') return mobile ? '#a78bfa' : '#7c3aed'
+  if (tone === 'add') return mobile ? '#86efac' : '#4ade80'
+  if (tone === 'search') return mobile ? '#60a5fa' : '#2563eb'
+  if (tone === 'copy') return mobile ? '#cbd5e1' : '#64748b'
+  if (tone === 'select') {
+    return selected ? (mobile ? '#a78bfa' : '#4f46e5') : mobile ? '#60a5fa' : '#2563eb'
+  }
+
+  return mobile ? '#fff' : '#2e2e2e'
+}
+
+const ToolbarButton = styled.button<{
+  $tone?: ToolbarTone
+  $selected?: boolean
+  $rightSpace?: boolean
+}>`
+  display: flex;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  align-items: center;
+  justify-content: center;
+  margin: 0 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: ${({ $tone, $selected }) => getToolbarButtonColor($tone, $selected)};
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: rgba(128, 128, 128, 0.15);
+  }
+
+  &:disabled {
+    color: #9ca3af;
+    cursor: not-allowed;
+    opacity: 1;
+  }
+
+  svg {
+    flex-shrink: 0;
+    color: inherit;
+  }
+
+  @media (max-width: 768px) {
+    width: 16px;
+    height: 30px;
+    flex-basis: 16px;
+    margin: 0;
+    margin-right: ${({ $rightSpace }) => ($rightSpace ? '20px' : '0')};
+    border-radius: 7px;
+    color: ${({ $tone, $selected }) => getToolbarButtonColor($tone, $selected, true)};
+
+    &:hover:not(:disabled) {
       background: rgba(255, 255, 255, 0.15);
     }
+
+    &:disabled {
+      color: #9ca3af;
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 350px) {
+    width: 17px;
+    flex-basis: 17px;
+  }
+`
+
+const ToolbarSeparator = styled.span`
+  display: block;
+  width: 1px;
+  height: 20px;
+  flex: 0 0 1px;
+  margin: 0 5px;
+  background: rgba(80, 80, 80, 0.3);
+
+  @media (max-width: 768px) {
+    width: 1px;
+    height: 18px;
+    flex-basis: 1px;
+    margin: 0;
+    background: rgba(255, 255, 255, 0.45);
+  }
+`
+
+const EditLockButton = styled.button<{ $active: boolean }>`
+  display: flex;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
+  align-items: center;
+  justify-content: center;
+  margin: 0 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: ${({ $active }) => ($active ? '#4f46e5' : '#2e2e2e')};
+  cursor: pointer;
+
+  svg {
+    color: inherit;
+  }
+
+  &:hover {
+    background: rgba(128, 128, 128, 0.15);
+  }
+
+  @media (max-width: 768px) {
+    width: 16px;
+    flex-basis: 16px;
+    margin: 0;
+    border-radius: 7px;
+    color: ${({ $active }) => ($active ? '#4f46e5' : '#fff')};
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+  }
+
+  @media (max-width: 350px) {
+    width: 17px;
+    flex-basis: 17px;
   }
 `
 
@@ -253,16 +739,14 @@ const DateContainer = styled.div`
   display: flex;
   align-items: center;
 
-  height: 35px;
+  height: 30px;
 
   input[type='date'] {
     width: 40px;
     min-width: 40px;
     height: 24px;
-
     border: none;
     background: transparent;
-
     color: transparent;
     overflow: hidden;
   }
@@ -282,230 +766,49 @@ const DateContainer = styled.div`
   }
 `
 
-const SelectedPage = styled.div`
+const PanelToggle = styled.button`
   display: flex;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 30px;
   align-items: center;
-  gap: 10px;
-  height: 35px;
-  margin: 0px 10px;
+  justify-content: center;
+  margin: 0 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(128, 128, 128, 0.15);
+  }
 
   @media (max-width: 768px) {
     display: none;
   }
 `
 
-const SearchContainer = styled.div<{ $searchExpanded: boolean }>`
-  display: flex;
-  align-self: ${({ $searchExpanded }) => ($searchExpanded ? 'flex-start' : 'center')};
-  align-items: center;
-  margin-left: auto;
-  margin-right: 10px;
-  width: ${({ $searchExpanded }) => ($searchExpanded ? '250px' : '30px')};
-  height: 30px;
-  overflow: hidden;
-  transform-origin: right center;
-  background: ${({ $searchExpanded }) => ($searchExpanded ? '#231f20' : 'transparent')};
-  border-radius: ${({ $searchExpanded }) => ($searchExpanded ? '0 0 10px 10px' : '10px')};
-  box-shadow: none;
-  transition: width 240ms cubic-bezier(0.2, 0.8, 0.2, 1), height 200ms ease, margin 200ms ease,
-    background-color 180ms ease, border-radius 200ms ease, box-shadow 220ms ease;
-
-  > button {
-    order: 2;
-    display: flex;
-    flex: ${({ $searchExpanded }) => ($searchExpanded ? '0 0 0px' : '0 0 30px')};
-    width: ${({ $searchExpanded }) => ($searchExpanded ? '0' : '30px')};
-    min-width: 0;
-    padding: 0;
-    overflow: hidden;
-    opacity: ${({ $searchExpanded }) => ($searchExpanded ? 0 : 1)};
-    pointer-events: ${({ $searchExpanded }) => ($searchExpanded ? 'none' : 'auto')};
-    transition: flex-basis 220ms ease, opacity 140ms ease;
-  }
-
-  input {
-    order: 1;
-    display: block;
-    flex: ${({ $searchExpanded }) => ($searchExpanded ? '1 1 0%' : '0 0 0px')};
-    width: 0;
-    min-width: 0;
-    padding: ${({ $searchExpanded }) => ($searchExpanded ? '10px' : '0')};
-    background: transparent;
-    border: none;
-    outline: none;
-    color: #ffffff;
-    opacity: ${({ $searchExpanded }) => ($searchExpanded ? 1 : 0)};
-    pointer-events: ${({ $searchExpanded }) => ($searchExpanded ? 'auto' : 'none')};
-    transition: flex-grow 220ms ease, opacity 160ms ease, padding 220ms ease;
-  }
-
-  && ${IconButton} svg {
-    color: #fff !important;
-  }
-
-  && ${IconButton} {
-    order: 3;
-    display: flex;
-    flex: ${({ $searchExpanded }) => ($searchExpanded ? '0 0 34px' : '0 0 0px')};
-    width: ${({ $searchExpanded }) => ($searchExpanded ? '30px' : '0')} !important;
-    min-width: ${({ $searchExpanded }) => ($searchExpanded ? '30px' : '0')} !important;
-    margin: ${({ $searchExpanded }) => ($searchExpanded ? '2px' : '0')} !important;
-    padding: 0 !important;
-    overflow: hidden;
-    opacity: ${({ $searchExpanded }) => ($searchExpanded ? 1 : 0)};
-    pointer-events: ${({ $searchExpanded }) => ($searchExpanded ? 'auto' : 'none')};
-    transition: flex-basis 220ms ease, opacity 160ms ease, margin 220ms ease;
-  }
-
-  @media (max-width: 1260px) {
-    position: static;
-    width: ${({ $searchExpanded }) => ($searchExpanded ? '160px' : '30px')};
-    margin: ${({ $searchExpanded }) => ($searchExpanded ? '0 5px 0 auto' : '2px 2px 2px auto')};
-  }
-
-  @media (max-width: 768px) {
-    position: ${({ $searchExpanded }) => ($searchExpanded ? 'absolute' : 'static')};
-    order: 1;
-    top: ${({ $searchExpanded }) => ($searchExpanded ? '2px' : 'auto')};
-    right: ${({ $searchExpanded }) => ($searchExpanded ? '2px' : 'auto')};
-    z-index: ${({ $searchExpanded }) => ($searchExpanded ? 20 : 'auto')};
-    flex: 0 0 ${({ $searchExpanded }) => ($searchExpanded ? 'calc(100% - 24px)' : '30px')};
-    width: ${({ $searchExpanded }) => ($searchExpanded ? 'calc(100% - 24px)' : '30px')};
-    min-width: ${({ $searchExpanded }) => ($searchExpanded ? '0' : '30px')};
-    height: ${({ $searchExpanded }) => ($searchExpanded ? '36px' : '30px')};
-    margin: ${({ $searchExpanded }) => ($searchExpanded ? '0' : '2px')};
-    align-self: ${({ $searchExpanded }) => ($searchExpanded ? 'auto' : 'center')};
-    overflow: hidden;
-    border-radius: ${({ $searchExpanded }) => ($searchExpanded ? '0 0 12px 12px' : '10px')};
-    background: ${({ $searchExpanded }) => ($searchExpanded ? '#fff' : 'transparent')};
-    box-shadow: ${({ $searchExpanded }) =>
-      $searchExpanded ? '0 4px 12px rgba(0, 0, 0, 0.15)' : 'none'};
-
-    > button {
-      color: #fff;
-    }
-
-    > input {
-      padding: ${({ $searchExpanded }) => ($searchExpanded ? '0 10px' : '0')};
-      height: 100%;
-    }
-
-    && ${IconButton} svg {
-      color: #231f20 !important;
-    }
-
-    && ${IconButton}:hover {
-      background: rgba(35, 31, 32, 0.1);
-    }
-
-    input::placeholder {
-      color: rgba(35, 31, 32, 0.6);
-    }
-
-    input {
-      color: #231f20;
-    }
-  }
-`
-
-const SearchToggleButton = styled.button`
-  display: flex;
-  width: 30px;
-  height: 30px;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: #2e2e2e;
-  cursor: pointer;
-`
-
-const ActionsContainer = styled.div`
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  height: 35px;
-
-  @media (max-width: 768px) {
-    order: 0;
-  }
-`
-
-const ToolbarActionButton = styled(IconButton)<{ $active: boolean }>`
-  &&&& {
-    background: transparent;
-
-    svg {
-      color: ${({ $active }) => ($active ? '#4f46e5' : '#2e2e2e')} !important;
-    }
-  }
-
-  @media (max-width: 768px) {
-    &&&& svg {
-      color: ${({ $active }) => ($active ? '#4f46e5' : '#fff')} !important;
-    }
-  }
-`
-
-const EditLockButton = styled.button<{ $active: boolean }>`
-  display: flex;
-  width: 30px;
-  height: 30px;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  margin: 2px;
-  border: 0;
-  border-radius: 10px;
-  background: transparent;
-  color: ${({ $active }) => ($active ? '#4f46e5' : '#2e2e2e')};
-  cursor: pointer;
-
-  svg {
-    color: inherit;
-  }
-
-  &:hover {
-    background: rgba(128, 128, 128, 0.15);
-  }
-
-  @media (max-width: 768px) {
-    color: ${({ $active }) => ($active ? '#4f46e5' : '#fff')};
-
-    &:hover {
-      background: rgba(255, 255, 255, 0.15);
-    }
-  }
-`
-
-const PanelToggle = styled(IconButton)`
-  @media (max-width: 768px) {
-    display: none !important;
-  }
-`
-
 const MobileMenuButton = styled.button`
   display: none;
-  width: 30px;
+  width: 20px;
   height: 30px;
-  flex-shrink: 0;
+  flex: 0 0 20px;
   align-items: center;
   justify-content: center;
-  margin: 2px;
+  margin: 0;
+  padding: 0;
   border: 0;
-  border-radius: 10px;
+  border-radius: 7px;
   background: transparent;
-  color: #2e2e2e;
+  color: #fff;
 
   &:hover {
-    background: rgba(128, 128, 128, 0.15);
+    background: rgba(255, 255, 255, 0.15);
   }
 
   @media (max-width: 768px) {
     display: flex;
-    color: #fff;
   }
 `

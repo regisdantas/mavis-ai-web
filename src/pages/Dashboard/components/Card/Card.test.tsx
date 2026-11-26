@@ -34,10 +34,6 @@ jest.mock('../../hooks/useTextareaCaret', () => ({
   }),
 }))
 
-jest.mock('../../hooks/useNoteAI', () => ({
-  useNoteAI: () => ({ aiLoading: false, handleAI: jest.fn() }),
-}))
-
 jest.mock('../../hooks/useNoteTags', () => ({
   useNoteTags: ({
     tags,
@@ -78,13 +74,14 @@ const renderCard = (notesLocked: boolean, onChangeContent = jest.fn(async () => 
       date="2026-11-25"
       content={content}
       notesLocked={notesLocked}
-      onDeleteCard={jest.fn()}
       onChangeContent={onChangeContent}
       onChangeDate={jest.fn()}
       tags={[]}
       selected={false}
       onToggleSelection={jest.fn()}
       templateOptions={[]}
+      onEditorFocus={jest.fn()}
+      onEditorBlur={jest.fn()}
     />
   )
 
@@ -99,6 +96,23 @@ describe('Card global edit lock and draft autosave', () => {
     expect(header).not.toBeNull()
     expect(window.getComputedStyle(header as HTMLElement).position).toBe('sticky')
     expect(window.getComputedStyle(header as HTMLElement).top).toBe('0px')
+  })
+
+  it('moves color and template actions into the header toolbox', () => {
+    renderCard(false)
+
+    expect(screen.queryByTitle('AI assistant')).toBeNull()
+    expect(screen.queryByTitle('Undo last change')).toBeNull()
+    expect(screen.queryByTitle('Archive note')).toBeNull()
+    expect(screen.queryByTitle('Move to trash')).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open note toolbox' }))
+
+    expect(screen.getByRole('menu', { name: 'Note toolbox' })).toBeTruthy()
+    expect(screen.getByRole('menuitem', { name: 'Color' })).toBeTruthy()
+    const templateButton = screen.getByRole('menuitem', { name: 'Template' }) as HTMLButtonElement
+    expect(templateButton.disabled).toBe(true)
+    expect(window.getComputedStyle(templateButton).color).toBe('rgb(156, 163, 175)')
   })
 
   it('allows expanding and collapsing while notes are locked', () => {
@@ -116,13 +130,14 @@ describe('Card global edit lock and draft autosave', () => {
       date: '2026-11-25',
       content,
       notesLocked: true,
-      onDeleteCard: jest.fn(),
       onChangeContent,
       onChangeDate: jest.fn(),
       tags: [],
       selected: false,
       onToggleSelection: jest.fn(),
       templateOptions: [],
+      onEditorFocus: jest.fn(),
+      onEditorBlur: jest.fn(),
     }
     const { rerender } = render(<Card {...props} />)
 
@@ -170,13 +185,14 @@ describe('Card global edit lock and draft autosave', () => {
           locked: true,
         })}
         notesLocked
-        onDeleteCard={jest.fn()}
         onChangeContent={jest.fn(async () => {})}
         onChangeDate={jest.fn()}
         tags={[]}
         selected={false}
         onToggleSelection={jest.fn()}
         templateOptions={[]}
+        onEditorFocus={jest.fn()}
+        onEditorBlur={jest.fn()}
       />
     )
 

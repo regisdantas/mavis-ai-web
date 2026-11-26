@@ -161,6 +161,11 @@ const LogoutButton = styled.button`
 
 const HeaderPortal = styled.div`
   display: flex;
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  width: 0;
+  height: 100%;
   flex-direction: row;
 
   @media (max-width: 768px) {
@@ -168,7 +173,7 @@ const HeaderPortal = styled.div`
     min-width: 0;
     width: 0;
     height: 100%;
-    margin: 0 36px 0 38px;
+    margin: 0 34px 0 42px;
     overflow: hidden;
   }
 `
@@ -222,4 +227,8 @@ const HeaderContainer = styled.header`
   background: #231f20;
 
   border-bottom: 1px solid #3a3a3a;
+
+  @media (max-width: 768px) {
+    padding: 0;
+  }
 `

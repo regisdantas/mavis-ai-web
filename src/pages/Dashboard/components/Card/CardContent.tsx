@@ -34,6 +34,8 @@ interface CardContentProps {
   value: string
   readOnly: boolean
   editing: boolean
+  onEditorFocus: (textarea: HTMLTextAreaElement) => void
+  onEditorBlur: (textarea: HTMLTextAreaElement) => void
   textareaRef: React.RefObject<HTMLTextAreaElement>
   markdownRef: React.RefObject<HTMLDivElement>
 
@@ -51,6 +53,8 @@ const CardContent: React.FC<CardContentProps> = ({
   value,
   readOnly,
   editing,
+  onEditorFocus,
+  onEditorBlur,
   textareaRef,
   markdownRef,
   setValue,
@@ -74,6 +78,7 @@ const CardContent: React.FC<CardContentProps> = ({
           const el = e.currentTarget
           el.style.height = 'auto'
           el.style.height = `${el.scrollHeight}px`
+          onEditorFocus(el)
         }}
         onChange={(e) => {
           const el = e.currentTarget
@@ -85,9 +90,11 @@ const CardContent: React.FC<CardContentProps> = ({
           const related = e.relatedTarget as HTMLElement | null
 
           if (related?.dataset?.keepeditor === 'true') {
+            onSave()
             return
           }
 
+          onEditorBlur(e.currentTarget)
           onSave()
           setEditing(false)
         }}
@@ -135,6 +142,27 @@ const CardContent: React.FC<CardContentProps> = ({
               />
             )
           },
+          table({ node: _node, children, ...props }) {
+            return (
+              <MarkdownScrollWrapper>
+                <table {...props}>{children}</table>
+              </MarkdownScrollWrapper>
+            )
+          },
+          pre({ node: _node, children, ...props }) {
+            return (
+              <MarkdownScrollWrapper>
+                <pre {...props}>{children}</pre>
+              </MarkdownScrollWrapper>
+            )
+          },
+          img({ node: _node, ...props }) {
+            return (
+              <MarkdownInlineScrollWrapper>
+                <img {...props} alt={props.alt || ''} />
+              </MarkdownInlineScrollWrapper>
+            )
+          },
         }}
         remarkPlugins={[
           [
@@ -166,19 +194,7 @@ const MarkdownContainer = styled.div`
     max-width: 100%;
     min-width: 0;
     margin-left: 0;
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-    scrollbar-width: thin;
-    scrollbar-color: #b0b0b5 transparent;
-  }
-
-  &::-webkit-scrollbar {
-    height: 8px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #b0b0b5;
-    border-radius: 6px;
+    overflow-x: hidden;
   }
 
   padding: 20px;
@@ -230,9 +246,11 @@ const MarkdownContainer = styled.div`
     margin: 20px 0;
     padding: 8px;
     text-align: left;
-    white-space: pre-wrap;
-    word-break: break-word;
-    overflow-wrap: break-word;
+    width: max-content;
+    max-width: none;
+    white-space: pre;
+    word-break: normal;
+    overflow-wrap: normal;
   }
 
   hr {
@@ -345,8 +363,9 @@ const MarkdownContainer = styled.div`
   }
 
   table {
-    display: inline-table;
-    width: auto;
+    width: max-content;
+    min-width: 100%;
+    max-width: none;
 
     border-top: 1px solid rgba(0, 0, 0, 0.2);
     border-left: 1px solid rgba(0, 0, 0, 0.2);
@@ -355,11 +374,6 @@ const MarkdownContainer = styled.div`
     margin: 0;
     margin-bottom: 20px;
     margin-right: 10px;
-
-    @media (max-width: 1260px) {
-      width: max-content;
-      min-width: 100%;
-    }
   }
 
   table th {
@@ -482,8 +496,48 @@ const MarkdownContainer = styled.div`
     width: 100%;
   }
 
+  .katex-display {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+  }
+`
+
+const MarkdownScrollWrapper = styled.div`
+  && {
+    width: 100%;
+    min-width: 0;
+    margin: 0;
+  }
+
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #b0b0b5 transparent;
+
+  &::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #b0b0b5;
+    border-radius: 6px;
+  }
+`
+
+const MarkdownInlineScrollWrapper = styled.span`
+  display: inline-block;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  vertical-align: bottom;
+
   img {
-    max-width: 45vw;
+    display: block;
+    max-width: none;
   }
 `
 

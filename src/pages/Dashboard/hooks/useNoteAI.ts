@@ -4,10 +4,29 @@ import { getOpenAIKey, saveOpenAIKey } from '../../../services/openAIKeyService'
 
 interface UseNoteAIProps {
   userId?: string
+  getNoteContext: () => NoteAIContext | null
+  onContentChange: (entryId: string, newText: string) => Promise<void>
+}
+
+export interface NoteAIContext {
+  entryId: string
   value: string
-  textareaRef: React.RefObject<HTMLTextAreaElement | null>
-  pushHistory: (text: string) => void
-  onContentChange: (newText: string) => void
+  textarea: HTMLTextAreaElement | null
+}
+
+export interface NoteAIControls {
+  aiLoading: boolean
+  assistantOpen: boolean
+  instruction: string
+  setInstruction: (instruction: string) => void
+  apiKeyInput: string
+  setApiKeyInput: (apiKey: string) => void
+  requiresApiKey: boolean
+  error: string
+  openAssistant: () => Promise<void>
+  closeAssistant: () => void
+  clearInstruction: () => void
+  submitInstruction: () => Promise<void>
 }
 
 const systemPrompt = `You are a text editor assistant.
@@ -37,11 +56,9 @@ Rules:
 
 export function useNoteAI({
   userId,
-  value,
-  textareaRef,
-  pushHistory,
+  getNoteContext,
   onContentChange,
-}: UseNoteAIProps) {
+}: UseNoteAIProps): NoteAIControls {
   const [aiLoading, setAiLoading] = useState(false)
   const [assistantOpen, setAssistantOpen] = useState(false)
   const [instruction, setInstruction] = useState('')
@@ -49,22 +66,26 @@ export function useNoteAI({
   const [requiresApiKey, setRequiresApiKey] = useState(false)
   const [error, setError] = useState('')
   const noteDraftRef = useRef<{
+    entryId: string | null
     value: string
     selectionStart: number | null
     selectionEnd: number | null
   }>({
-    value,
+    entryId: null,
+    value: '',
     selectionStart: null,
     selectionEnd: null,
   })
 
   const openAssistant = async () => {
-    const textarea = textareaRef.current
-    const noteText = textarea?.value ?? value
+    const noteContext = getNoteContext()
+    const textarea = noteContext?.textarea
+    const noteText = textarea?.value ?? noteContext?.value ?? ''
     const selectionStart = textarea?.selectionStart ?? null
     const selectionEnd = textarea?.selectionEnd ?? null
 
     noteDraftRef.current = {
+      entryId: noteContext?.entryId ?? null,
       value: noteText,
       selectionStart,
       selectionEnd,
@@ -74,6 +95,12 @@ export function useNoteAI({
     setInstruction('')
     setApiKeyInput('')
     setError('')
+
+    if (!noteContext) {
+      setRequiresApiKey(false)
+      setError('Select a note or start editing a note to use the AI assistant.')
+      return
+    }
 
     if (!userId) {
       setRequiresApiKey(false)
@@ -120,6 +147,13 @@ export function useNoteAI({
       return
     }
 
+    const { entryId, value: noteText, selectionStart, selectionEnd } = noteDraftRef.current
+
+    if (!entryId) {
+      setError('Select a note or start editing a note to use the AI assistant.')
+      return
+    }
+
     setAiLoading(true)
     setError('')
 
@@ -141,9 +175,6 @@ export function useNoteAI({
         apiKey = await getOpenAIKey(userId)
       }
 
-      const { value: noteText, selectionStart, selectionEnd } = noteDraftRef.current
-      pushHistory(noteText)
-
       if (selectionStart !== null && selectionEnd !== null && selectionStart !== selectionEnd) {
         const selectedText = noteText.substring(selectionStart, selectionEnd)
 
@@ -160,7 +191,7 @@ export function useNoteAI({
           noteText.substring(0, selectionStart) +
           result.output_text.trim() +
           noteText.substring(selectionEnd)
-        onContentChange(updated)
+        await onContentChange(entryId, updated)
       } else {
         const result = await executeAI(
           userId,
@@ -171,7 +202,7 @@ export function useNoteAI({
           apiKey
         )
 
-        onContentChange(`${noteText}\n\n${result.output_text.trim()}`)
+        await onContentChange(entryId, `${noteText}\n\n${result.output_text.trim()}`)
       }
 
       closeAssistant()

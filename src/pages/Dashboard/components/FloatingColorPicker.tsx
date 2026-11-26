@@ -1,5 +1,4 @@
 import React from 'react'
-import { createPortal } from 'react-dom'
 import styled from 'styled-components'
 
 interface FloatingColorPickerProps {
@@ -13,7 +12,7 @@ const FloatingColorPicker: React.FC<FloatingColorPickerProps> = ({
   onColorClicked,
   dropdownRef,
 }) => {
-  return createPortal(
+  return (
     <ColorDropdown
       ref={dropdownRef}
       onMouseDown={(e) => e.stopPropagation()}
@@ -22,6 +21,7 @@ const FloatingColorPicker: React.FC<FloatingColorPickerProps> = ({
       {colors.map((color) => (
         <ColorOption
           key={color}
+          type="button"
           onMouseDown={(e) => {
             e.preventDefault()
             e.stopPropagation()
@@ -32,19 +32,19 @@ const FloatingColorPicker: React.FC<FloatingColorPickerProps> = ({
           <ColorLabel>{color}</ColorLabel>
         </ColorOption>
       ))}
-    </ColorDropdown>,
-    document.body
+    </ColorDropdown>
   )
 }
 
 export default FloatingColorPicker
 
 const ColorDropdown = styled.div`
-  position: absolute;
+  && {
+    width: max-content;
+    margin: 0;
+  }
 
-  top: 120px;
-  right: 50%;
-
+  position: relative;
   min-width: 160px;
 
   display: flex;
@@ -87,6 +87,11 @@ const ColorOption = styled.button`
 `
 
 const ColorCircle = styled.div<{ color: string }>`
+  && {
+    width: 14px;
+    margin: 0;
+  }
+
   width: 14px;
   height: 14px;
 
