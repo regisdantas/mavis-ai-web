@@ -8,10 +8,13 @@ import { IconButton } from '../../../../styles/global'
 import FloatingColorPicker from '../FloatingColorPicker'
 import FloatingTemplatePicker from '../FloatingTemplatePicker'
 import { TemplateOption } from '../../utils/cardUtils'
+import { SearchHighlight } from '../SearchHighlight'
 
 interface CardHeaderProps {
   title: string
   titleRef: React.RefObject<HTMLSpanElement>
+  searchContent: string
+  fuzzySearchEnabled: boolean
   readOnly: boolean
   collapsed: boolean
   isFavorite: boolean
@@ -44,6 +47,8 @@ interface CardHeaderProps {
 const CardHeader: React.FC<CardHeaderProps> = ({
   title,
   titleRef,
+  searchContent,
+  fuzzySearchEnabled,
   readOnly,
   collapsed,
   isFavorite,
@@ -96,7 +101,11 @@ const CardHeader: React.FC<CardHeaderProps> = ({
           data-placeholder="🙋 Give me a name"
           onBlur={(e) => onTitleChange(e.currentTarget.innerText)}
         >
-          {title}
+          <SearchHighlight
+            text={title}
+            query={searchContent}
+            fuzzySearchEnabled={fuzzySearchEnabled}
+          />
         </Title>
       </TitleBox>
 

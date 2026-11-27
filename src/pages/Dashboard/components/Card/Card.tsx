@@ -16,11 +16,55 @@ import { useCardClickOutside } from '../../hooks/useCardClickOutside'
 import { useTextareaCaret } from '../../hooks/useTextareaCaret'
 import { useNoteTags } from '../../hooks/useNoteTags'
 
+interface PendingTextareaSelection {
+  start: number
+  end: number
+  direction: HTMLTextAreaElement['selectionDirection']
+  scrollTop: number
+}
+
+const mapCaretPosition = (previousText: string, nextText: string, position: number) => {
+  let commonPrefixLength = 0
+
+  while (
+    commonPrefixLength < previousText.length &&
+    commonPrefixLength < nextText.length &&
+    previousText[commonPrefixLength] === nextText[commonPrefixLength]
+  ) {
+    commonPrefixLength += 1
+  }
+
+  let commonSuffixLength = 0
+
+  while (
+    commonSuffixLength < previousText.length - commonPrefixLength &&
+    commonSuffixLength < nextText.length - commonPrefixLength &&
+    previousText[previousText.length - 1 - commonSuffixLength] ===
+      nextText[nextText.length - 1 - commonSuffixLength]
+  ) {
+    commonSuffixLength += 1
+  }
+
+  if (position <= commonPrefixLength) {
+    return position
+  }
+
+  const previousSuffixStart = previousText.length - commonSuffixLength
+
+  if (position >= previousSuffixStart) {
+    return position + nextText.length - previousText.length
+  }
+
+  return nextText.length - commonSuffixLength
+}
+
 interface ICardProps {
   id: string
   number: number
   date: string
   content: string
+  searchContent: string
+  fuzzySearchEnabled: boolean
   notesLocked: boolean
 
   onChangeContent: (id: string, content: string) => Promise<void>
@@ -38,6 +82,8 @@ export const Card: React.FC<ICardProps> = ({
   id,
   date,
   content,
+  searchContent,
+  fuzzySearchEnabled,
   notesLocked,
   onChangeContent,
   onChangeDate,
@@ -149,11 +195,60 @@ export const Card: React.FC<ICardProps> = ({
   )
 
   const [value, setValue] = React.useState(objContent.text || '')
+  const pendingTextareaSelectionRef = React.useRef<PendingTextareaSelection | null>(null)
   const previousPersistedTextRef = React.useRef(objContent.text || '')
   const savedDraftRef = React.useRef({
     text: objContent.text || '',
     title: objContent.title || '',
   })
+  const updateEditorValue = React.useCallback(
+    (nextText: string) => {
+      const textarea = textareaRef.current
+
+      if (
+        editingContent &&
+        textarea &&
+        document.activeElement === textarea &&
+        textarea.value !== nextText
+      ) {
+        const previousText = textarea.value
+
+        pendingTextareaSelectionRef.current = {
+          start: mapCaretPosition(previousText, nextText, textarea.selectionStart),
+          end: mapCaretPosition(previousText, nextText, textarea.selectionEnd),
+          direction: textarea.selectionDirection,
+          scrollTop: textarea.scrollTop,
+        }
+      }
+
+      setValue((currentValue) => (currentValue === nextText ? currentValue : nextText))
+    },
+    [editingContent]
+  )
+
+  React.useLayoutEffect(() => {
+    const pendingSelection = pendingTextareaSelectionRef.current
+
+    if (!pendingSelection) {
+      return
+    }
+
+    const textarea = textareaRef.current
+
+    if (!editingContent || !textarea) {
+      pendingTextareaSelectionRef.current = null
+      return
+    }
+
+    pendingTextareaSelectionRef.current = null
+    const textLength = textarea.value.length
+    textarea.setSelectionRange(
+      Math.min(pendingSelection.start, textLength),
+      Math.min(pendingSelection.end, textLength),
+      pendingSelection.direction
+    )
+    textarea.scrollTop = pendingSelection.scrollTop
+  }, [editingContent, value])
 
   React.useEffect(() => {
     savedDraftRef.current = {
@@ -164,12 +259,16 @@ export const Card: React.FC<ICardProps> = ({
 
   React.useEffect(() => {
     const persistedText = objContent.text || ''
+    const previousPersistedText = previousPersistedTextRef.current
 
-    if (previousPersistedTextRef.current !== persistedText) {
+    if (previousPersistedText !== persistedText) {
       previousPersistedTextRef.current = persistedText
-      setValue(persistedText)
+
+      if (!editingContent || value === previousPersistedText) {
+        updateEditorValue(persistedText)
+      }
     }
-  }, [objContent.text])
+  }, [editingContent, objContent.text, updateEditorValue, value])
 
   const saveCurrentDraft = React.useCallback(
     (nextText?: string, nextTitle?: string) => {
@@ -184,7 +283,7 @@ export const Card: React.FC<ICardProps> = ({
       }
 
       savedDraftRef.current = { text: savedText, title: savedTitle }
-      setValue(savedText)
+      updateEditorValue(savedText)
 
       void onChangeContent(
         id,
@@ -204,7 +303,7 @@ export const Card: React.FC<ICardProps> = ({
         }
       })
     },
-    [editingContent, id, localProcessMacros, objContent, onChangeContent, value]
+    [editingContent, id, localProcessMacros, objContent, onChangeContent, updateEditorValue, value]
   )
 
   React.useEffect(() => {
@@ -333,11 +432,17 @@ export const Card: React.FC<ICardProps> = ({
   }
 
   return (
-    <CardContainer key={id} selected={selected}>
+    <CardContainer
+      key={id}
+      selected={selected}
+      $overlayOpen={toolboxOpen || showColorPicker || showTemplatePicker}
+    >
       <div className="ContentContainer" style={{ backgroundColor: objContent.color || '#eee' }}>
         <CardHeader
           title={objContent.title}
           titleRef={titleRef}
+          searchContent={searchContent}
+          fuzzySearchEnabled={fuzzySearchEnabled}
           readOnly={notesLocked}
           collapsed={objContent.collapsed}
           selected={selected}
@@ -389,6 +494,8 @@ export const Card: React.FC<ICardProps> = ({
         {!objContent.collapsed && (
           <CardContent
             value={value}
+            searchContent={searchContent}
+            fuzzySearchEnabled={fuzzySearchEnabled}
             readOnly={readOnly}
             editing={editingContent}
             onEditorFocus={(textarea) => onEditorFocus(id, textarea)}
@@ -416,6 +523,8 @@ export const Card: React.FC<ICardProps> = ({
               tagDropdownRef={tagDropdownRef}
               date={date}
               tags={objContent.tags}
+              searchContent={searchContent}
+              fuzzySearchEnabled={fuzzySearchEnabled}
               availableTags={tags}
               readOnly={readOnly}
               tagPickerRef={tagPickerRef}
@@ -443,7 +552,9 @@ export const Card: React.FC<ICardProps> = ({
   )
 }
 
-const CardContainer = styled.div<{ selected: boolean }>`
+const CardContainer = styled.div<{ selected: boolean; $overlayOpen: boolean }>`
+position: relative;
+z-index: ${({ $overlayOpen }) => ($overlayOpen ? 10 : 'auto')};
 box-shadow: ${({ selected }) => (selected ? '0 0 0 3px #2563eb' : 'none')};  width: 100%;
 
   display: flex;

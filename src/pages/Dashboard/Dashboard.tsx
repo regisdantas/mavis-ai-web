@@ -72,6 +72,8 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
   const {
     searchContent,
     setSearchContent,
+    fuzzySearchEnabled,
+    setFuzzySearchEnabled,
     selectedTag,
     setSelectedTag,
     systemTags,
@@ -669,7 +671,9 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
             selectedTag={selectedTag}
             selectedDate={selectedDate}
             searchContent={searchContent}
+            fuzzySearchEnabled={fuzzySearchEnabled}
             onSearchChange={setSearchContent}
+            onToggleFuzzySearch={() => setFuzzySearchEnabled((enabled) => !enabled)}
             onDateChange={handleDateChanged}
             onAddNote={handleAddNewEntry}
             onCopyAllNotes={handleCopyAllNotes}
@@ -739,6 +743,8 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
               {!notesMinimized && (
                 <NotesList
                   entries={visibleEntries}
+                  searchContent={searchContent}
+                  fuzzySearchEnabled={fuzzySearchEnabled}
                   pickerTags={pickerTags}
                   updateEntryDate={handleUpdateEntryDate}
                   onHoverCard={setHoveredCardId}

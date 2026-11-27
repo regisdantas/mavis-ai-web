@@ -7,6 +7,8 @@ import { TemplateOption } from '../utils/cardUtils'
 
 interface NotesListProps {
   entries: IEntry[]
+  searchContent: string
+  fuzzySearchEnabled: boolean
   pickerTags: string[]
   onHoverCard: (id: string | null) => void
   onChangeEntry: (id: string, content: string) => Promise<void>
@@ -21,6 +23,8 @@ interface NotesListProps {
 
 export const NotesList: React.FC<NotesListProps> = ({
   entries,
+  searchContent,
+  fuzzySearchEnabled,
   pickerTags,
   onHoverCard,
   onChangeEntry,
@@ -45,6 +49,8 @@ export const NotesList: React.FC<NotesListProps> = ({
             date={entry.date}
             number={index + 1}
             content={entry.content}
+            searchContent={searchContent}
+            fuzzySearchEnabled={fuzzySearchEnabled}
             onChangeContent={onChangeEntry}
             onChangeDate={updateEntryDate}
             tags={pickerTags}

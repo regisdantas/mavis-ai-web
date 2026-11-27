@@ -3,10 +3,13 @@ import styled from 'styled-components'
 import { createPortal } from 'react-dom'
 import { IoMdAddCircleOutline } from 'react-icons/io'
 import { FiTag } from 'react-icons/fi'
+import { SearchHighlight } from '../SearchHighlight'
 
 interface CardTagsProps {
   date: string
   tags: string[]
+  searchContent: string
+  fuzzySearchEnabled: boolean
   availableTags: string[]
   readOnly: boolean
 
@@ -32,6 +35,8 @@ interface CardTagsProps {
 const CardTags: React.FC<CardTagsProps> = ({
   date,
   tags,
+  searchContent,
+  fuzzySearchEnabled,
   availableTags,
   readOnly,
   tagPickerRef,
@@ -75,7 +80,11 @@ const CardTags: React.FC<CardTagsProps> = ({
 
       {tags.map((tag) => (
         <TagChip key={tag} type="button" disabled={readOnly} onClick={() => toggleTag(tag)}>
-          {formatTag(tag)}
+          <SearchHighlight
+            text={formatTag(tag)}
+            query={searchContent}
+            fuzzySearchEnabled={fuzzySearchEnabled}
+          />
         </TagChip>
       ))}
 

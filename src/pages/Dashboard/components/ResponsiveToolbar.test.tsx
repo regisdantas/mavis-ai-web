@@ -24,7 +24,9 @@ const createNotesToolbarProps = (
   selectedTag: 'all',
   selectedDate: '2026-01-01',
   searchContent: '',
+  fuzzySearchEnabled: false,
   onSearchChange: jest.fn(),
+  onToggleFuzzySearch: jest.fn(),
   onDateChange: jest.fn(),
   onAddNote: jest.fn(),
   onCopyAllNotes: jest.fn(),
@@ -257,4 +259,29 @@ describe('responsive dashboard toolbar menus', () => {
       }
     }
   )
+
+  it('places the fuzzy search toggle before clear and reports its current state', () => {
+    const onToggleFuzzySearch = jest.fn()
+
+    render(
+      <NotesToolbar
+        {...createNotesToolbarProps({
+          searchContent: 'hello',
+          fuzzySearchEnabled: true,
+          onToggleFuzzySearch,
+        })}
+      />
+    )
+
+    const fuzzyButton = screen.getByRole('button', { name: 'Disable fuzzy search' })
+    const clearButton = screen.getByRole('button', { name: 'Clear search' })
+
+    expect(fuzzyButton.getAttribute('aria-pressed')).toBe('true')
+    expect(
+      fuzzyButton.compareDocumentPosition(clearButton) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
+
+    fireEvent.click(fuzzyButton)
+    expect(onToggleFuzzySearch).toHaveBeenCalledTimes(1)
+  })
 })

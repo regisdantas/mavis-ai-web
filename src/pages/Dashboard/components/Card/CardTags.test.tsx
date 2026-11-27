@@ -10,6 +10,8 @@ describe('CardTags', () => {
       <CardTags
         date="2026-11-25"
         tags={['work', 'personal']}
+        searchContent=""
+        fuzzySearchEnabled={false}
         availableTags={['work', 'personal']}
         readOnly={false}
         tagPickerRef={createRef()}

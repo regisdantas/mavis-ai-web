@@ -1,6 +1,7 @@
 import React from 'react'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { Card } from './Card'
+import { TemplateOption } from '../../utils/cardUtils'
 
 jest.mock('react-markdown', () => {
   const ReactRuntime = jest.requireActual('react')
@@ -90,7 +91,10 @@ jest.mock('../../hooks/useCardClickOutside', () => ({
 const renderCard = (
   notesLocked: boolean,
   onChangeContent = jest.fn(async () => {}),
-  noteText = 'Original text'
+  noteText = 'Original text',
+  searchContent = '',
+  fuzzySearchEnabled = false,
+  templateOptions: TemplateOption[] = []
 ) => {
   const content = JSON.stringify({
     title: 'Test note',
@@ -106,13 +110,15 @@ const renderCard = (
       number={1}
       date="2026-11-25"
       content={content}
+      searchContent={searchContent}
+      fuzzySearchEnabled={fuzzySearchEnabled}
       notesLocked={notesLocked}
       onChangeContent={onChangeContent}
       onChangeDate={jest.fn()}
       tags={[]}
       selected={false}
       onToggleSelection={jest.fn()}
-      templateOptions={[]}
+      templateOptions={templateOptions}
       onEditorFocus={jest.fn()}
       onEditorBlur={jest.fn()}
     />
@@ -176,6 +182,31 @@ describe('Card global edit lock and draft autosave', () => {
     expect(window.getComputedStyle(templateButton).color).toBe('rgb(156, 163, 175)')
   })
 
+  it.each(['Color', 'Template'])(
+    'raises the note above its siblings while the %s picker is open',
+    (pickerName) => {
+      const templateOptions =
+        pickerName === 'Template' ? [{ title: 'Example', text: 'Template text' }] : []
+      const { container } = renderCard(
+        false,
+        undefined,
+        'Original text',
+        '',
+        false,
+        templateOptions
+      )
+
+      fireEvent.click(screen.getByRole('button', { name: 'Open note toolbox' }))
+      fireEvent.click(screen.getByRole('menuitem', { name: pickerName }))
+
+      const cardContainer = container.querySelector('.ContentContainer')
+        ?.parentElement as HTMLElement
+
+      expect(window.getComputedStyle(cardContainer).position).toBe('relative')
+      expect(window.getComputedStyle(cardContainer).zIndex).toBe('10')
+    }
+  )
+
   it('allows expanding and collapsing while notes are locked', () => {
     const content = JSON.stringify({
       title: 'Test note',
@@ -190,6 +221,8 @@ describe('Card global edit lock and draft autosave', () => {
       number: 1,
       date: '2026-11-25',
       content,
+      searchContent: '',
+      fuzzySearchEnabled: false,
       notesLocked: true,
       onChangeContent,
       onChangeDate: jest.fn(),
@@ -245,6 +278,8 @@ describe('Card global edit lock and draft autosave', () => {
           color: '#fff',
           locked: true,
         })}
+        searchContent=""
+        fuzzySearchEnabled={false}
         notesLocked
         onChangeContent={jest.fn(async () => {})}
         onChangeDate={jest.fn()}
@@ -290,5 +325,38 @@ describe('Card global edit lock and draft autosave', () => {
         value: originalVisibilityState,
       })
     }
+  })
+
+  it('preserves the editing caret when autosave expands a macro', async () => {
+    jest.useFakeTimers()
+
+    try {
+      const { container } = renderCard(
+        false,
+        jest.fn(async () => {}),
+        'start /date finish'
+      )
+
+      fireEvent.click(screen.getByText('start /date finish'))
+      const editor = container.querySelector('textarea') as HTMLTextAreaElement
+      editor.setSelectionRange(2, 2)
+
+      await act(async () => {
+        jest.advanceTimersByTime(500)
+      })
+
+      expect(editor.value).not.toContain('/date')
+      expect(editor.selectionStart).toBe(2)
+      expect(editor.selectionEnd).toBe(2)
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  it('highlights matching text in note titles case-insensitively', () => {
+    const { container } = renderCard(true, undefined, 'Original text', 'test')
+    const highlightedTitle = container.querySelector('header mark')
+
+    expect(highlightedTitle?.textContent).toBe('Test')
   })
 })

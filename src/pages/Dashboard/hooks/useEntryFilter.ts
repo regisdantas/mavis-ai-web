@@ -8,9 +8,11 @@ import { BsJournalBookmark } from 'react-icons/bs'
 import { getTags } from '../../../utils'
 import { TagItem } from '../components/ExplorerSideBar'
 import { IEntry } from './useEntries'
+import { getSearchableNoteText, matchesNoteSearch } from '../utils/noteSearch'
 
 export function useEntryFilter(entries: IEntry[]) {
   const [searchContent, setSearchContent] = React.useState('')
+  const [fuzzySearchEnabled, setFuzzySearchEnabled] = React.useState(false)
   const [selectedTag, setSelectedTag] = React.useState('favorite')
 
   const systemTags: TagItem[] = React.useMemo(
@@ -51,7 +53,11 @@ export function useEntryFilter(entries: IEntry[]) {
       const isPrompt = tags.includes('prompts')
 
       if (searchContent.trim() !== '') {
-        return entry.content.toLowerCase().includes(searchContent.toLowerCase())
+        return matchesNoteSearch(
+          getSearchableNoteText(entry.content),
+          searchContent,
+          fuzzySearchEnabled
+        )
       }
 
       if (selectedTag === 'all') {
@@ -88,7 +94,7 @@ export function useEntryFilter(entries: IEntry[]) {
 
       return tags.includes(selectedTag) && !isTrashed && !isArchived && !isTemplate && !isPrompt
     },
-    [searchContent, selectedTag]
+    [fuzzySearchEnabled, searchContent, selectedTag]
   )
 
   const visibleEntries = React.useMemo(
@@ -99,6 +105,8 @@ export function useEntryFilter(entries: IEntry[]) {
   return {
     searchContent,
     setSearchContent,
+    fuzzySearchEnabled,
+    setFuzzySearchEnabled,
 
     selectedTag,
     setSelectedTag,

@@ -14,6 +14,7 @@ import {
   FiSquare,
   FiTrash2,
   FiUnlock,
+  FiZap,
 } from 'react-icons/fi'
 import { IoMdAddCircleOutline } from 'react-icons/io'
 import { MdOutlineClear } from 'react-icons/md'
@@ -24,8 +25,10 @@ interface NotesToolbarProps {
   selectedTag: string
   selectedDate: string
   searchContent: string
+  fuzzySearchEnabled: boolean
 
   onSearchChange: (value: string) => void
+  onToggleFuzzySearch: () => void
   onDateChange: (event: React.ChangeEvent<HTMLInputElement>) => void
 
   onAddNote: () => void
@@ -55,7 +58,9 @@ export const NotesToolbar: React.FC<NotesToolbarProps> = ({
   selectedTag,
   selectedDate,
   searchContent,
+  fuzzySearchEnabled,
   onSearchChange,
+  onToggleFuzzySearch,
   onDateChange,
   onAddNote,
   onCopyAllNotes,
@@ -204,6 +209,18 @@ export const NotesToolbar: React.FC<NotesToolbarProps> = ({
                 }
               }}
             />
+            <FuzzySearchButton
+              $searchExpanded={searchExpanded}
+              $active={fuzzySearchEnabled}
+              type="button"
+              aria-label={fuzzySearchEnabled ? 'Disable fuzzy search' : 'Enable fuzzy search'}
+              aria-pressed={fuzzySearchEnabled}
+              title={fuzzySearchEnabled ? 'Disable fuzzy search' : 'Enable fuzzy search'}
+              tabIndex={searchExpanded ? 0 : -1}
+              onClick={onToggleFuzzySearch}
+            >
+              <FiZap />
+            </FuzzySearchButton>
             <SearchClearButton
               $searchExpanded={searchExpanded}
               type="button"
@@ -521,6 +538,31 @@ const SearchClearButton = styled.button<{ $searchExpanded: boolean }>`
 
   @media (max-width: 768px) {
     color: #60a5fa;
+  }
+`
+
+const FuzzySearchButton = styled.button<{ $searchExpanded: boolean; $active: boolean }>`
+  order: 2;
+  display: flex;
+  width: ${({ $searchExpanded }) => ($searchExpanded ? '30px' : '0')};
+  min-width: ${({ $searchExpanded }) => ($searchExpanded ? '30px' : '0')};
+  height: 30px;
+  flex: ${({ $searchExpanded }) => ($searchExpanded ? '0 0 30px' : '0 0 0')};
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 8px;
+  background: ${({ $active }) => ($active ? 'rgba(251, 191, 36, 0.18)' : 'transparent')};
+  color: ${({ $active }) => ($active ? '#fbbf24' : '#2563eb')};
+  opacity: ${({ $searchExpanded }) => ($searchExpanded ? 1 : 0)};
+  pointer-events: ${({ $searchExpanded }) => ($searchExpanded ? 'auto' : 'none')};
+  transition: flex-basis 220ms ease, opacity 160ms ease, margin 220ms ease;
+
+  @media (max-width: 768px) {
+    color: ${({ $active }) => ($active ? '#d97706' : '#60a5fa')};
   }
 `
 

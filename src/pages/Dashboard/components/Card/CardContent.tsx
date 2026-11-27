@@ -11,6 +11,8 @@ import remarkToc from 'remark-toc'
 import remarkBreaks from 'remark-breaks'
 import stringWidth from 'string-width'
 import { getSourceOffsetFromClick, rehypeAddSourceOffsets } from './markdownSourcePosition'
+import { rehypeSearchHighlight } from './searchHighlight'
+import { SearchMatch } from '../SearchHighlight'
 
 interface ButtonCommandProps {
   label: string
@@ -32,6 +34,8 @@ const ButtonCommand: React.FC<ButtonCommandProps> = ({
 
 interface CardContentProps {
   value: string
+  searchContent: string
+  fuzzySearchEnabled: boolean
   readOnly: boolean
   editing: boolean
   onEditorFocus: (textarea: HTMLTextAreaElement) => void
@@ -51,6 +55,8 @@ interface CardContentProps {
 
 const CardContent: React.FC<CardContentProps> = ({
   value,
+  searchContent,
+  fuzzySearchEnabled,
   readOnly,
   editing,
   onEditorFocus,
@@ -126,8 +132,15 @@ const CardContent: React.FC<CardContentProps> = ({
       }}
     >
       <ReactMarkdown
-        rehypePlugins={[rehypeRaw, rehypeAddSourceOffsets]}
+        rehypePlugins={[
+          rehypeRaw,
+          [rehypeSearchHighlight, searchContent, fuzzySearchEnabled],
+          rehypeAddSourceOffsets,
+        ]}
         components={{
+          mark({ node: _node, children }) {
+            return <SearchMatch>{children}</SearchMatch>
+          },
           button(props) {
             const expression = decodeURIComponent(
               String((props.node as any)?.properties?.dataExpression ?? '')
