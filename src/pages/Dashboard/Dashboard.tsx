@@ -58,6 +58,7 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
     fetchEntries,
     addEntry,
     updateEntry,
+    updateEntryEmoji,
     updateEntryDate,
     renameTag,
     deleteTag,
@@ -484,6 +485,11 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
     await updateEntryDate(id, date)
   }
 
+  const handleUpdateEntryEmoji = async (id: string, emoji: string) => {
+    if (notesLocked) return
+    await updateEntryEmoji(id, emoji)
+  }
+
   async function handleAddNewEntry() {
     const tags = selectedTag !== 'all' ? [selectedTag] : []
 
@@ -749,6 +755,7 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
                   updateEntryDate={handleUpdateEntryDate}
                   onHoverCard={setHoveredCardId}
                   onChangeEntry={handleChangeEntry}
+                  onChangeEmoji={handleUpdateEntryEmoji}
                   selectedNoteIds={selectedNoteIds}
                   onToggleSelection={toggleNoteSelection}
                   templateOptions={templateOptions}

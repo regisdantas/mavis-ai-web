@@ -63,11 +63,13 @@ interface ICardProps {
   number: number
   date: string
   content: string
+  emoji?: string
   searchContent: string
   fuzzySearchEnabled: boolean
   notesLocked: boolean
 
   onChangeContent: (id: string, content: string) => Promise<void>
+  onChangeEmoji: (id: string, emoji: string) => Promise<void>
   onChangeDate: (id: string, date: string) => void
 
   tags: string[]
@@ -82,10 +84,12 @@ export const Card: React.FC<ICardProps> = ({
   id,
   date,
   content,
+  emoji,
   searchContent,
   fuzzySearchEnabled,
   notesLocked,
   onChangeContent,
+  onChangeEmoji,
   onChangeDate,
   tags,
   selected,
@@ -98,6 +102,7 @@ export const Card: React.FC<ICardProps> = ({
   const [toolboxOpen, setToolboxOpen] = React.useState(false)
   const [showColorPicker, setShowColorPicker] = React.useState(false)
   const [showTemplatePicker, setShowTemplatePicker] = React.useState(false)
+  const [showEmojiPicker, setShowEmojiPicker] = React.useState(false)
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
   const markdownRef = React.useRef<HTMLDivElement>(null)
   const titleRef = React.useRef<HTMLSpanElement>(null)
@@ -105,6 +110,8 @@ export const Card: React.FC<ICardProps> = ({
   const colorPickerRef = React.useRef<HTMLDivElement>(null)
   const templatePickerRef = React.useRef<HTMLDivElement>(null)
   const toolboxRef = React.useRef<HTMLDivElement>(null)
+  const emojiPickerRef = React.useRef<HTMLDivElement>(null)
+  const emojiDropdownRef = React.useRef<HTMLDivElement>(null)
   const tagDropdownRef = React.useRef<HTMLDivElement>(null)
   const colorDropdownRef = React.useRef<HTMLDivElement>(null)
   const templateDropdownRef = React.useRef<HTMLDivElement>(null)
@@ -123,6 +130,8 @@ export const Card: React.FC<ICardProps> = ({
     templatePickerRef,
     templateDropdownRef,
     toolboxRef,
+    emojiPickerRef,
+    emojiDropdownRef,
     closeTagPicker: () => {
       setShowTagPicker(false)
       setCreatingTag(false)
@@ -132,6 +141,9 @@ export const Card: React.FC<ICardProps> = ({
     },
     closeTemplatePicker: () => {
       setShowTemplatePicker(false)
+    },
+    closeEmojiPicker: () => {
+      setShowEmojiPicker(false)
     },
     closeToolbox: () => {
       setToolboxOpen(false)
@@ -340,6 +352,7 @@ export const Card: React.FC<ICardProps> = ({
 
     setShowColorPicker(false)
     setShowTemplatePicker(false)
+    setShowEmojiPicker(false)
     setShowTagPicker(false)
     setCreatingTag(false)
     setToolboxOpen(false)
@@ -354,6 +367,7 @@ export const Card: React.FC<ICardProps> = ({
     setShowTagPicker,
     setShowColorPicker,
     setShowTemplatePicker,
+    setShowEmojiPicker,
     setToolboxOpen,
   ])
 
@@ -435,11 +449,12 @@ export const Card: React.FC<ICardProps> = ({
     <CardContainer
       key={id}
       selected={selected}
-      $overlayOpen={toolboxOpen || showColorPicker || showTemplatePicker}
+      $overlayOpen={toolboxOpen || showColorPicker || showTemplatePicker || showEmojiPicker}
     >
       <div className="ContentContainer" style={{ backgroundColor: objContent.color || '#eee' }}>
         <CardHeader
           title={objContent.title}
+          emoji={emoji || ''}
           titleRef={titleRef}
           searchContent={searchContent}
           fuzzySearchEnabled={fuzzySearchEnabled}
@@ -451,9 +466,13 @@ export const Card: React.FC<ICardProps> = ({
           setToolboxOpen={setToolboxOpen}
           showColorPicker={showColorPicker}
           showTemplatePicker={showTemplatePicker}
+          showEmojiPicker={showEmojiPicker}
           setShowColorPicker={setShowColorPicker}
           setShowTemplatePicker={setShowTemplatePicker}
+          setShowEmojiPicker={setShowEmojiPicker}
           toolboxRef={toolboxRef}
+          emojiPickerRef={emojiPickerRef}
+          emojiDropdownRef={emojiDropdownRef}
           colorPickerRef={colorPickerRef}
           templatePickerRef={templatePickerRef}
           colorDropdownRef={colorDropdownRef}
@@ -474,6 +493,14 @@ export const Card: React.FC<ICardProps> = ({
             setToolboxOpen(false)
           }}
           onTemplateSelected={setTemplate}
+          onEmojiSelected={(selectedEmoji) => {
+            if (readOnly) return
+
+            setShowEmojiPicker(false)
+            void onChangeEmoji(id, selectedEmoji).catch((error) => {
+              console.error('Failed to save note emoji.', error)
+            })
+          }}
           isFavorite={hasTag('favorite')}
           copyFormattedContent={copyFormattedContent}
           onToggleFavorite={() => {

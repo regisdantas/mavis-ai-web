@@ -106,4 +106,36 @@ describe('useEntries global note history', () => {
 
     expect(getContent(firstEntry!.id)).toBeUndefined()
   })
+
+  it('persists emoji changes and includes them in undo and redo history', async () => {
+    render(<EntriesHarness />)
+
+    let entry: IEntry | null = null
+
+    await act(async () => {
+      entry = await getCurrent().addEntry({ content: 'note', date: '2026-11-25' })
+      await getCurrent().updateEntryEmoji(entry!.id, '🧠')
+    })
+
+    expect(getCurrent().entries.find((currentEntry) => currentEntry.id === entry!.id)?.emoji).toBe(
+      '🧠'
+    )
+    expect(mockAddDoc.mock.calls[1][1]).toEqual(expect.objectContaining({ emoji: '🧠' }))
+
+    await act(async () => {
+      await getCurrent().undoLastChange()
+    })
+
+    expect(getCurrent().entries.find((currentEntry) => currentEntry.id === entry!.id)?.emoji).toBe(
+      undefined
+    )
+
+    await act(async () => {
+      await getCurrent().redoLastChange()
+    })
+
+    expect(getCurrent().entries.find((currentEntry) => currentEntry.id === entry!.id)?.emoji).toBe(
+      '🧠'
+    )
+  })
 })

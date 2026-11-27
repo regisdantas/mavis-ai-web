@@ -8,9 +8,12 @@ interface UseCardClickOutsideProps {
   templatePickerRef: RefObject<HTMLDivElement>
   templateDropdownRef: RefObject<HTMLDivElement>
   toolboxRef: RefObject<HTMLDivElement>
+  emojiPickerRef: RefObject<HTMLDivElement>
+  emojiDropdownRef: RefObject<HTMLDivElement>
   closeTagPicker: () => void
   closeColorPicker: () => void
   closeTemplatePicker: () => void
+  closeEmojiPicker: () => void
   closeToolbox: () => void
 }
 
@@ -22,9 +25,12 @@ export function useCardClickOutside({
   templatePickerRef,
   templateDropdownRef,
   toolboxRef,
+  emojiPickerRef,
+  emojiDropdownRef,
   closeTagPicker,
   closeColorPicker,
   closeTemplatePicker,
+  closeEmojiPicker,
   closeToolbox,
 }: UseCardClickOutsideProps) {
   useEffect(() => {
@@ -52,6 +58,13 @@ export function useCardClickOutside({
         closeTemplatePicker()
       }
 
+      const insideEmojiTrigger = emojiPickerRef.current?.contains(target) ?? false
+      const insideEmojiDropdown = emojiDropdownRef.current?.contains(target) ?? false
+
+      if (!insideEmojiTrigger && !insideEmojiDropdown) {
+        closeEmojiPicker()
+      }
+
       const insideToolbox = toolboxRef.current?.contains(target) ?? false
 
       if (!insideToolbox) {
@@ -72,9 +85,12 @@ export function useCardClickOutside({
     templatePickerRef,
     templateDropdownRef,
     toolboxRef,
+    emojiPickerRef,
+    emojiDropdownRef,
     closeTagPicker,
     closeColorPicker,
     closeTemplatePicker,
+    closeEmojiPicker,
     closeToolbox,
   ])
 }

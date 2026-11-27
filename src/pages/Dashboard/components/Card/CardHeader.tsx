@@ -1,17 +1,19 @@
 import React from 'react'
 import styled from 'styled-components'
-import { FiCopy, FiSliders, FiStar, FiType } from 'react-icons/fi'
+import { FiCopy, FiSmile, FiSliders, FiStar, FiType } from 'react-icons/fi'
 import { FaStar } from 'react-icons/fa'
 import { IoMdArrowDropdown, IoMdArrowDropleft } from 'react-icons/io'
 import { MdOutlineColorLens } from 'react-icons/md'
 import { IconButton } from '../../../../styles/global'
 import FloatingColorPicker from '../FloatingColorPicker'
+import FloatingEmojiPicker from '../FloatingEmojiPicker'
 import FloatingTemplatePicker from '../FloatingTemplatePicker'
 import { TemplateOption } from '../../utils/cardUtils'
 import { SearchHighlight } from '../SearchHighlight'
 
 interface CardHeaderProps {
   title: string
+  emoji: string
   titleRef: React.RefObject<HTMLSpanElement>
   searchContent: string
   fuzzySearchEnabled: boolean
@@ -25,9 +27,13 @@ interface CardHeaderProps {
   setToolboxOpen: React.Dispatch<React.SetStateAction<boolean>>
   showColorPicker: boolean
   showTemplatePicker: boolean
+  showEmojiPicker: boolean
   setShowColorPicker: React.Dispatch<React.SetStateAction<boolean>>
   setShowTemplatePicker: React.Dispatch<React.SetStateAction<boolean>>
+  setShowEmojiPicker: React.Dispatch<React.SetStateAction<boolean>>
   toolboxRef: React.RefObject<HTMLDivElement>
+  emojiPickerRef: React.RefObject<HTMLDivElement>
+  emojiDropdownRef: React.RefObject<HTMLDivElement>
   colorPickerRef: React.RefObject<HTMLDivElement>
   templatePickerRef: React.RefObject<HTMLDivElement>
   colorDropdownRef: React.RefObject<HTMLDivElement>
@@ -36,6 +42,7 @@ interface CardHeaderProps {
   templateOptions: TemplateOption[]
   onColorSelected: (color: string) => void
   onTemplateSelected: (option: TemplateOption) => void
+  onEmojiSelected: (emoji: string) => void
 
   copyFormattedContent: () => void
 
@@ -46,6 +53,7 @@ interface CardHeaderProps {
 
 const CardHeader: React.FC<CardHeaderProps> = ({
   title,
+  emoji,
   titleRef,
   searchContent,
   fuzzySearchEnabled,
@@ -58,9 +66,13 @@ const CardHeader: React.FC<CardHeaderProps> = ({
   setToolboxOpen,
   showColorPicker,
   showTemplatePicker,
+  showEmojiPicker,
   setShowColorPicker,
   setShowTemplatePicker,
+  setShowEmojiPicker,
   toolboxRef,
+  emojiPickerRef,
+  emojiDropdownRef,
   colorPickerRef,
   templatePickerRef,
   colorDropdownRef,
@@ -69,6 +81,7 @@ const CardHeader: React.FC<CardHeaderProps> = ({
   templateOptions,
   onColorSelected,
   onTemplateSelected,
+  onEmojiSelected,
   copyFormattedContent,
   onToggleFavorite,
   onToggleCollapse,
@@ -92,6 +105,27 @@ const CardHeader: React.FC<CardHeaderProps> = ({
             <FiStar />
           </IconButton>
         )}
+        <EmojiPickerAnchor ref={emojiPickerRef}>
+          <EmojiButton
+            type="button"
+            disabled={readOnly}
+            title={emoji || 'Choose note emoji'}
+            aria-label="Choose note emoji"
+            aria-haspopup="dialog"
+            aria-expanded={showEmojiPicker}
+            onClick={() => setShowEmojiPicker((open) => !open)}
+          >
+            {emoji || <FiSmile />}
+          </EmojiButton>
+          {showEmojiPicker && (
+            <FloatingEmojiPicker
+              emoji={emoji}
+              onEmojiSelected={onEmojiSelected}
+              triggerRef={emojiPickerRef}
+              dropdownRef={emojiDropdownRef}
+            />
+          )}
+        </EmojiPickerAnchor>
         <Title
           ref={titleRef}
           title="Note name"
@@ -262,6 +296,48 @@ const TitleBox = styled.strong`
   padding: 0;
 
   color: black;
+`
+
+const EmojiPickerAnchor = styled.div`
+  && {
+    width: auto;
+    margin: 0;
+  }
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin: 0;
+`
+
+const EmojiButton = styled.button`
+  display: flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #2e2e2e;
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: rgba(128, 128, 128, 0.15);
+  }
+
+  &:disabled {
+    color: #9ca3af;
+    cursor: not-allowed;
+  }
+
+  svg {
+    height: 18px;
+  }
 `
 
 const Title = styled.span`

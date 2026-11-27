@@ -36,6 +36,23 @@ jest.mock('react-markdown', () => {
     },
   }
 })
+jest.mock('emoji-picker-react', () => {
+  const ReactRuntime = jest.requireActual('react')
+
+  return {
+    __esModule: true,
+    default: ({ onEmojiClick }: { onEmojiClick: (emojiData: { emoji: string }) => void }) =>
+      ReactRuntime.createElement(
+        'button',
+        {
+          type: 'button',
+          'aria-label': 'Select brain emoji',
+          onClick: () => onEmojiClick({ emoji: '🧠' }),
+        },
+        '🧠'
+      ),
+  }
+})
 jest.mock('rehype-raw', () => ({ __esModule: true, default: jest.fn() }))
 jest.mock('remark-gfm', () => ({ __esModule: true, default: jest.fn() }))
 jest.mock('remark-frontmatter', () => ({ __esModule: true, default: jest.fn() }))
@@ -94,7 +111,8 @@ const renderCard = (
   noteText = 'Original text',
   searchContent = '',
   fuzzySearchEnabled = false,
-  templateOptions: TemplateOption[] = []
+  templateOptions: TemplateOption[] = [],
+  onChangeEmoji = jest.fn(async (_id: string, _emoji: string) => {})
 ) => {
   const content = JSON.stringify({
     title: 'Test note',
@@ -110,10 +128,12 @@ const renderCard = (
       number={1}
       date="2026-11-25"
       content={content}
+      emoji=""
       searchContent={searchContent}
       fuzzySearchEnabled={fuzzySearchEnabled}
       notesLocked={notesLocked}
       onChangeContent={onChangeContent}
+      onChangeEmoji={onChangeEmoji}
       onChangeDate={jest.fn()}
       tags={[]}
       selected={false}
@@ -182,6 +202,29 @@ describe('Card global edit lock and draft autosave', () => {
     expect(window.getComputedStyle(templateButton).color).toBe('rgb(156, 163, 175)')
   })
 
+  it('opens the emoji picker and saves a selected note emoji', async () => {
+    const onChangeEmoji = jest.fn(async (_id: string, _emoji: string) => {})
+    renderCard(false, undefined, 'Original text', '', false, [], onChangeEmoji)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Choose note emoji' }))
+    const emojiPicker = document.body.querySelector('[role="dialog"][aria-label="Emoji picker"]')
+    expect(emojiPicker).not.toBeNull()
+    expect(emojiPicker?.querySelector('input[aria-label="Search emojis"]')).not.toBeNull()
+    const selectEmojiButton = emojiPicker?.querySelector<HTMLButtonElement>(
+      'button[aria-label="Select brain emoji"]'
+    )
+
+    if (!selectEmojiButton) {
+      throw new Error('Emoji option was not rendered.')
+    }
+
+    fireEvent.click(selectEmojiButton)
+
+    await waitFor(() => {
+      expect(onChangeEmoji).toHaveBeenCalledWith('note-1', '🧠')
+    })
+  })
+
   it.each(['Color', 'Template'])(
     'raises the note above its siblings while the %s picker is open',
     (pickerName) => {
@@ -225,6 +268,8 @@ describe('Card global edit lock and draft autosave', () => {
       fuzzySearchEnabled: false,
       notesLocked: true,
       onChangeContent,
+      emoji: '',
+      onChangeEmoji: jest.fn(async () => {}),
       onChangeDate: jest.fn(),
       tags: [],
       selected: false,
@@ -282,6 +327,8 @@ describe('Card global edit lock and draft autosave', () => {
         fuzzySearchEnabled={false}
         notesLocked
         onChangeContent={jest.fn(async () => {})}
+        emoji=""
+        onChangeEmoji={jest.fn(async () => {})}
         onChangeDate={jest.fn()}
         tags={[]}
         selected={false}

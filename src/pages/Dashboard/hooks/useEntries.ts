@@ -21,6 +21,7 @@ export interface IEntry {
   uid: string
   id: string
   content: string
+  emoji?: string
   date: string
   createdAt: string
 }
@@ -155,6 +156,7 @@ export function useEntries(userId: string) {
             nextEntry !== undefined &&
             entry.uid === nextEntry.uid &&
             entry.content === nextEntry.content &&
+            entry.emoji === nextEntry.emoji &&
             entry.date === nextEntry.date &&
             entry.createdAt === nextEntry.createdAt
           )
@@ -239,6 +241,23 @@ export function useEntries(userId: string) {
       }
 
       await applyEntries([{ ...existingEntry, content }])
+    },
+    [applyEntries, userId]
+  )
+
+  const updateEntryEmoji = React.useCallback(
+    async (id: string, emoji: string) => {
+      if (!userId) {
+        return
+      }
+
+      const existingEntry = entriesRef.current.find((entry) => entry.id === id)
+
+      if (!existingEntry) {
+        return
+      }
+
+      await applyEntries([{ ...existingEntry, emoji }])
     },
     [applyEntries, userId]
   )
@@ -424,6 +443,7 @@ export function useEntries(userId: string) {
     fetchEntries,
     addEntry,
     updateEntry,
+    updateEntryEmoji,
     replaceEntry,
     deleteEntry,
     updateEntryDate,

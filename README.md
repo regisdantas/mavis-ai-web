@@ -40,3 +40,15 @@ Para o Emulator, defina `FIRESTORE_EMULATOR_HOST` e
 
 O script lê os documentos durante a execução; evite alterações no banco até o
 backup terminar para reduzir o risco de capturar dados de momentos diferentes.
+
+## Migrações do Firestore
+
+Execute `npm run migrations` para aplicar as migrações pendentes. Cada migração
+é registrada na coleção `_migrations` somente depois de concluir com sucesso,
+então execuções seguintes ignoram as já aplicadas. O comando usa as mesmas
+Application Default Credentials e variáveis de projeto descritas acima e também
+aceita o Firestore Emulator.
+
+A migração `20261126-extract-leading-note-emojis` move o emoji inicial dos
+títulos de notas para o campo `emoji` e remove esse prefixo do título, mantendo
+a apresentação visual da nota.

@@ -14,6 +14,8 @@ const DropdownHarness: React.FC<DropdownHarnessProps> = ({ closeToolbox }) => {
   const templatePickerRef = React.useRef<HTMLDivElement>(null)
   const templateDropdownRef = React.useRef<HTMLDivElement>(null)
   const toolboxRef = React.useRef<HTMLDivElement>(null)
+  const emojiPickerRef = React.useRef<HTMLDivElement>(null)
+  const emojiDropdownRef = React.useRef<HTMLDivElement>(null)
 
   useCardClickOutside({
     tagPickerRef,
@@ -23,9 +25,12 @@ const DropdownHarness: React.FC<DropdownHarnessProps> = ({ closeToolbox }) => {
     templatePickerRef,
     templateDropdownRef,
     toolboxRef,
+    emojiPickerRef,
+    emojiDropdownRef,
     closeTagPicker: jest.fn(),
     closeColorPicker: jest.fn(),
     closeTemplatePicker: jest.fn(),
+    closeEmojiPicker: jest.fn(),
     closeToolbox,
   })
 
