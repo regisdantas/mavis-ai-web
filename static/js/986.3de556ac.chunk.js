@@ -1,0 +1,1 @@
+"use strict";(Array.isArray(globalThis.webpackChunkmavis_ai_web)?globalThis.webpackChunkmavis_ai_web:globalThis.webpackChunkmavis_ai_web=[]).push([[986],{986(a,i,s){s.r(i),s.d(i,{default:()=>b.k});var b=s(4351)}}]);
