@@ -2,6 +2,7 @@ import { useContext, createContext, useEffect, useState, ReactNode } from 'react
 import {
   GoogleAuthProvider,
   FacebookAuthProvider,
+  OAuthProvider,
   signInWithPopup,
   signOut,
   onAuthStateChanged,
@@ -13,6 +14,7 @@ interface IAuthContext {
   user: User | null
   signInWithGoogle: () => Promise<void>
   signInWithFacebook: () => Promise<void>
+  signInWithApple: () => Promise<void>
   logOut: () => Promise<void>
 }
 
@@ -35,6 +37,13 @@ export const AuthContextProvider = ({ children }: IAuthProps) => {
     await signInWithPopup(auth, provider)
   }
 
+  const signInWithApple = async () => {
+    const provider = new OAuthProvider('apple.com')
+    provider.addScope('email')
+    provider.addScope('name')
+    await signInWithPopup(auth, provider)
+  }
+
   const logOut = async () => {
     await signOut(auth)
   }
@@ -53,6 +62,7 @@ export const AuthContextProvider = ({ children }: IAuthProps) => {
         user,
         signInWithGoogle,
         signInWithFacebook,
+        signInWithApple,
         logOut,
       }}
     >

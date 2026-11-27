@@ -1,6 +1,14 @@
 import React from 'react'
 import styled from 'styled-components'
-import { FiCopy, FiSmile, FiSliders, FiStar, FiType } from 'react-icons/fi'
+import {
+  FiArchive,
+  FiCopy,
+  FiMoreVertical,
+  FiSmile,
+  FiStar,
+  FiTrash2,
+  FiType,
+} from 'react-icons/fi'
 import { FaStar } from 'react-icons/fa'
 import { IoMdArrowDropdown, IoMdArrowDropleft } from 'react-icons/io'
 import { MdOutlineColorLens } from 'react-icons/md'
@@ -20,6 +28,8 @@ interface CardHeaderProps {
   readOnly: boolean
   collapsed: boolean
   isFavorite: boolean
+  isArchived: boolean
+  isTrashed: boolean
   selected: boolean
   onToggleSelection: () => void
 
@@ -47,6 +57,9 @@ interface CardHeaderProps {
   copyFormattedContent: () => void
 
   onToggleFavorite: () => void
+  onDuplicateNote: () => void
+  onArchiveNote: () => void
+  onDeleteNote: () => void
   onToggleCollapse: () => void
   onTitleChange: (title: string) => void
 }
@@ -60,6 +73,8 @@ const CardHeader: React.FC<CardHeaderProps> = ({
   readOnly,
   collapsed,
   isFavorite,
+  isArchived,
+  isTrashed,
   selected,
   onToggleSelection,
   toolboxOpen,
@@ -84,6 +99,9 @@ const CardHeader: React.FC<CardHeaderProps> = ({
   onEmojiSelected,
   copyFormattedContent,
   onToggleFavorite,
+  onDuplicateNote,
+  onArchiveNote,
+  onDeleteNote,
   onToggleCollapse,
   onTitleChange,
 }) => {
@@ -96,15 +114,6 @@ const CardHeader: React.FC<CardHeaderProps> = ({
         >
           {selected ? '✓' : ''}
         </SelectButton>
-        {isFavorite ? (
-          <IconButton disabled={readOnly} title="Remove favorite" onClick={onToggleFavorite}>
-            <FaStar />
-          </IconButton>
-        ) : (
-          <IconButton disabled={readOnly} title="Add favorite" onClick={onToggleFavorite}>
-            <FiStar />
-          </IconButton>
-        )}
         <EmojiPickerAnchor ref={emojiPickerRef}>
           <EmojiButton
             type="button"
@@ -144,21 +153,30 @@ const CardHeader: React.FC<CardHeaderProps> = ({
       </TitleBox>
 
       <Toolbox>
+        {isFavorite ? (
+          <IconButton disabled={readOnly} title="Remove favorite" onClick={onToggleFavorite}>
+            <FaStar />
+          </IconButton>
+        ) : (
+          <IconButton disabled={readOnly} title="Add favorite" onClick={onToggleFavorite}>
+            <FiStar />
+          </IconButton>
+        )}
         <ToolboxWrapper ref={toolboxRef}>
           <ToolboxToggle
             type="button"
             disabled={readOnly}
-            title="Open note toolbox"
-            aria-label="Open note toolbox"
+            title="Options"
+            aria-label="Options"
             aria-haspopup="menu"
             aria-expanded={toolboxOpen}
             onClick={() => setToolboxOpen((open) => !open)}
           >
-            <FiSliders />
+            <FiMoreVertical />
           </ToolboxToggle>
 
           {toolboxOpen && (
-            <ToolboxDropdown role="menu" aria-label="Note toolbox">
+            <ToolboxDropdown role="menu" aria-label="Options">
               <ToolboxMenuButton
                 type="button"
                 role="menuitem"
@@ -186,6 +204,47 @@ const CardHeader: React.FC<CardHeaderProps> = ({
               >
                 <FiType />
                 <span>Template</span>
+              </ToolboxMenuButton>
+              <ToolboxMenuSeparator role="separator" />
+              <ToolboxMenuButton
+                type="button"
+                role="menuitem"
+                title="Duplicate note"
+                disabled={readOnly}
+                onClick={() => {
+                  setToolboxOpen(false)
+                  onDuplicateNote()
+                }}
+              >
+                <FiCopy />
+                <span>Duplicate</span>
+              </ToolboxMenuButton>
+              <ToolboxMenuButton
+                type="button"
+                role="menuitem"
+                title={isArchived ? 'Unarchive note' : 'Archive note'}
+                disabled={readOnly}
+                onClick={() => {
+                  setToolboxOpen(false)
+                  onArchiveNote()
+                }}
+              >
+                <FiArchive />
+                <span>{isArchived ? 'Unarchive' : 'Archive'}</span>
+              </ToolboxMenuButton>
+              <ToolboxMenuButton
+                type="button"
+                role="menuitem"
+                title={isTrashed ? 'Permanently delete note' : 'Move to trash'}
+                disabled={readOnly}
+                $danger
+                onClick={() => {
+                  setToolboxOpen(false)
+                  onDeleteNote()
+                }}
+              >
+                <FiTrash2 />
+                <span>{isTrashed ? 'Delete permanently' : 'Delete'}</span>
               </ToolboxMenuButton>
             </ToolboxDropdown>
           )}
@@ -237,10 +296,10 @@ const SelectButton = styled.span`
 
   min-width: 18px;
 
-  border: 1px solid #888;
+  border: 1px solid var(--mavis-border-strong);
   border-radius: 4px;
 
-  background: #fff;
+  background: var(--mavis-input);
 
   display: flex;
   align-items: center;
@@ -251,10 +310,10 @@ const SelectButton = styled.span`
   font-size: 12px;
   font-weight: bold;
 
-  color: #2563eb;
+  color: var(--mavis-brand);
 
   &:hover {
-    border-color: #2563eb;
+    border-color: var(--mavis-brand);
   }
 `
 
@@ -272,7 +331,7 @@ const HeaderContainer = styled.header`
   padding: 10px;
   background: inherit;
 
-  border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid var(--mavis-brand-border);
 
   svg {
     cursor: pointer;
@@ -295,7 +354,7 @@ const TitleBox = styled.strong`
   margin: 0;
   padding: 0;
 
-  color: black;
+  color: var(--mavis-text);
 `
 
 const EmojiPickerAnchor = styled.div`
@@ -321,17 +380,17 @@ const EmojiButton = styled.button`
   border: 0;
   border-radius: 7px;
   background: transparent;
-  color: #2e2e2e;
+  color: var(--mavis-text);
   font-size: 19px;
   line-height: 1;
   cursor: pointer;
 
   &:hover:not(:disabled) {
-    background: rgba(128, 128, 128, 0.15);
+    background: var(--mavis-brand-soft);
   }
 
   &:disabled {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.disabled || '#9ca3af'};
     cursor: not-allowed;
   }
 
@@ -349,7 +408,7 @@ const Title = styled.span`
 
   &:empty::before {
     content: attr(data-placeholder);
-    color: #494949;
+    color: var(--mavis-muted);
   }
 
   &:focus {
@@ -400,15 +459,15 @@ const ToolboxToggle = styled.button`
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: #2e2e2e;
+  color: var(--mavis-text);
   cursor: pointer;
 
   &:hover:not(:disabled) {
-    background: rgba(128, 128, 128, 0.15);
+    background: var(--mavis-brand-soft);
   }
 
   &:disabled {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.disabled || '#9ca3af'};
     cursor: not-allowed;
     opacity: 1;
   }
@@ -429,13 +488,20 @@ const ToolboxDropdown = styled.div`
   flex-direction: column;
   gap: 2px;
   padding: 5px;
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--mavis-brand-border);
   border-radius: 10px;
-  background: #fff;
+  background: var(--mavis-surface);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.16);
 `
 
-const ToolboxMenuButton = styled.button`
+const ToolboxMenuSeparator = styled.div`
+  height: 1px;
+  flex: 0 0 1px;
+  margin: 4px 6px;
+  background: var(--mavis-brand-border);
+`
+
+const ToolboxMenuButton = styled.button<{ $danger?: boolean }>`
   display: flex;
   align-items: center;
   gap: 8px;
@@ -444,16 +510,17 @@ const ToolboxMenuButton = styled.button`
   border: 0;
   border-radius: 7px;
   background: transparent;
-  color: #2e2e2e;
+  color: ${({ $danger }) => ($danger ? 'var(--mavis-danger)' : 'var(--mavis-text)')};
   text-align: left;
   cursor: pointer;
 
   &:hover:not(:disabled) {
-    background: #f1f1f4;
+    background: ${({ $danger }) =>
+      $danger ? 'var(--mavis-danger-background)' : 'var(--mavis-surface-hover)'};
   }
 
   &:disabled {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.disabled || '#9ca3af'};
     cursor: not-allowed;
     opacity: 1;
   }

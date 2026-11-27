@@ -1,6 +1,7 @@
 import React from 'react'
 import styled from 'styled-components'
-import { FiCpu, FiMenu, FiPlus, FiTrash2 } from 'react-icons/fi'
+import { FiCpu, FiMapPin, FiMenu, FiPlus, FiTrash2 } from 'react-icons/fi'
+import mavis from '../../../assets/mavis.png'
 import { IconButton } from '../../../styles/global'
 import { useChatAi } from '../context/ChatAiContext'
 
@@ -23,17 +24,14 @@ export const ChatSideBar: React.FC<ChatSideBarProps> = ({
     loadSession,
     deleteSession,
     removeSession,
+    toggleSessionPin,
   } = useChatAi()
   const sidebarRef = React.useRef<HTMLDivElement>(null)
-  const closeMenuAfterSelection = () => {
-    if (window.innerWidth <= 768) {
-      setMenuExpanded(false)
-    }
-  }
+  const closeMenuAfterSelection = () => setMenuExpanded(false)
 
   React.useEffect(() => {
     const handleOutsideClick = (event: MouseEvent) => {
-      if (window.innerWidth > 768 || !menuExpanded) {
+      if (!menuExpanded) {
         return
       }
 
@@ -56,102 +54,207 @@ export const ChatSideBar: React.FC<ChatSideBarProps> = ({
   }, [menuExpanded, setMenuExpanded])
 
   return (
-    <Container ref={sidebarRef} expanded={menuExpanded}>
-      <IconButton
-        expanded={menuExpanded}
-        title="Menu"
-        onClick={() => setMenuExpanded(!menuExpanded)}
-      >
-        <FiMenu />
-        {menuExpanded && <span>Sessions</span>}
-      </IconButton>
-      {minimized && (
-        <IconButton
-          expanded={menuExpanded}
-          title="Expand Chat"
-          onClick={() => {
-            setMinimized(!minimized)
-            closeMenuAfterSelection()
-          }}
-        >
-          <FiCpu />
-          {menuExpanded && <span>Expand Chat</span>}
-        </IconButton>
-      )}
-      <IconButton
-        expanded={menuExpanded}
-        onClick={() => {
-          void createNewSession()
-          closeMenuAfterSelection()
-        }}
-      >
-        <FiPlus />
-        {menuExpanded && <span>New Chat</span>}
-      </IconButton>
-      <SessionsContainer disabled={!menuExpanded}>
-        {sessions.map((session) => (
-          <SessionRow key={session.id}>
-            <SessionItem
-              active={currentSessionId === session.id}
+    <SidebarSlot ref={sidebarRef} data-testid="sessions-rail">
+      {!menuExpanded && (
+        <CollapsedControls>
+          <IconButton
+            title="Menu"
+            data-sidebar-toggle="sessions"
+            onClick={() => setMenuExpanded(true)}
+          >
+            <FiMenu />
+          </IconButton>
+          {minimized && (
+            <IconButton
+              title="Expand Chat"
               onClick={() => {
-                loadSession(session.id)
+                setMinimized(false)
                 closeMenuAfterSelection()
               }}
             >
-              {session.title}
-            </SessionItem>
+              <FiCpu />
+            </IconButton>
+          )}
+          <IconButton
+            title="New Chat"
+            onClick={() => {
+              void createNewSession()
+              closeMenuAfterSelection()
+            }}
+          >
+            <FiPlus />
+          </IconButton>
+        </CollapsedControls>
+      )}
 
-            <DeleteButton
-              onClick={(event) => {
-                event.stopPropagation()
-                void deleteSession(session.id)
+      <SessionDrawer
+        expanded={menuExpanded}
+        minimized={minimized}
+        role="complementary"
+        aria-label="Chat sessions"
+        aria-hidden={!menuExpanded}
+      >
+        {menuExpanded && (
+          <>
+            {minimized && (
+              <IconButton
+                expanded
+                title="Expand Chat"
+                onClick={() => {
+                  setMinimized(false)
+                  closeMenuAfterSelection()
+                }}
+              >
+                <FiCpu />
+                <span>Expand Chat</span>
+              </IconButton>
+            )}
+            <IconButton
+              expanded
+              title="New Chat"
+              onClick={() => {
+                void createNewSession()
                 closeMenuAfterSelection()
               }}
             >
-              <FiTrash2 size={12} />
-            </DeleteButton>
-          </SessionRow>
-        ))}
-      </SessionsContainer>
-    </Container>
+              <FiPlus />
+              <span>New Chat</span>
+            </IconButton>
+            <SessionsContainer>
+              {sessions.map((session) => (
+                <SessionRow key={session.id}>
+                  <SessionItem
+                    active={currentSessionId === session.id}
+                    onClick={() => {
+                      loadSession(session.id)
+                      closeMenuAfterSelection()
+                    }}
+                  >
+                    {session.title}
+                  </SessionItem>
+
+                  <PinButton
+                    type="button"
+                    $pinned={Boolean(session.pinned)}
+                    aria-label={session.pinned ? 'Unpin session' : 'Pin session'}
+                    aria-pressed={Boolean(session.pinned)}
+                    title={session.pinned ? 'Unpin session' : 'Pin session'}
+                    onClick={() => {
+                      void toggleSessionPin(session.id).catch((error) => {
+                        console.error('Failed to update session pin.', error)
+                      })
+                    }}
+                  >
+                    <FiMapPin />
+                  </PinButton>
+
+                  <DeleteButton
+                    aria-label="Delete session"
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      void deleteSession(session.id)
+                    }}
+                  >
+                    <FiTrash2 size={12} />
+                  </DeleteButton>
+                </SessionRow>
+              ))}
+            </SessionsContainer>
+          </>
+        )}
+      </SessionDrawer>
+    </SidebarSlot>
   )
 }
 
-interface ContainerProps {
+interface SessionDrawerProps {
   expanded: boolean
+  minimized?: boolean
 }
 
-const Container = styled.div<ContainerProps>`
-  width: ${(props) => (props.expanded ? '180px' : '40px')};
-  position: static;
-  right: 0;
-  top: 40px;
+const SidebarSlot = styled.div`
+  width: 60px;
   height: 100%;
-  border-left: 1px solid #d0d0d0;
+  flex: 0 0 60px;
+  overflow: visible;
   padding: 4px;
-  overflow-y: auto;
-  overflow-x: visible;
-  background: #f8f8f8;
-  margin-left: 6px;
-  transition: width 0.3s ease-in-out;
+  border-left: 1px solid var(--mavis-brand-border);
+  background: ${({ theme }) => theme.surfaceSubtle || '#f7f6fc'};
 
   @media (max-width: 768px) {
-    position: absolute;
-    top: 0;
-    right: 0;
-    z-index: 20;
-    width: ${({ expanded }) => (expanded ? 'min(82vw, 240px)' : '0')};
+    width: 0;
+    min-width: 0;
     height: 100%;
-    margin: 0;
-    padding: ${({ expanded }) => (expanded ? '4px' : '0')};
-    overflow-x: hidden;
-    border-left: ${({ expanded }) => (expanded ? '1px solid #d0d0d0' : '0')};
-    box-shadow: ${({ expanded }) => (expanded ? '-4px 0 12px rgba(0, 0, 0, 0.15)' : 'none')};
+    flex: 0 0 0;
+    padding: 0;
+    overflow: visible;
+    border: 0;
+    background: transparent;
   }
 `
 
-const SessionsContainer = styled.div<{ disabled: boolean }>`
-  display: ${(props) => (props.disabled ? 'none' : 'flex')};
+const CollapsedControls = styled.div`
+  position: relative;
+  z-index: 21;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+`
+
+const SessionDrawer = styled.aside<SessionDrawerProps>`
+  position: absolute;
+  right: 0;
+  top: 0;
+  z-index: 20;
+  pointer-events: ${({ expanded }) => (expanded ? 'auto' : 'none')};
+  pointer-events: ${({ expanded }) => (expanded ? 'auto' : 'none')};
+  height: 100%;
+  width: ${({ expanded, minimized }) => (expanded ? (minimized ? '400px' : '100%') : '0')};
+  padding: ${({ expanded }) => (expanded ? '4px' : '0')};
+  overflow-x: hidden;
+  overflow-y: ${({ expanded }) => (expanded ? 'auto' : 'hidden')};
+  border-left: 1px solid var(--mavis-brand-border);
+  background: ${({ theme }) => theme.surfaceSubtle || '#f7f6fc'};
+  box-shadow: ${({ expanded }) => (expanded ? '-4px 0 12px rgba(36, 32, 68, 0.16)' : 'none')};
+  transition: width 0.3s ease-in-out;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url(${mavis});
+    background-repeat: no-repeat;
+    background-position: center bottom;
+    background-size: auto 86%;
+    opacity: 0.12;
+    pointer-events: none;
+  }
+
+  > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  @media (max-width: 768px) {
+    right: auto;
+    left: 0;
+    width: ${({ expanded }) => (expanded ? '50%' : '0')};
+    padding: ${({ expanded }) => (expanded ? '4px' : '0')};
+    border-left: 0;
+    border-right: ${({ expanded }) => (expanded ? '1px solid var(--mavis-brand-border)' : '0')};
+    box-shadow: ${({ expanded }) => (expanded ? '4px 0 12px rgba(36, 32, 68, 0.16)' : 'none')};
+  }
+`
+
+const SessionsContainer = styled.div`
+  display: flex;
+  width: 100%;
+  min-width: 0;
   flex-direction: column;
   gap: 6px;
   margin-top: 12px;
@@ -159,6 +262,7 @@ const SessionsContainer = styled.div<{ disabled: boolean }>`
 
 const SessionItem = styled.div<{ active: boolean }>`
   flex: 1;
+  min-width: 0;
 
   display: flex;
   align-items: center;
@@ -169,9 +273,9 @@ const SessionItem = styled.div<{ active: boolean }>`
 
   border-radius: 999px;
 
-  background: ${({ active }) => (active ? '#4f46e5' : 'rgba(79, 70, 229, 0.12)')};
+  background: ${({ active }) => (active ? 'var(--mavis-brand)' : 'var(--mavis-brand-soft)')};
 
-  color: ${({ active }) => (active ? '#fff' : '#4338ca')};
+  color: ${({ active }) => (active ? 'var(--mavis-text-inverse)' : 'var(--mavis-brand)')};
 
   font-size: 11px;
   font-weight: 600;
@@ -185,14 +289,44 @@ const SessionItem = styled.div<{ active: boolean }>`
   white-space: nowrap;
 
   &:hover {
-    background: ${({ active }) => (active ? '#4f46e5' : 'rgba(79, 70, 229, 0.2)')};
+    background: ${({ active }) =>
+      active ? 'var(--mavis-brand-strong)' : 'var(--mavis-secondary-bg-hover)'};
   }
 `
 
 const SessionRow = styled.div`
   display: flex;
+  width: 100%;
+  min-width: 0;
   align-items: center;
   gap: 4px;
+`
+
+const PinButton = styled.button<{ $pinned: boolean }>`
+  display: flex;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: ${({ $pinned }) => ($pinned ? 'var(--mavis-brand-soft)' : 'transparent')};
+  color: ${({ $pinned }) => ($pinned ? 'var(--mavis-brand)' : 'var(--mavis-muted)')};
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+
+  &:hover {
+    background: var(--mavis-brand-soft);
+    color: var(--mavis-brand);
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+    fill: ${({ $pinned }) => ($pinned ? 'currentColor' : 'none')};
+  }
 `
 
 const DeleteButton = styled.button`
@@ -206,9 +340,9 @@ const DeleteButton = styled.button`
   border: none;
   border-radius: 999px;
 
-  background: rgba(79, 70, 229, 0.12);
+  background: var(--mavis-brand-soft);
 
-  color: #4338ca;
+  color: var(--mavis-brand);
 
   cursor: pointer;
 
@@ -218,6 +352,6 @@ const DeleteButton = styled.button`
 
   &:hover {
     background: rgba(239, 68, 68, 0.15);
-    color: #ef4444;
+    color: var(--mavis-danger);
   }
 `

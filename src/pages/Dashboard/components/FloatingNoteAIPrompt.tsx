@@ -125,9 +125,9 @@ const PromptDialog = styled.div`
   padding: 16px;
   overflow-y: auto;
   transform: translate(-50%, -50%);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--mavis-brand-border);
   border-radius: 14px;
-  background: #fff;
+  background: var(--mavis-surface);
   box-shadow: 0 12px 36px rgba(0, 0, 0, 0.2);
 
   @media (max-width: 768px) {
@@ -150,7 +150,7 @@ const DialogHeader = styled.div`
 
 const DialogTitle = styled.h2`
   margin: 0;
-  color: #231f20;
+  color: var(--mavis-text);
   font-size: 16px;
   font-weight: 600;
 `
@@ -164,11 +164,11 @@ const CloseButton = styled.button`
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #555;
+  color: var(--mavis-muted);
   cursor: pointer;
 
   &:hover {
-    background: #f1f1f1;
+    background: var(--mavis-surface-hover);
   }
 `
 
@@ -176,15 +176,15 @@ const ApiKeyInput = styled.input`
   width: 100%;
   min-height: 40px;
   padding: 10px 12px;
-  border: 1px solid #d5d7dc;
+  border: 1px solid var(--mavis-border);
   border-radius: 8px;
-  background: #fff;
-  color: #231f20;
+  background: var(--mavis-input);
+  color: var(--mavis-text);
   font: inherit;
 
   &:focus {
-    outline: 2px solid rgba(79, 70, 229, 0.3);
-    border-color: #4f46e5;
+    outline: 2px solid rgba(91, 75, 216, 0.3);
+    border-color: var(--mavis-brand);
   }
 `
 
@@ -194,22 +194,22 @@ const InstructionInput = styled.textarea`
   max-height: 40vh;
   padding: 12px;
   resize: vertical;
-  border: 1px solid #d5d7dc;
+  border: 1px solid var(--mavis-border);
   border-radius: 8px;
-  background: #fff;
-  color: #231f20;
+  background: var(--mavis-input);
+  color: var(--mavis-text);
   font: inherit;
   line-height: 1.4;
 
   &:focus {
-    outline: 2px solid rgba(79, 70, 229, 0.3);
-    border-color: #4f46e5;
+    outline: 2px solid rgba(91, 75, 216, 0.3);
+    border-color: var(--mavis-brand);
   }
 `
 
 const ErrorMessage = styled.p`
   margin: 0;
-  color: #b91c1c;
+  color: var(--mavis-danger-text);
   font-size: 13px;
 `
 
@@ -223,20 +223,20 @@ const ClearButton = styled.button`
   min-width: 64px;
   min-height: 36px;
   padding: 0 12px;
-  border: 1px solid #d5d7dc;
+  border: 1px solid var(--mavis-border);
   border-radius: 8px;
-  background: #f5f6f8;
-  color: #333;
+  background: var(--mavis-surface-subtle);
+  color: var(--mavis-text-secondary);
   font: inherit;
   cursor: pointer;
 
   &:hover:not(:disabled) {
-    background: #eceff3;
+    background: var(--mavis-surface-hover);
   }
 
   &:disabled {
-    background: #e5e7eb;
-    color: #9ca3af;
+    background: var(--mavis-surface-hover);
+    color: var(--mavis-disabled);
     cursor: not-allowed;
     opacity: 1;
   }
@@ -252,17 +252,17 @@ const SendButton = styled.button`
   padding: 0 14px;
   border: 0;
   border-radius: 8px;
-  background: #4f46e5;
+  background: var(--mavis-brand);
   color: #fff;
   font: inherit;
   cursor: pointer;
 
   &:hover:not(:disabled) {
-    background: #4338ca;
+    background: var(--mavis-brand-strong);
   }
 
   &:disabled {
-    background: #9ca3af;
+    background: var(--mavis-disabled);
     color: #fff;
     cursor: not-allowed;
     opacity: 1;

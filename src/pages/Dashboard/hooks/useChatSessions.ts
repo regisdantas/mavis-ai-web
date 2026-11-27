@@ -35,6 +35,10 @@ const findSessionDocuments = async (
 
 const sortSessions = (sessions: ChatSession[]) => {
   return [...sessions].sort((a, b) => {
+    if (Boolean(a.pinned) !== Boolean(b.pinned)) {
+      return a.pinned ? -1 : 1
+    }
+
     if (a.updatedAt > b.updatedAt) return -1
     if (a.updatedAt < b.updatedAt) return 1
     return 0
@@ -70,9 +74,10 @@ export function useChatSessions(userId: string) {
         model,
         selectedPromptIds: [],
         messages: [],
+        pinned: false,
       }
 
-      setSessions((current) => [session, ...current])
+      setSessions((current) => sortSessions([session, ...current]))
 
       await addDoc(getSessionsCollection(userId), session)
 
@@ -87,7 +92,9 @@ export function useChatSessions(userId: string) {
         return
       }
 
-      setSessions((current) => current.map((s) => (s.id === session.id ? session : s)))
+      setSessions((current) =>
+        sortSessions(current.map((s) => (s.id === session.id ? session : s)))
+      )
 
       const documents = await findSessionDocuments(userId, session.id)
 

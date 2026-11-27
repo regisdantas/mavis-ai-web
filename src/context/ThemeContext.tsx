@@ -9,28 +9,42 @@ interface ThemeContextData {
 
 const ThemeContext = React.createContext({} as ThemeContextData)
 
+const getInitialDarkMode = () => {
+  const storedTheme = localStorage.getItem('theme')
+
+  if (storedTheme === 'dark') {
+    return true
+  }
+
+  if (storedTheme === 'light') {
+    return false
+  }
+
+  return typeof window.matchMedia === 'function'
+    ? window.matchMedia('(prefers-color-scheme: dark)').matches
+    : false
+}
+
 export const ThemeProvider: React.FC<{
   children: React.ReactNode
 }> = ({ children }) => {
-  const [darkMode, setDarkMode] = React.useState(() => {
-    const stored = localStorage.getItem('theme')
+  const [darkMode, setDarkMode] = React.useState(getInitialDarkMode)
 
-    if (stored) {
-      return stored === 'dark'
-    }
+  React.useLayoutEffect(() => {
+    const root = document.documentElement
+    root.dataset.theme = darkMode ? 'dark' : 'light'
+    root.style.colorScheme = darkMode ? 'dark' : 'light'
 
-    return window.matchMedia('(prefers-color-scheme: light)').matches
-  })
+    document
+      .querySelector<HTMLMetaElement>('meta[name="theme-color"]')
+      ?.setAttribute('content', darkMode ? darkTheme.background : lightTheme.background)
+  }, [darkMode])
 
-  const toggleTheme = () => {
-    setDarkMode((current) => {
-      const next = !current
-
-      localStorage.setItem('theme', next ? 'dark' : 'light')
-
-      return next
-    })
-  }
+  const toggleTheme = React.useCallback(() => {
+    const next = !darkMode
+    localStorage.setItem('theme', next ? 'dark' : 'light')
+    setDarkMode(next)
+  }, [darkMode])
 
   return (
     <ThemeContext.Provider

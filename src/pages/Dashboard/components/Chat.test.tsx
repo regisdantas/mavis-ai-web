@@ -60,6 +60,7 @@ const makeChatAiValue = (messages: ChatMessage[]) => ({
   loadSession: jest.fn(async () => {}),
   deleteSession: jest.fn(async () => {}),
   removeSession: jest.fn(async () => {}),
+  toggleSessionPin: jest.fn(async () => {}),
   sendPrompt: jest.fn(async () => {}),
   deleteMessage: jest.fn(),
   clearMessages: jest.fn(),
@@ -71,6 +72,22 @@ const makeChatAiValue = (messages: ChatMessage[]) => ({
 })
 
 describe('Chat', () => {
+  it('shows Mavis in the empty conversation state', () => {
+    mockUseChatAi.mockReturnValue(makeChatAiValue([]))
+
+    render(
+      <Chat
+        uid="user-id"
+        selectedNotesText=""
+        noteTitles={[]}
+        notesCount={0}
+        clearSelectedNotes={jest.fn()}
+      />
+    )
+
+    expect(screen.getByText("Hi, I'm Mavis.")).toBeTruthy()
+  })
+
   it('shows message minimap items and scrolls to the bottom when a message arrives', () => {
     const initialMessages: ChatMessage[] = [{ id: 'user-1', role: 'user', content: 'Hello' }]
     mockUseChatAi.mockReturnValue(makeChatAiValue(initialMessages))

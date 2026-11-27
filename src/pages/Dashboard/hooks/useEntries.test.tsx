@@ -50,6 +50,24 @@ describe('useEntries global note history', () => {
     mockSetDoc.mockResolvedValue(undefined)
   })
 
+  it('preserves an optional emoji when creating a note', async () => {
+    render(<EntriesHarness />)
+
+    let entry: IEntry | null = null
+
+    await act(async () => {
+      entry = await getCurrent().addEntry({
+        content: 'note with emoji',
+        date: '2026-11-25',
+        emoji: '🧠',
+      })
+    })
+
+    const createdEntry = getCurrent().entries[0]
+    expect(createdEntry.emoji).toBe('🧠')
+    expect(entry).toEqual(createdEntry)
+  })
+
   it('undoes and redoes changes across different notes in reverse order', async () => {
     render(<EntriesHarness />)
 

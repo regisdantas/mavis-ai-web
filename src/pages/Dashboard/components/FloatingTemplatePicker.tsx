@@ -57,7 +57,8 @@ const TemplateDropdown = styled.div`
   flex-direction: column;
   gap: 2px;
 
-  background: white;
+  background: var(--mavis-surface);
+  border: 1px solid var(--mavis-brand-border);
 
   border-radius: 14px;
 
@@ -78,7 +79,7 @@ const TemplateOptionItem = styled.button`
   border: none;
   border-radius: 10px;
 
-  background: #f5f6f8;
+  background: var(--mavis-surface-subtle);
 
   padding: 8px 10px;
 
@@ -89,7 +90,7 @@ const TemplateOptionItem = styled.button`
   text-align: left;
 
   &:hover {
-    background: #eceff3;
+    background: var(--mavis-surface-hover);
   }
 `
 const TemplateContent = styled.div`
@@ -106,7 +107,7 @@ const TemplateContent = styled.div`
 `
 
 const TemplateTitle = styled.span`
-  color: #444;
+  color: var(--mavis-text-secondary);
 
   font-size: 12px;
   font-weight: 600;

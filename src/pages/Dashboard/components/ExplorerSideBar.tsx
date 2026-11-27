@@ -1,5 +1,5 @@
 import React from 'react'
-import { FiMenu, FiMoreVertical, FiTag } from 'react-icons/fi'
+import { FiFolder, FiMenu, FiMoreVertical } from 'react-icons/fi'
 import { IconButton } from '../../../styles/global'
 import { IconType } from 'react-icons'
 import styled from 'styled-components'
@@ -131,6 +131,7 @@ export const ExplorerSideBar: React.FC<ExplorerSideBarProps> = ({
     const Icon = tag.icon
     const canManageTag = tag.name !== 'all' && tag.name !== 'other'
     const isTrash = tag.name === 'trash'
+    const isSelected = selectedTag === tag.name
 
     return (
       <TagRow
@@ -138,15 +139,16 @@ export const ExplorerSideBar: React.FC<ExplorerSideBarProps> = ({
         ref={openMenuTag === tag.name ? menuRef : null}
         $active={openMenuTag === tag.name}
       >
-        <IconButton
+        <ExplorerItem
           expanded={explorerExpanded}
-          selected={selectedTag === tag.name}
+          selected={isSelected}
+          $selected={isSelected}
           title={tag.name}
           onClick={() => selectTag(tag.name)}
         >
           <Icon />
           {explorerExpanded && <span>{formatTag(tag.name)}</span>}
-        </IconButton>
+        </ExplorerItem>
 
         {explorerExpanded && canManageTag && (
           <MenuWrapper>
@@ -224,16 +226,18 @@ export const ExplorerSideBar: React.FC<ExplorerSideBarProps> = ({
 
   const renderCustomTag = (tag: string) => {
     const isPinned = !unpinnedTags.includes(tag)
+    const isSelected = selectedTag === tag
 
     return (
       <TagRow key={tag} ref={openMenuTag === tag ? menuRef : null} $active={openMenuTag === tag}>
-        <IconButton
+        <ExplorerItem
           expanded={explorerExpanded}
-          selected={selectedTag === tag}
+          selected={isSelected}
+          $selected={isSelected}
           title={formatTag(tag)}
           onClick={() => selectTag(tag)}
         >
-          <FiTag />
+          <FiFolder />
           {editingTag === tag ? (
             <RenameInput
               autoFocus
@@ -266,7 +270,7 @@ export const ExplorerSideBar: React.FC<ExplorerSideBarProps> = ({
           ) : (
             explorerExpanded && <span>{formatTag(tag)}</span>
           )}
-        </IconButton>
+        </ExplorerItem>
 
         {explorerExpanded && (
           <MenuWrapper>
@@ -335,14 +339,14 @@ export const ExplorerSideBar: React.FC<ExplorerSideBarProps> = ({
 
   return (
     <Container ref={sidebarRef} expanded={explorerExpanded}>
-      <IconButton
+      <ExplorerHeader
         expanded={explorerExpanded}
-        title="Menu"
+        title={explorerExpanded ? 'Collapse notes explorer' : 'Menu'}
         onClick={() => setExplorerExpanded(!explorerExpanded)}
       >
         <FiMenu />
-        {explorerExpanded && <span>Menu</span>}
-      </IconButton>
+        {explorerExpanded && <span>Explorer</span>}
+      </ExplorerHeader>
 
       {minimized && (
         <RestoreExplorerButton
@@ -355,11 +359,26 @@ export const ExplorerSideBar: React.FC<ExplorerSideBarProps> = ({
         </RestoreExplorerButton>
       )}
 
+      {explorerExpanded && <ExplorerSectionLabel>Locations</ExplorerSectionLabel>}
       {systemTags.filter((tag) => tag.position === 'top').map(renderSystemTag)}
-      {pinnedCustomTags.map(renderCustomTag)}
+      {pinnedCustomTags.length > 0 && explorerExpanded && (
+        <ExplorerSectionLabel>Pinned Tags</ExplorerSectionLabel>
+      )}
+      {pinnedCustomTags.length > 0 && (
+        <FolderTree $expanded={explorerExpanded}>
+          {pinnedCustomTags.map(renderCustomTag)}
+        </FolderTree>
+      )}
       {systemTags.filter((tag) => tag.position === 'bottom').map(renderSystemTag)}
-      {unpinnedCustomTags.length > 0 && <TagDivider role="separator" />}
-      {unpinnedCustomTags.map(renderCustomTag)}
+      {unpinnedCustomTags.length > 0 && (
+        <>
+          <TagDivider role="separator" />
+          {explorerExpanded && <ExplorerSectionLabel>Tags</ExplorerSectionLabel>}
+          <FolderTree $expanded={explorerExpanded}>
+            {unpinnedCustomTags.map(renderCustomTag)}
+          </FolderTree>
+        </>
+      )}
     </Container>
   )
 }
@@ -371,8 +390,8 @@ interface ContainerProps {
 const Container = styled.div<ContainerProps>`
   width: ${(props) => (props.expanded ? '200px' : '44px')};
 
-  border-left: 1px solid #d0d0d0;
-  background: #f5f5f5;
+  border-left: 1px solid var(--mavis-brand-border);
+  background: var(--mavis-surface-subtle);
   overflow-y: auto;
   overflow-x: hidden;
   padding: 4px;
@@ -401,32 +420,123 @@ const Container = styled.div<ContainerProps>`
 const TagDivider = styled.div`
   width: 100%;
   height: 1px;
-  margin: 4px 0;
-  background: #d0d0d0;
+  margin: 8px 0 4px;
+  background: var(--mavis-brand-border);
 `
 
 const TagRow = styled.div<{ $active?: boolean }>`
   position: relative;
   display: flex;
+  width: 100%;
+  min-width: 0;
   align-items: center;
+  gap: 4px;
+  margin: 1px 0;
   z-index: ${({ $active }) => ($active ? 9999 : 1)};
+`
+
+const ExplorerHeader = styled(IconButton)`
+  && {
+    min-height: 32px;
+    height: 32px;
+    margin: 0 0 4px !important;
+    padding: ${({ expanded }) => (expanded ? '0 8px' : '0')} !important;
+    border-radius: 6px;
+    color: var(--mavis-brand-deep);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+`
+
+const ExplorerSectionLabel = styled.div`
+  padding: 8px 8px 4px;
+  color: var(--mavis-muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+`
+
+interface FolderTreeProps {
+  $expanded: boolean
+}
+
+const FolderTree = styled.div<FolderTreeProps>`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-left: ${({ $expanded }) => ($expanded ? '10px' : '0')};
+  padding-left: ${({ $expanded }) => ($expanded ? '6px' : '0')};
+  border-left: ${({ $expanded }) => ($expanded ? '1px solid var(--mavis-brand-border)' : '0')};
+`
+
+interface ExplorerItemProps {
+  $selected: boolean
+}
+
+const ExplorerItem = styled(IconButton)<ExplorerItemProps>`
+  && {
+    width: ${({ expanded }) => (expanded ? 'auto' : '30px')} !important;
+    min-width: 0;
+    min-height: 28px;
+    height: 28px;
+    flex: ${({ expanded }) => (expanded ? '1 1 auto' : '0 0 30px')};
+    margin: 0 !important;
+    padding: ${({ expanded }) => (expanded ? '0 8px' : '0')} !important;
+    border: 0;
+    border-left: 2px solid ${({ $selected }) => ($selected ? 'var(--mavis-brand)' : 'transparent')};
+    border-radius: 4px;
+    background: ${({ $selected }) => ($selected ? 'var(--mavis-brand-soft)' : 'transparent')};
+    color: ${({ $selected }) => ($selected ? 'var(--mavis-brand-deep)' : 'var(--mavis-muted)')};
+  }
+
+  &:hover {
+    background: ${({ $selected }) =>
+      $selected ? 'var(--mavis-brand-soft)' : 'var(--mavis-surface-hover)'};
+  }
+
+  svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  span {
+    font-size: 12px;
+    font-weight: ${({ $selected }) => ($selected ? 600 : 500)};
+  }
 `
 
 const MenuWrapper = styled.div`
   position: relative;
+  flex: 0 0 22px;
 `
 
 const RestoreExplorerButton = styled(IconButton)`
   && svg {
-    color: #4b5563 !important;
+    color: var(--mavis-brand) !important;
   }
 `
 
 const MenuButton = styled.button`
+  display: flex;
+  width: 22px;
+  height: 26px;
+  align-items: center;
+  justify-content: center;
   border: none;
   background: transparent;
+  border-radius: 4px;
+  color: var(--mavis-muted);
   cursor: pointer;
-  padding: 4px;
+  padding: 0;
+
+  &:hover:not(:disabled) {
+    background: var(--mavis-brand-soft);
+    color: var(--mavis-brand);
+  }
 
   &:disabled {
     cursor: not-allowed;
@@ -439,7 +549,9 @@ const PopupMenu = styled.div`
   top: 100%;
   right: 0;
   min-width: 160px;
-  background: white;
+  background: var(--mavis-surface);
+  color: var(--mavis-text);
+  border: 1px solid var(--mavis-brand-border);
   border-radius: 8px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
   z-index: 999;
@@ -458,11 +570,15 @@ const MenuItem = styled.button<{ disabled?: boolean }>`
   opacity: ${({ disabled }) => (disabled ? 0.5 : 1)};
 
   &:hover:not(:disabled) {
-    background: #f1f1f1;
+    background: var(--mavis-surface-hover);
   }
 `
 
 const RenameInput = styled.input`
   width: 100px;
   margin-left: 8px;
+  border: 1px solid var(--mavis-border);
+  border-radius: 6px;
+  background: var(--mavis-input);
+  color: var(--mavis-text);
 `

@@ -1,6 +1,6 @@
 import React from 'react'
 import styled from 'styled-components'
-import { FiCpu, FiMaximize2, FiMenu, FiMinusSquare } from 'react-icons/fi'
+import { FiMaximize2, FiMenu, FiMinusSquare } from 'react-icons/fi'
 import { IconButton } from '../../../styles/global'
 
 interface ChatToolbarProps {
@@ -39,18 +39,13 @@ export const ChatToolbar: React.FC<ChatToolbarProps> = ({
       >
         <FiMenu />
       </MobileMenuButton>
-      <SelectedPage>
-        <FiCpu />
-        Chat
-      </SelectedPage>
-      <ActionsContainer>
-        <PanelToggle
-          title={minimized ? 'Restore chat panel' : 'Minimize chat panel'}
-          onClick={() => setMinimized(!minimized)}
-        >
-          {minimized ? <FiMaximize2 /> : <FiMinusSquare />}
-        </PanelToggle>
-      </ActionsContainer>
+      <PanelToggle
+        title={minimized ? 'Restore chat panel' : 'Minimize chat panel'}
+        onClick={() => setMinimized(!minimized)}
+      >
+        {minimized ? <FiMaximize2 /> : <FiMinusSquare />}
+      </PanelToggle>
+      <SelectedPage>Chat</SelectedPage>
     </ToolbarContainer>
   )
 }
@@ -65,6 +60,7 @@ interface ToolbarContainerProps {
 const ToolbarContainer = styled.div<ToolbarContainerProps>`
   display: ${({ minimized }) => (minimized ? 'none' : 'flex')};
   position: absolute;
+  z-index: 30;
   left: ${({ toolbarOffset }) => `${toolbarOffset}px`};
   top: 10px;
   width: ${({ barWidth }) => `${barWidth}px`};
@@ -73,10 +69,10 @@ const ToolbarContainer = styled.div<ToolbarContainerProps>`
   height: 32px;
   padding: 0;
   margin: 0;
-  border-bottom: 1px solid #d0d0d0;
+  border-bottom: 1px solid var(--mavis-brand-border);
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
-  background: #e0e0e5;
+  background: var(--mavis-panel);
 
   @media (max-width: 768px) {
     display: ${({ mobileActive }) => (mobileActive ? 'flex' : 'none')};
@@ -111,18 +107,13 @@ const SelectedPage = styled.div`
   gap: 10px;
   height: 35px;
   margin: 0px 10px;
+  color: var(--mavis-text);
+  font-size: 1rem;
 
   @media (max-width: 768px) {
     display: none;
     color: #fff;
   }
-`
-
-const ActionsContainer = styled.div`
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  height: 35px;
 `
 
 const PanelToggle = styled(IconButton)`

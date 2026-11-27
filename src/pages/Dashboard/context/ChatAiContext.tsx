@@ -479,6 +479,22 @@ Write the result in Markdown using clear sections and bullet points. Make it det
     [deleteSession, currentSessionId, sessions, loadSession, createNewSession]
   )
 
+  const toggleSessionPin = useCallback(
+    async (sessionId: string) => {
+      const session = sessions.find((currentSession) => currentSession.id === sessionId)
+
+      if (!session) {
+        return
+      }
+
+      await updateSession({
+        ...session,
+        pinned: !session.pinned,
+      })
+    },
+    [sessions, updateSession]
+  )
+
   return {
     prompt,
     setPrompt,
@@ -496,6 +512,7 @@ Write the result in Markdown using clear sections and bullet points. Make it det
     loadSession,
     deleteSession,
     removeSession,
+    toggleSessionPin,
 
     sendPrompt,
     deleteMessage,

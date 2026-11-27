@@ -9,12 +9,18 @@ import { TemplateOption } from '../../utils/cardUtils'
 import { processMacros } from '../../../../services/templateMacros'
 import { renderTemplate, executeExpression } from '../../../../services/templateEngine'
 
-import { noteColors, parseNoteContent, formatTag } from '../../utils/cardUtils'
+import {
+  getNoteDisplayColor,
+  noteColors,
+  parseNoteContent,
+  formatTag,
+} from '../../utils/cardUtils'
 
 import { useLocationData } from '../../hooks/useLocationData'
 import { useCardClickOutside } from '../../hooks/useCardClickOutside'
 import { useTextareaCaret } from '../../hooks/useTextareaCaret'
 import { useNoteTags } from '../../hooks/useNoteTags'
+import { useTheme } from '../../../../context/ThemeContext'
 
 interface PendingTextareaSelection {
   start: number
@@ -71,6 +77,9 @@ interface ICardProps {
   onChangeContent: (id: string, content: string) => Promise<void>
   onChangeEmoji: (id: string, emoji: string) => Promise<void>
   onChangeDate: (id: string, date: string) => void
+  onDuplicateNote: (id: string) => Promise<void>
+  onArchiveNote: (id: string) => Promise<void>
+  onDeleteNote: (id: string) => Promise<void>
 
   tags: string[]
   selected: boolean
@@ -91,6 +100,9 @@ export const Card: React.FC<ICardProps> = ({
   onChangeContent,
   onChangeEmoji,
   onChangeDate,
+  onDuplicateNote,
+  onArchiveNote,
+  onDeleteNote,
   tags,
   selected,
   onToggleSelection,
@@ -116,6 +128,7 @@ export const Card: React.FC<ICardProps> = ({
   const colorDropdownRef = React.useRef<HTMLDivElement>(null)
   const templateDropdownRef = React.useRef<HTMLDivElement>(null)
   const [isMobile, setIsMobile] = React.useState(window.innerWidth < 1260)
+  const { darkMode } = useTheme()
   const { temperature, weather, location } = useLocationData()
   const { setCursorPosition, findBestCursorPosition } = useTextareaCaret({
     editing: editingContent,
@@ -161,6 +174,7 @@ export const Card: React.FC<ICardProps> = ({
   }, [])
 
   const objContent = React.useMemo(() => parseNoteContent(content, isJsonString), [content])
+  const noteColor = typeof objContent.color === 'string' ? objContent.color || '#eee' : '#eee'
   const readOnly = notesLocked
 
   const {
@@ -451,7 +465,10 @@ export const Card: React.FC<ICardProps> = ({
       selected={selected}
       $overlayOpen={toolboxOpen || showColorPicker || showTemplatePicker || showEmojiPicker}
     >
-      <div className="ContentContainer" style={{ backgroundColor: objContent.color || '#eee' }}>
+      <div
+        className="ContentContainer"
+        style={{ backgroundColor: getNoteDisplayColor(noteColor, darkMode) }}
+      >
         <CardHeader
           title={objContent.title}
           emoji={emoji || ''}
@@ -460,6 +477,8 @@ export const Card: React.FC<ICardProps> = ({
           fuzzySearchEnabled={fuzzySearchEnabled}
           readOnly={notesLocked}
           collapsed={objContent.collapsed}
+          isArchived={hasTag('archive')}
+          isTrashed={hasTag('trash')}
           selected={selected}
           onToggleSelection={() => onToggleSelection(id)}
           toolboxOpen={toolboxOpen}
@@ -503,6 +522,15 @@ export const Card: React.FC<ICardProps> = ({
           }}
           isFavorite={hasTag('favorite')}
           copyFormattedContent={copyFormattedContent}
+          onDuplicateNote={() => {
+            void onDuplicateNote(id)
+          }}
+          onArchiveNote={() => {
+            void onArchiveNote(id)
+          }}
+          onDeleteNote={() => {
+            void onDeleteNote(id)
+          }}
           onToggleFavorite={() => {
             if (!readOnly) toggleTag('favorite')
           }}
@@ -520,6 +548,7 @@ export const Card: React.FC<ICardProps> = ({
 
         {!objContent.collapsed && (
           <CardContent
+            darkMode={darkMode}
             value={value}
             searchContent={searchContent}
             fuzzySearchEnabled={fuzzySearchEnabled}
@@ -582,7 +611,7 @@ export const Card: React.FC<ICardProps> = ({
 const CardContainer = styled.div<{ selected: boolean; $overlayOpen: boolean }>`
 position: relative;
 z-index: ${({ $overlayOpen }) => ($overlayOpen ? 10 : 'auto')};
-box-shadow: ${({ selected }) => (selected ? '0 0 0 3px #2563eb' : 'none')};  width: 100%;
+box-shadow: ${({ selected }) => (selected ? '0 0 0 3px var(--mavis-brand)' : 'none')};  width: 100%;
 
   display: flex;
   flex-direction: column;
@@ -591,7 +620,7 @@ box-shadow: ${({ selected }) => (selected ? '0 0 0 3px #2563eb' : 'none')};  wid
   padding: 0px;
   margin: 10px 0px 0px 0px;
 
-  background-color: #757575;
+  background-color: var(--mavis-card-background);
 
   div {
     margin-left: 10px;
@@ -603,7 +632,7 @@ box-shadow: ${({ selected }) => (selected ? '0 0 0 3px #2563eb' : 'none')};  wid
     display: flex;
     flex-direction: column;
     align-items: center;
-    border-right: 1px solid rgba(0, 0, 0, 0.2);
+    border-right: 1px solid var(--mavis-brand-border);
 
     width: 100%;
     border-radius: 0px;
@@ -617,7 +646,7 @@ box-shadow: ${({ selected }) => (selected ? '0 0 0 3px #2563eb' : 'none')};  wid
       flex-direction: row;
       align-items: center;
       justify-content: flex-end;
-      border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+      border-bottom: 2px solid var(--mavis-brand-border);
       padding: 10px;
 
       svg {
@@ -659,8 +688,8 @@ box-shadow: ${({ selected }) => (selected ? '0 0 0 3px #2563eb' : 'none')};  wid
     align-items: center;
     padding: 4px 10px;
     border-radius: 999px;
-    background: rgba(79, 70, 229, 0.12);
-    color: #4338ca;
+    background: var(--mavis-brand-soft);
+    color: var(--mavis-text);
     font-size: 11px;
     font-weight: 600;
     cursor: pointer;

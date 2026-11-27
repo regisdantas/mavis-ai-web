@@ -187,8 +187,8 @@ const DateChip = styled.span<{ $disabled: boolean }>`
 
   border-radius: 999px;
 
-  background: rgba(79, 70, 229, 0.12);
-  color: #4338ca;
+  background: var(--mavis-brand-soft);
+  color: var(--mavis-text);
 
   font-size: 11px;
   font-weight: 600;
@@ -207,8 +207,8 @@ const TagChip = styled.button`
 
   border-radius: 999px;
 
-  background: rgba(79, 70, 229, 0.12);
-  color: #4338ca;
+  background: var(--mavis-brand-soft);
+  color: var(--mavis-text);
 
   font: inherit;
   font-size: 11px;
@@ -219,12 +219,12 @@ const TagChip = styled.button`
   transition: 0.2s;
 
   &:hover:not(:disabled) {
-    background: rgba(79, 70, 229, 0.2);
+    background: var(--mavis-secondary-bg-hover);
   }
 
   &:disabled {
-    background: rgba(156, 163, 175, 0.12);
-    color: #9ca3af;
+    background: var(--mavis-surface-hover);
+    color: var(--mavis-disabled);
     cursor: default;
   }
 `
@@ -249,8 +249,8 @@ const TagPickerButton = styled.button`
 
   border-radius: 999px;
 
-  background: rgba(79, 70, 229, 0.12);
-  color: #4338ca;
+  background: var(--mavis-brand-soft);
+  color: var(--mavis-text);
 
   font-size: 14px;
   font-weight: 600;
@@ -260,7 +260,7 @@ const TagPickerButton = styled.button`
   transition: 0.2s;
 
   &:hover {
-    background: rgba(79, 70, 229, 0.2);
+    background: var(--mavis-secondary-bg-hover);
   }
 `
 
@@ -277,7 +277,8 @@ const TagDropdown = styled.div`
   flex-direction: column;
   gap: 2px;
 
-  background: white;
+  background: var(--mavis-surface);
+  border: 1px solid var(--mavis-brand-border);
 
   border-radius: 14px;
 
@@ -301,8 +302,8 @@ const TagOption = styled.span`
   border: none;
   border-radius: 10px;
 
-  background: #f5f6f8;
-  color: #444;
+  background: var(--mavis-surface-subtle);
+  color: var(--mavis-text-secondary);
 
   padding: 8px 10px;
 
@@ -313,11 +314,11 @@ const TagOption = styled.span`
   margin: 0 !important;
 
   &:hover {
-    background: #eceff3;
+    background: var(--mavis-surface-hover);
   }
 
   &.selected {
-    background: #4f46e5;
+    background: #5b4bd8;
     color: white;
   }
 `
@@ -329,11 +330,11 @@ const NewTagButton = styled.span`
   align-items: center;
   gap: 8px;
 
-  border: 1px dashed #4f46e5;
+  border: 1px dashed var(--mavis-brand);
   border-radius: 10px;
 
   background: transparent;
-  color: #4f46e5;
+  color: var(--mavis-text);
 
   padding: 8px 10px;
 
@@ -345,18 +346,19 @@ const NewTagButton = styled.span`
 const NewTagInput = styled.input`
   width: 100%;
 
-  border: 1px solid #d8dce5;
+  border: 1px solid var(--mavis-border);
   border-radius: 10px;
 
   padding: 4px;
 
   font-size: 13px;
 
-  background: white;
+  background: var(--mavis-input);
+  color: var(--mavis-text);
 
   &:focus {
     outline: none;
-    border-color: #4f46e5;
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+    border-color: var(--mavis-brand);
+    box-shadow: 0 0 0 3px rgba(91, 75, 216, 0.12);
   }
 `

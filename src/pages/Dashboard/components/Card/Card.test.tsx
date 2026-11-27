@@ -112,7 +112,10 @@ const renderCard = (
   searchContent = '',
   fuzzySearchEnabled = false,
   templateOptions: TemplateOption[] = [],
-  onChangeEmoji = jest.fn(async (_id: string, _emoji: string) => {})
+  onChangeEmoji = jest.fn(async (_id: string, _emoji: string) => {}),
+  onDuplicateNote = jest.fn(async (_id: string) => {}),
+  onArchiveNote = jest.fn(async (_id: string) => {}),
+  onDeleteNote = jest.fn(async (_id: string) => {})
 ) => {
   const content = JSON.stringify({
     title: 'Test note',
@@ -135,6 +138,9 @@ const renderCard = (
       onChangeContent={onChangeContent}
       onChangeEmoji={onChangeEmoji}
       onChangeDate={jest.fn()}
+      onDuplicateNote={onDuplicateNote}
+      onArchiveNote={onArchiveNote}
+      onDeleteNote={onDeleteNote}
       tags={[]}
       selected={false}
       onToggleSelection={jest.fn()}
@@ -185,21 +191,62 @@ describe('Card global edit lock and draft autosave', () => {
     expect(window.getComputedStyle(header as HTMLElement).top).toBe('0px')
   })
 
-  it('moves color and template actions into the header toolbox', () => {
-    renderCard(false)
+  it('offers duplicate, archive, and delete actions in the options menu', () => {
+    const onDuplicateNote = jest.fn(async (_id: string) => {})
+    const onArchiveNote = jest.fn(async (_id: string) => {})
+    const onDeleteNote = jest.fn(async (_id: string) => {})
+    renderCard(
+      false,
+      undefined,
+      'Original text',
+      '',
+      false,
+      [],
+      undefined,
+      onDuplicateNote,
+      onArchiveNote,
+      onDeleteNote
+    )
 
     expect(screen.queryByTitle('AI assistant')).toBeNull()
     expect(screen.queryByTitle('Undo last change')).toBeNull()
     expect(screen.queryByTitle('Archive note')).toBeNull()
     expect(screen.queryByTitle('Move to trash')).toBeNull()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open note toolbox' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Options' }))
 
-    expect(screen.getByRole('menu', { name: 'Note toolbox' })).toBeTruthy()
+    expect(screen.getByRole('menu', { name: 'Options' })).toBeTruthy()
     expect(screen.getByRole('menuitem', { name: 'Color' })).toBeTruthy()
     const templateButton = screen.getByRole('menuitem', { name: 'Template' }) as HTMLButtonElement
     expect(templateButton.disabled).toBe(true)
     expect(window.getComputedStyle(templateButton).color).toBe('rgb(156, 163, 175)')
+    expect(screen.getByRole('menuitem', { name: 'Duplicate' })).toBeTruthy()
+    expect(screen.getByRole('menuitem', { name: 'Archive' })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Duplicate' }))
+    expect(onDuplicateNote).toHaveBeenCalledWith('note-1')
+    expect(screen.queryByRole('menu', { name: 'Options' })).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Options' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Archive' }))
+    expect(onArchiveNote).toHaveBeenCalledWith('note-1')
+    expect(screen.queryByRole('menu', { name: 'Options' })).toBeNull()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Options' }))
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Delete' }))
+    expect(onDeleteNote).toHaveBeenCalledWith('note-1')
+  })
+
+  it('places the favorite toggle immediately before note options', () => {
+    renderCard(false)
+
+    const favoriteButton = screen.getByTitle('Add favorite')
+    const optionsButton = screen.getByRole('button', { name: 'Options' })
+
+    expect(favoriteButton.parentElement).toBe(optionsButton.parentElement?.parentElement)
+    expect(
+      favoriteButton.compareDocumentPosition(optionsButton) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
   })
 
   it('opens the emoji picker and saves a selected note emoji', async () => {
@@ -239,7 +286,7 @@ describe('Card global edit lock and draft autosave', () => {
         templateOptions
       )
 
-      fireEvent.click(screen.getByRole('button', { name: 'Open note toolbox' }))
+      fireEvent.click(screen.getByRole('button', { name: 'Options' }))
       fireEvent.click(screen.getByRole('menuitem', { name: pickerName }))
 
       const cardContainer = container.querySelector('.ContentContainer')
@@ -268,6 +315,9 @@ describe('Card global edit lock and draft autosave', () => {
       fuzzySearchEnabled: false,
       notesLocked: true,
       onChangeContent,
+      onDuplicateNote: jest.fn(async () => {}),
+      onArchiveNote: jest.fn(async () => {}),
+      onDeleteNote: jest.fn(async () => {}),
       emoji: '',
       onChangeEmoji: jest.fn(async () => {}),
       onChangeDate: jest.fn(),
@@ -327,6 +377,9 @@ describe('Card global edit lock and draft autosave', () => {
         fuzzySearchEnabled={false}
         notesLocked
         onChangeContent={jest.fn(async () => {})}
+        onDuplicateNote={jest.fn(async () => {})}
+        onArchiveNote={jest.fn(async () => {})}
+        onDeleteNote={jest.fn(async () => {})}
         emoji=""
         onChangeEmoji={jest.fn(async () => {})}
         onChangeDate={jest.fn()}

@@ -1,21 +1,37 @@
 import React, { useEffect } from 'react'
 import { useStatus } from '../../hooks/useStatus'
-import { BsFacebook, BsGoogle } from 'react-icons/bs'
+import { BsFacebook } from 'react-icons/bs'
+import { FcGoogle } from 'react-icons/fc'
+import { FaApple } from 'react-icons/fa6'
 import { MdEmail } from 'react-icons/md'
 import { useNavigate } from 'react-router-dom'
 import { UserAuth } from '../../context/AuthContext'
 import styled from 'styled-components'
 import mavis from '../../assets/mavis.png'
+import logo from '../../assets/logo.png'
 
 const Login: React.FC = () => {
-  const { user, signInWithGoogle, signInWithFacebook } = UserAuth()
+  const { user, signInWithGoogle, signInWithFacebook, signInWithApple } = UserAuth()
   const [inputStatus, setInputStatus] = useStatus(null)
   const navigate = useNavigate()
   const handleGoogleSignIn = async () => {
     try {
       await signInWithGoogle()
     } catch (error) {
-      console.log(error)
+      console.error('Failed to sign in with Google.', error)
+      setInputStatus({
+        type: 'error',
+        fields: 'email',
+        message: error instanceof Error ? error.message : 'Unknown error',
+      })
+    }
+  }
+
+  const handleAppleSignIn = async () => {
+    try {
+      await signInWithApple()
+    } catch (error) {
+      console.error('Failed to sign in with Apple.', error)
       setInputStatus({
         type: 'error',
         fields: 'email',
@@ -28,7 +44,7 @@ const Login: React.FC = () => {
     try {
       await signInWithFacebook()
     } catch (error) {
-      console.log(error)
+      console.error('Failed to sign in with Facebook.', error)
       setInputStatus({
         type: 'error',
         fields: 'email',
@@ -48,8 +64,8 @@ const Login: React.FC = () => {
       <LoginShell>
         <BrandPanel>
           <BrandHeader>
-            <BrandMark>M</BrandMark>
-            <BrandName>MAVIS</BrandName>
+            <BrandLogo src={logo} alt="M" />
+            <BrandName>AVIS</BrandName>
             <BrandTag>AI WORKSPACE</BrandTag>
           </BrandHeader>
 
@@ -59,10 +75,10 @@ const Login: React.FC = () => {
               MEMORY-AUGMENTED VIRTUAL INTELLIGENCE SYSTEM
             </BrandEyebrow>
             <BrandTitle>
-              Your files, ideas, and agents, <BrandAccent>connected.</BrandAccent>
+              Knows your world and <BrandAccent>thinks ahead.</BrandAccent>
             </BrandTitle>
             <BrandDescription>
-              A file-system-based AI assistant with agents that remember context.
+              Your life, organized in a file-system-based AI agent assistant.
             </BrandDescription>
           </BrandCopy>
 
@@ -77,6 +93,9 @@ const Login: React.FC = () => {
             <WelcomeEyebrow>WELCOME BACK</WelcomeEyebrow>
             <AuthTitle>Sign in</AuthTitle>
             <AuthDescription>Pick up right where you left off.</AuthDescription>
+            {inputStatus?.type === 'error' && (
+              <LoginError role="alert">{inputStatus.message}</LoginError>
+            )}
 
             <form action="submit">
               <FieldGroup>
@@ -109,8 +128,12 @@ const Login: React.FC = () => {
 
             <SocialButtons>
               <CustomButton type="button" $variant="google" onClick={handleGoogleSignIn}>
-                <BsGoogle aria-hidden="true" />
+                <FcGoogle aria-hidden="true" />
                 <span>Continue with Google</span>
+              </CustomButton>
+              <CustomButton type="button" $variant="apple" onClick={handleAppleSignIn}>
+                <FaApple aria-hidden="true" />
+                <span>Sign in with Apple</span>
               </CustomButton>
               <CustomButton type="button" $variant="facebook" onClick={handleFacebookSignIn}>
                 <BsFacebook aria-hidden="true" />
@@ -136,8 +159,9 @@ const PageContainer = styled.main`
   justify-content: center;
   overflow-y: auto;
   padding: clamp(14px, 2.4vh, 30px) clamp(14px, 3vw, 48px);
-  background: radial-gradient(ellipse at 8% 8%, rgba(196, 181, 253, 0.38), transparent 34%),
-    radial-gradient(ellipse at 92% 92%, rgba(191, 219, 254, 0.48), transparent 32%), #f7f8fc;
+  background: radial-gradient(ellipse at 8% 8%, var(--mavis-page-glow-start), transparent 34%),
+    radial-gradient(ellipse at 92% 92%, var(--mavis-page-glow-end), transparent 32%),
+    var(--mavis-page);
 
   @media (max-width: 720px) {
     align-items: flex-start;
@@ -156,9 +180,9 @@ const LoginShell = styled.div`
   width: min(1120px, 100%);
   min-height: min(620px, calc(100dvh - 68px));
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.8);
+  border: 1px solid var(--mavis-brand-border);
   border-radius: 28px;
-  background: #fff;
+  background: var(--mavis-surface);
   box-shadow: 0 32px 80px rgba(37, 31, 82, 0.12), 0 4px 16px rgba(37, 31, 82, 0.06);
 
   @media (max-width: 900px) and (min-width: 721px) {
@@ -226,21 +250,15 @@ const BrandHeader = styled.div`
   z-index: 2;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 3px;
 `
 
-const BrandMark = styled.span`
-  display: grid;
-  width: 34px;
-  height: 34px;
-  place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.38);
-  border-radius: 11px;
-  background: rgba(255, 255, 255, 0.13);
-  color: #fff;
-  font-size: 18px;
-  font-weight: 800;
-  letter-spacing: -0.06em;
+const BrandLogo = styled.img`
+  display: block;
+  width: 38px;
+  height: 28px;
+  object-fit: contain;
+  filter: grayscale(1) brightness(0) invert(1);
 `
 
 const BrandName = styled.span`
@@ -251,7 +269,7 @@ const BrandName = styled.span`
 `
 
 const BrandTag = styled.span`
-  margin-left: 2px;
+  margin-left: 6px;
   padding: 5px 8px;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 999px;
@@ -288,9 +306,10 @@ const BrandEyebrow = styled.p`
   gap: 8px;
   margin: 0 0 18px;
   color: #d7d1ff;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
 
   span {
     width: 7px;
@@ -303,8 +322,8 @@ const BrandEyebrow = styled.p`
   @media (max-width: 720px) {
     gap: 6px;
     margin-bottom: 8px;
-    font-size: 8px;
-    letter-spacing: 0.1em;
+    font-size: clamp(5.5px, 1.8vw, 7px);
+    letter-spacing: 0;
 
     span {
       width: 6px;
@@ -404,10 +423,15 @@ const AuthPanel = styled.section`
   justify-content: center;
   min-width: 0;
   padding: clamp(20px, 3vh, 32px) clamp(28px, 4vw, 52px);
-  background: #fff;
+  background: var(--mavis-surface);
 
   @media (max-width: 720px) {
     padding: 26px 22px 30px;
+  }
+
+  @media (min-width: 721px) and (max-height: 620px) {
+    padding-top: 10px;
+    padding-bottom: 10px;
   }
 `
 
@@ -418,7 +442,7 @@ const AuthContent = styled.div`
 
 const WelcomeEyebrow = styled.p`
   margin: 0 0 8px;
-  color: #7564d8;
+  color: var(--mavis-brand-blue);
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.16em;
@@ -426,7 +450,7 @@ const WelcomeEyebrow = styled.p`
 
 const AuthTitle = styled.h2`
   margin: 0;
-  color: #22213a;
+  color: var(--mavis-brand-deep);
   font-size: 30px;
   font-weight: 700;
   letter-spacing: -0.05em;
@@ -435,19 +459,38 @@ const AuthTitle = styled.h2`
 
 const AuthDescription = styled.p`
   margin: 7px 0 18px;
-  color: #788096;
+  color: var(--mavis-muted);
   font-size: 13px;
   line-height: 1.5;
+
+  @media (min-width: 721px) and (max-height: 620px) {
+    margin-bottom: 10px;
+  }
+`
+
+const LoginError = styled.p`
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--mavis-danger-border);
+  border-radius: 9px;
+  background: var(--mavis-danger-background);
+  color: var(--mavis-danger-text);
+  font-size: 12px;
+  line-height: 1.4;
 `
 
 const FieldGroup = styled.div`
   margin-bottom: 12px;
+
+  @media (min-width: 721px) and (max-height: 620px) {
+    margin-bottom: 8px;
+  }
 `
 
 const FieldLabel = styled.label`
   display: block;
   margin-bottom: 5px;
-  color: #45475b;
+  color: var(--mavis-text-secondary);
   font-size: 12px;
   font-weight: 600;
 `
@@ -457,22 +500,22 @@ const TextInput = styled.input`
   width: 100%;
   height: 45px;
   padding: 0 13px;
-  border: 1px solid #dfe2ed;
+  border: 1px solid var(--mavis-border);
   border-radius: 10px;
   outline: none;
-  background: #f9faff;
-  color: #24233a;
+  background: var(--mavis-input);
+  color: var(--mavis-text);
   font: inherit;
   font-size: 13px;
   transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 
   &::placeholder {
-    color: #a0a5b5;
+    color: var(--mavis-muted);
   }
 
   &:focus {
-    border-color: #7b6be0;
-    background: #fff;
+    border-color: var(--mavis-brand-blue);
+    background: var(--mavis-surface);
     box-shadow: 0 0 0 3px rgba(123, 107, 224, 0.14);
   }
 `
@@ -482,14 +525,18 @@ const Divider = styled.div`
   align-items: center;
   gap: 12px;
   margin: 16px 0;
-  color: #9298a9;
+  color: var(--mavis-muted);
   font-size: 11px;
+
+  @media (min-width: 721px) and (max-height: 620px) {
+    margin: 12px 0;
+  }
 
   &::before,
   &::after {
     height: 1px;
     flex: 1;
-    background: #eceef4;
+    background: var(--mavis-border);
     content: '';
   }
 `
@@ -502,12 +549,16 @@ const SocialButtons = styled.div`
 
 const PrivacyNote = styled.p`
   margin: 16px 0 0;
-  color: #9a9eae;
+  color: var(--mavis-muted);
   font-size: 10px;
   text-align: center;
+
+  @media (min-width: 721px) and (max-height: 620px) {
+    margin-top: 8px;
+  }
 `
 interface CustomButtonProps {
-  $variant: 'email' | 'google' | 'facebook'
+  $variant: 'email' | 'google' | 'facebook' | 'apple'
 }
 
 export const CustomButton = styled.button<CustomButtonProps>`
@@ -518,14 +569,15 @@ export const CustomButton = styled.button<CustomButtonProps>`
   align-items: center;
   justify-content: center;
   padding: 0 42px;
-  border: 1px solid ${({ $variant }) => ($variant === 'google' ? '#e2e5ed' : 'transparent')};
+  border: 1px solid transparent;
   border-radius: 10px;
   background: ${({ $variant }) => {
     if ($variant === 'email') return '#5b4bd8'
-    if ($variant === 'facebook') return '#1877f2'
-    return '#fff'
+    if ($variant === 'google') return '#ea4335'
+    if ($variant === 'apple') return '#111111'
+    return '#1877f2'
   }};
-  color: ${({ $variant }) => ($variant === 'google' ? '#33384b' : '#fff')};
+  color: #fff;
   font: inherit;
   font-size: 13px;
   font-weight: 700;
@@ -537,8 +589,9 @@ export const CustomButton = styled.button<CustomButtonProps>`
     box-shadow: 0 7px 16px rgba(35, 31, 72, 0.12);
     background: ${({ $variant }) => {
       if ($variant === 'email') return '#4c3bc8'
-      if ($variant === 'facebook') return '#1168dc'
-      return '#f8f9fc'
+      if ($variant === 'google') return '#d33426'
+      if ($variant === 'apple') return '#2b2b2b'
+      return '#1168dc'
     }};
   }
 
@@ -558,7 +611,7 @@ export const CustomButton = styled.button<CustomButtonProps>`
     width: 19px;
     height: 19px;
     flex-shrink: 0;
-    color: ${({ $variant }) => ($variant === 'google' ? '#4285f4' : 'currentColor')};
+    color: currentColor;
   }
 
   span {

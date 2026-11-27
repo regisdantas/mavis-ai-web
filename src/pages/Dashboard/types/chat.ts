@@ -16,4 +16,5 @@ export interface ChatSession {
   model: string
   selectedPromptIds: string[]
   messages: ChatMessage[]
+  pinned?: boolean
 }

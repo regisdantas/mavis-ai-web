@@ -33,6 +33,51 @@ export const noteColors = [
   '#D7CCC8',
 ]
 
+export const darkNoteColorMap: Readonly<Record<string, string>> = {
+  '#fff': '#242338',
+  '#ffffff': '#242338',
+  '#f8f9fa': '#2b2d3b',
+  '#ced4da': '#343b4b',
+  '#fff4b5': '#4a3e1a',
+  '#ffdcc8': '#4b3027',
+  '#ffcdd2': '#4b2831',
+  '#fadce6': '#472b38',
+  '#dcccfb': '#362c4c',
+  '#bbdefb': '#243849',
+  '#c8e6c9': '#273c2c',
+  '#b2dfdb': '#243c3b',
+  '#f3e5c8': '#463b2b',
+  '#d7ccc8': '#3c302d',
+}
+
+const darkenUnmappedHexColor = (color: string) => {
+  const match = /^#([a-f\d]{3}|[a-f\d]{6})$/i.exec(color)
+
+  if (!match) {
+    return '#292739'
+  }
+
+  const hex = match[1]
+  const channels =
+    hex.length === 3
+      ? Array.from(hex, (channel) => parseInt(`${channel}${channel}`, 16))
+      : (hex.match(/.{2}/g) || []).map((channel) => parseInt(channel, 16))
+
+  return `#${channels
+    .map((channel) => Math.round(channel * 0.3).toString(16).padStart(2, '0'))
+    .join('')}`
+}
+
+export const getNoteDisplayColor = (color: string, darkMode: boolean) => {
+  if (!darkMode) {
+    return color
+  }
+
+  const normalizedColor = color.trim().toLowerCase()
+
+  return darkNoteColorMap[normalizedColor] || darkenUnmappedHexColor(normalizedColor)
+}
+
 export const parseNoteContent = (
   content: string,
   isJsonString: (value: string) => boolean

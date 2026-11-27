@@ -153,9 +153,9 @@ const PickerContainer = styled.div`
   overflow: hidden;
   padding: 10px;
   box-sizing: border-box;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--mavis-brand-border);
   border-radius: 14px;
-  background: #fff;
+  background: var(--mavis-surface);
   box-shadow: 0 12px 32px rgba(15, 23, 42, 0.2);
 `
 
@@ -165,10 +165,10 @@ const SearchInputContainer = styled.div`
   align-items: center;
   gap: 8px;
   padding: 0 10px;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--mavis-border);
   border-radius: 9px;
-  background: #fff;
-  color: #64748b;
+  background: var(--mavis-input);
+  color: var(--mavis-muted);
 
   svg {
     width: 16px;
@@ -184,12 +184,12 @@ const SearchInput = styled.input`
   border: 0;
   outline: 0;
   background: transparent;
-  color: #1f2937;
+  color: var(--mavis-text);
   font: inherit;
   font-size: 13px;
 
   &::placeholder {
-    color: #94a3b8;
+    color: var(--mavis-muted);
   }
 `
 
@@ -204,11 +204,11 @@ const ClearSearchButton = styled.button`
   border: 0;
   border-radius: 6px;
   background: transparent;
-  color: #64748b;
+  color: var(--mavis-muted);
   cursor: pointer;
 
   &:hover {
-    background: #f1f5f9;
+    background: var(--mavis-surface-hover);
   }
 `
 
@@ -241,18 +241,18 @@ const SearchResultButton = styled.button`
   &:hover,
   &:focus {
     outline: none;
-    background: #eef2ff;
+    background: var(--mavis-surface-hover);
   }
 
   &:focus {
-    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.45);
+    box-shadow: 0 0 0 2px rgba(91, 75, 216, 0.45);
   }
 `
 
 const NoResults = styled.p`
   margin: 0;
   padding: 24px 12px;
-  color: #64748b;
+  color: var(--mavis-muted);
   font-size: 13px;
   text-align: center;
 `
@@ -262,12 +262,12 @@ const RemoveEmojiButton = styled.button`
   padding: 6px 10px;
   border: 0;
   border-radius: 7px;
-  background: #f1f1f4;
-  color: #2e2e2e;
+  background: var(--mavis-surface-subtle);
+  color: var(--mavis-text);
   text-align: left;
   cursor: pointer;
 
   &:hover {
-    background: #e7e7ec;
+    background: var(--mavis-surface-hover);
   }
 `

@@ -13,6 +13,9 @@ interface NotesListProps {
   onHoverCard: (id: string | null) => void
   onChangeEntry: (id: string, content: string) => Promise<void>
   onChangeEmoji: (id: string, emoji: string) => Promise<void>
+  onDuplicateNote: (id: string) => Promise<void>
+  onArchiveNote: (id: string) => Promise<void>
+  onDeleteNote: (id: string) => Promise<void>
   updateEntryDate: (id: string, date: string) => Promise<void>
   selectedNoteIds: string[]
   onToggleSelection: (id: string) => void
@@ -30,6 +33,9 @@ export const NotesList: React.FC<NotesListProps> = ({
   onHoverCard,
   onChangeEntry,
   onChangeEmoji,
+  onDuplicateNote,
+  onArchiveNote,
+  onDeleteNote,
   updateEntryDate,
   selectedNoteIds,
   onToggleSelection,
@@ -56,6 +62,9 @@ export const NotesList: React.FC<NotesListProps> = ({
             fuzzySearchEnabled={fuzzySearchEnabled}
             onChangeContent={onChangeEntry}
             onChangeDate={updateEntryDate}
+            onDuplicateNote={onDuplicateNote}
+            onArchiveNote={onArchiveNote}
+            onDeleteNote={onDeleteNote}
             tags={pickerTags}
             selected={selectedNoteIds.includes(entry.id)}
             onToggleSelection={onToggleSelection}

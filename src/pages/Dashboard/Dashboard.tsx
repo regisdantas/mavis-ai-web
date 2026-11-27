@@ -5,7 +5,7 @@ import { useEntryFilter } from './hooks/useEntryFilter'
 import { useEntries } from './hooks/useEntries'
 import { UserAuth } from '../../context/AuthContext'
 import { HeaderPortal } from '../../components/HeaderPortal'
-import { defaultContent, getArchiveTags, parseNoteContent } from './utils/cardUtils'
+import { defaultContent, getArchiveTags, getTrashTags, parseNoteContent } from './utils/cardUtils'
 import { getTags, isJsonString } from '../../utils'
 import { getTagPinPreferences, saveTagPinPreferences } from '../../services/tagPinPreferences'
 import { useDashboard } from './context/DashboardContext'
@@ -515,13 +515,17 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
     })
   }
 
-  const handleDeleteSelectedNotes = async () => {
-    if (notesLocked || !selectedNoteIds.length) {
+  const handleDeleteSelectedNotes = async (noteIds = selectedNoteIds) => {
+    if (notesLocked || !noteIds.length) {
       return
     }
 
-    const selectedTrashIds = new Set(selectedTrashEntryIds)
-    const noteIdsToMoveToTrash = selectedNoteIds.filter((id) => !selectedTrashIds.has(id))
+    const selectedTrashIds = new Set(
+      entries
+        .filter((entry) => noteIds.includes(entry.id) && getTags(entry.content).includes('trash'))
+        .map((entry) => entry.id)
+    )
+    const noteIdsToMoveToTrash = noteIds.filter((id) => !selectedTrashIds.has(id))
 
     if (selectedTrashEntryIds.length) {
       const selectedTrashLabel = `${selectedTrashEntryIds.length} selected ${
@@ -543,15 +547,12 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
       .filter((entry) => noteIdsToMoveToTrash.includes(entry.id))
       .map((entry) => {
         const content = parseNoteContent(entry.content, isJsonString)
-        const tags = Array.from(
-          new Set([...content.tags.filter((tag) => tag !== 'archive'), 'trash'])
-        )
 
         return {
           ...entry,
           content: JSON.stringify({
             ...content,
-            tags,
+            tags: getTrashTags(content.tags),
           }),
         }
       })
@@ -559,13 +560,13 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
     await applyEntries(updatedEntries, selectedTrashEntryIds)
   }
 
-  const handleArchiveSelectedNotes = async () => {
-    if (notesLocked || !selectedNoteIds.length) {
+  const handleArchiveSelectedNotes = async (noteIds = selectedNoteIds) => {
+    if (notesLocked || !noteIds.length) {
       return
     }
 
     const updatedEntries = entries
-      .filter((entry) => selectedNoteIds.includes(entry.id))
+      .filter((entry) => noteIds.includes(entry.id))
       .map((entry) => {
         const content = parseNoteContent(entry.content, isJsonString)
 
@@ -644,6 +645,48 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
       await handleDeleteSelectedNotes()
     } catch (error) {
       console.error('Failed to delete selected notes.', error)
+    }
+  }
+
+  const handleArchiveNoteFromOptions = async (id: string) => {
+    try {
+      await handleArchiveSelectedNotes([id])
+    } catch (error) {
+      console.error('Failed to archive note.', error)
+    }
+  }
+
+  const handleDeleteNoteFromOptions = async (id: string) => {
+    try {
+      await handleDeleteSelectedNotes([id])
+    } catch (error) {
+      console.error('Failed to delete note.', error)
+    }
+  }
+
+  const handleDuplicateNoteFromOptions = async (id: string) => {
+    if (notesLocked) {
+      return
+    }
+
+    try {
+      const entry = entries.find((currentEntry) => currentEntry.id === id)
+
+      if (!entry) {
+        throw new Error('The note selected for duplication could not be found.')
+      }
+
+      const duplicate = await addEntry({
+        content: entry.content,
+        date: entry.date,
+        emoji: entry.emoji,
+      })
+
+      if (!duplicate) {
+        throw new Error('The note could not be duplicated for the current user.')
+      }
+    } catch (error) {
+      console.error('Failed to duplicate note.', error)
     }
   }
 
@@ -756,6 +799,9 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
                   onHoverCard={setHoveredCardId}
                   onChangeEntry={handleChangeEntry}
                   onChangeEmoji={handleUpdateEntryEmoji}
+                  onDuplicateNote={handleDuplicateNoteFromOptions}
+                  onArchiveNote={handleArchiveNoteFromOptions}
+                  onDeleteNote={handleDeleteNoteFromOptions}
                   selectedNoteIds={selectedNoteIds}
                   onToggleSelection={toggleNoteSelection}
                   templateOptions={templateOptions}
@@ -766,7 +812,7 @@ const Dashboard: React.FC<DashboardProps> = ({ explorerExpanded, setExplorerExpa
               )}
             </NotesPanel>
           </NotesView>
-          <ChatView role="region" aria-label="AI sessions">
+          <ChatView role="region" aria-label="AI sessions" $minimized={chatMinimized}>
             <ChatPanel ref={chatPanelRef} minimized={chatMinimized} otherMinimized={notesMinimized}>
               <Chat
                 uid={user?.uid || ''}
@@ -845,15 +891,22 @@ const NotesView = styled.div`
   }
 `
 
-const ChatView = styled.div`
-  display: contents;
+const ChatView = styled.div<{ $minimized: boolean }>`
+  position: relative;
+  display: flex;
+  flex: ${({ $minimized }) => ($minimized ? '0 0 60px' : '1 1 60px')};
+  width: ${({ $minimized }) => ($minimized ? '60px' : 'auto')};
+  min-width: 0;
+  max-width: ${({ $minimized }) => ($minimized ? '60px' : '1084px')};
+  height: 100%;
+  min-height: 0;
 
   @media (max-width: 768px) {
-    position: relative;
     display: flex;
     flex: 0 0 100%;
     width: 100%;
     min-width: 100%;
+    max-width: none;
     height: 100%;
     overflow: hidden;
     scroll-snap-align: start;
@@ -865,12 +918,12 @@ const ChatPanel = styled.div<{ minimized: boolean; otherMinimized: boolean }>`
   flex: ${({ minimized }) => (minimized ? '0' : '1')};
   width: ${({ minimized }) => (minimized ? '0' : 'auto')};
   min-width: 0;
-  max-width: 1024px;
+  max-width: 1324px;
   margin-left: ${({ minimized, otherMinimized }) => (!minimized && otherMinimized ? 'auto' : '0')};
   margin-right: ${({ minimized, otherMinimized }) => (!minimized && otherMinimized ? 'auto' : '0')};
   flex-direction: column;
   overflow: hidden;
-  background: #e0e0e5;
+  background: var(--mavis-panel);
 
   @media (max-width: 768px) {
     flex: ${({ minimized }) => (minimized ? '0' : '1 1 0')};
@@ -883,33 +936,33 @@ const NotesPanel = styled.div<{ minimized: boolean; otherMinimized: boolean }>`
   flex: ${({ minimized }) => (minimized ? '0 0 0' : '1.5')};
   width: ${({ minimized }) => (minimized ? '0' : 'auto')};
   min-width: 0;
-  max-width: 1024px;
+  max-width: 1324px;
   margin-left: ${({ minimized, otherMinimized }) => (!minimized && otherMinimized ? 'auto' : '0')};
   margin-right: ${({ minimized, otherMinimized }) =>
     !minimized && otherMinimized ? 'auto' : '10px'};
   flex-direction: column;
   overflow: hidden;
-  background: #e0e0e5;
+  background: var(--mavis-panel);
   overflow-y: scroll;
   scrollbar-width: thin;
-  scrollbar-color: #b0b0b5 #e0e0e5;
+  scrollbar-color: var(--mavis-scrollbar) var(--mavis-panel);
 
   &::-webkit-scrollbar {
     width: 12px;
   }
 
   &::-webkit-scrollbar-track {
-    background: #e0e0e5;
+    background: var(--mavis-panel);
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #b0b0b5;
+    background: var(--mavis-scrollbar);
     border-radius: 6px;
-    border: 2px solid #e0e0e5;
+    border: 2px solid var(--mavis-panel);
   }
 
   &::-webkit-scrollbar-thumb:hover {
-    background: #909095;
+    background: var(--mavis-border-strong);
   }
 
   @media (max-width: 768px) {

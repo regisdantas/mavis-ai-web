@@ -208,7 +208,15 @@ export function useEntries(userId: string) {
   }, [userId])
 
   const addEntry = React.useCallback(
-    async ({ content, date }: { content: string; date: string }): Promise<IEntry | null> => {
+    async ({
+      content,
+      date,
+      emoji,
+    }: {
+      content: string
+      date: string
+      emoji?: string
+    }): Promise<IEntry | null> => {
       if (!userId) {
         return null
       }
@@ -218,6 +226,7 @@ export function useEntries(userId: string) {
         id: uuid(),
         content,
         date,
+        ...(emoji === undefined ? {} : { emoji }),
         createdAt: new Date().toISOString(),
       }
 

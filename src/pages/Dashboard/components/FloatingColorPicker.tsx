@@ -51,7 +51,8 @@ const ColorDropdown = styled.div`
   flex-direction: column;
   gap: 2px;
 
-  background: white;
+  background: var(--mavis-surface);
+  border: 1px solid var(--mavis-brand-border);
 
   border-radius: 14px;
 
@@ -73,7 +74,7 @@ const ColorOption = styled.button`
   border: none;
   border-radius: 10px;
 
-  background: #f5f6f8;
+  background: var(--mavis-surface-subtle);
 
   padding: 8px 10px;
 
@@ -82,7 +83,7 @@ const ColorOption = styled.button`
   transition: 0.2s;
 
   &:hover {
-    background: #eceff3;
+    background: var(--mavis-surface-hover);
   }
 `
 
@@ -99,7 +100,7 @@ const ColorCircle = styled.div<{ color: string }>`
 
   background: ${({ color }) => color};
 
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--mavis-border);
 
   flex-shrink: 0;
 `
@@ -108,5 +109,5 @@ const ColorLabel = styled.span`
   font-size: 12px;
   font-weight: 600;
 
-  color: #444;
+  color: var(--mavis-text-secondary);
 `

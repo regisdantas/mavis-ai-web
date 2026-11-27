@@ -1,5 +1,5 @@
 import React from 'react'
-import styled from 'styled-components'
+import styled, { DefaultTheme } from 'styled-components'
 import {
   FiArchive,
   FiCheckSquare,
@@ -245,37 +245,6 @@ export const NotesToolbar: React.FC<NotesToolbarProps> = ({
           </EditLockButton>
           <ToolbarButton
             type="button"
-            $selected={selectedCount > 0}
-            $tone="select"
-            title={selectedCount > 0 ? 'Deselect all notes' : 'Select all visible notes'}
-            aria-label={selectedCount > 0 ? 'Deselect all notes' : 'Select all visible notes'}
-            aria-pressed={selectedCount > 0}
-            onClick={selectOrClearAll}
-          >
-            {selectedCount > 0 ? <FiSquare /> : <FiCheckSquare />}
-          </ToolbarButton>
-          <ToolbarButton
-            type="button"
-            $tone="copy"
-            title="Copy selected or visible notes"
-            aria-label="Copy selected or visible notes"
-            onClick={onCopyAllNotes}
-          >
-            <FiCopy />
-          </ToolbarButton>
-          {selectedTag === 'journal' && (
-            <DateContainer>
-              <input
-                title="Select date"
-                aria-label="Select date"
-                type="date"
-                value={selectedDate}
-                onChange={onDateChange}
-              />
-            </DateContainer>
-          )}
-          <ToolbarButton
-            type="button"
             $tone="add"
             title="Add note"
             aria-label="Add note"
@@ -302,6 +271,15 @@ export const NotesToolbar: React.FC<NotesToolbarProps> = ({
           >
             <FiCpu />
           </ToolbarButton>
+                    <ToolbarButton
+            type="button"
+            $tone="copy"
+            title="Copy selected or visible notes"
+            aria-label="Copy selected or visible notes"
+            onClick={onCopyAllNotes}
+          >
+            <FiCopy />
+          </ToolbarButton>
           <ToolbarButton
             type="button"
             $tone="redo"
@@ -323,6 +301,17 @@ export const NotesToolbar: React.FC<NotesToolbarProps> = ({
             <FiRotateCcw />
           </ToolbarButton>
           <ToolbarSeparator aria-hidden="true" />
+          <ToolbarButton
+            type="button"
+            $selected={selectedCount > 0}
+            $tone="select"
+            title={selectedCount > 0 ? 'Deselect all notes' : 'Select all visible notes'}
+            aria-label={selectedCount > 0 ? 'Deselect all notes' : 'Select all visible notes'}
+            aria-pressed={selectedCount > 0}
+            onClick={selectOrClearAll}
+          >
+            {selectedCount > 0 ? <FiSquare /> : <FiCheckSquare />}
+          </ToolbarButton>
           <ToolbarButton
             type="button"
             $tone="archive"
@@ -388,10 +377,10 @@ const ToolbarContainer = styled.div<ToolbarContainerProps>`
   overflow-x: auto;
   overflow-y: hidden;
   scrollbar-width: none;
-  border-bottom: 1px solid #d0d0d0;
+  border-bottom: 1px solid var(--mavis-brand-border);
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
-  background: #e0e0e5;
+  background: var(--mavis-panel);
 
   &::-webkit-scrollbar {
     display: none;
@@ -424,7 +413,7 @@ const SearchContainer = styled.div<{ $searchExpanded: boolean }>`
   margin: 0 4px;
   overflow: hidden;
   border-radius: ${({ $searchExpanded }) => ($searchExpanded ? '0 0 10px 10px' : '10px')};
-  background: ${({ $searchExpanded }) => ($searchExpanded ? '#231f20' : 'transparent')};
+  background: ${({ $searchExpanded }) => ($searchExpanded ? 'var(--mavis-brand)' : 'transparent')};
   transition: width 240ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 180ms ease,
     border-radius 200ms ease;
 
@@ -439,7 +428,7 @@ const SearchContainer = styled.div<{ $searchExpanded: boolean }>`
     border: none;
     outline: none;
     background: transparent;
-    color: #fff;
+    color: var(--mavis-text-inverse);
     opacity: ${({ $searchExpanded }) => ($searchExpanded ? 1 : 0)};
     pointer-events: ${({ $searchExpanded }) => ($searchExpanded ? 'auto' : 'none')};
     transition: flex-grow 220ms ease, opacity 160ms ease, padding 220ms ease;
@@ -460,17 +449,18 @@ const SearchContainer = styled.div<{ $searchExpanded: boolean }>`
     min-width: ${({ $searchExpanded }) => ($searchExpanded ? '0' : '17px')};
     height: ${({ $searchExpanded }) => ($searchExpanded ? '36px' : '30px')};
     margin: ${({ $searchExpanded }) => ($searchExpanded ? '0' : '2px 0')};
-    background: ${({ $searchExpanded }) => ($searchExpanded ? '#fff' : 'transparent')};
+    background: ${({ $searchExpanded }) =>
+      $searchExpanded ? 'var(--mavis-surface)' : 'transparent'};
     box-shadow: ${({ $searchExpanded }) =>
       $searchExpanded ? '0 4px 12px rgba(0, 0, 0, 0.15)' : 'none'};
 
     input {
       padding: ${({ $searchExpanded }) => ($searchExpanded ? '0 10px' : '0')};
-      color: #231f20;
+      color: var(--mavis-text);
     }
 
     input::placeholder {
-      color: rgba(35, 31, 32, 0.6);
+      color: var(--mavis-muted);
     }
   }
 
@@ -494,7 +484,7 @@ const SearchToggleButton = styled.button<{ $searchExpanded: boolean }>`
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: #2563eb;
+  color: ${({ theme }) => theme.brand || '#5b4bd8'};
   opacity: ${({ $searchExpanded }) => ($searchExpanded ? 0 : 1)};
   pointer-events: ${({ $searchExpanded }) => ($searchExpanded ? 'none' : 'auto')};
   cursor: pointer;
@@ -502,7 +492,7 @@ const SearchToggleButton = styled.button<{ $searchExpanded: boolean }>`
   @media (max-width: 768px) {
     width: ${({ $searchExpanded }) => ($searchExpanded ? '0' : '17px')};
     flex-basis: ${({ $searchExpanded }) => ($searchExpanded ? '0' : '17px')};
-    color: #60a5fa;
+    color: #bfdbfe;
   }
 
   @media (max-width: 350px) {
@@ -526,18 +516,18 @@ const SearchClearButton = styled.button<{ $searchExpanded: boolean }>`
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #2563eb;
+  color: ${({ theme }) => theme.brand || '#5b4bd8'};
   opacity: ${({ $searchExpanded }) => ($searchExpanded ? 1 : 0)};
   pointer-events: ${({ $searchExpanded }) => ($searchExpanded ? 'auto' : 'none')};
   transition: flex-basis 220ms ease, opacity 160ms ease, margin 220ms ease;
 
   &:disabled {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.disabled || '#9ca3af'};
     cursor: default;
   }
 
   @media (max-width: 768px) {
-    color: #60a5fa;
+    color: #bfdbfe;
   }
 `
 
@@ -555,14 +545,16 @@ const FuzzySearchButton = styled.button<{ $searchExpanded: boolean; $active: boo
   overflow: hidden;
   border: 0;
   border-radius: 8px;
-  background: ${({ $active }) => ($active ? 'rgba(251, 191, 36, 0.18)' : 'transparent')};
-  color: ${({ $active }) => ($active ? '#fbbf24' : '#2563eb')};
+  background: ${({ $active }) => ($active ? 'var(--mavis-brand-soft)' : 'transparent')};
+  color: ${({ theme, $active }) =>
+    $active ? theme.brandBlue || '#7185e8' : theme.brand || '#5b4bd8'};
   opacity: ${({ $searchExpanded }) => ($searchExpanded ? 1 : 0)};
   pointer-events: ${({ $searchExpanded }) => ($searchExpanded ? 'auto' : 'none')};
   transition: flex-basis 220ms ease, opacity 160ms ease, margin 220ms ease;
 
   @media (max-width: 768px) {
-    color: ${({ $active }) => ($active ? '#d97706' : '#60a5fa')};
+    background: ${({ $active }) => ($active ? 'rgba(196, 181, 253, 0.22)' : 'transparent')};
+    color: ${({ $active }) => ($active ? '#c4b5fd' : '#bfdbfe')};
   }
 `
 
@@ -586,8 +578,8 @@ const SelectedPage = styled.div`
   align-items: center;
   margin: 0 8px;
   overflow: hidden;
-  color: #4b4b50;
-  font-size: 12px;
+  color: ${({ theme }) => theme.textSecondary || '#514d68'};
+  font-size: 1rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 
@@ -644,20 +636,32 @@ type ToolbarTone =
   | 'copy'
   | 'select'
 
-const getToolbarButtonColor = (tone?: ToolbarTone, selected?: boolean, mobile = false) => {
-  if (tone === 'undo') return mobile ? '#f87171' : '#dc2626'
-  if (tone === 'redo') return mobile ? '#4ade80' : '#16a34a'
-  if (tone === 'archive') return mobile ? '#4ade80' : '#16a34a'
-  if (tone === 'trash') return mobile ? '#f87171' : '#dc2626'
-  if (tone === 'ai') return mobile ? '#a78bfa' : '#7c3aed'
-  if (tone === 'add') return mobile ? '#86efac' : '#4ade80'
-  if (tone === 'search') return mobile ? '#60a5fa' : '#2563eb'
-  if (tone === 'copy') return mobile ? '#cbd5e1' : '#64748b'
+const getToolbarButtonColor = (
+  tone?: ToolbarTone,
+  selected?: boolean,
+  mobile = false,
+  theme?: DefaultTheme
+) => {
+  const brand = theme?.brand || '#5b4bd8'
+  const brandStrong = theme?.brandStrong || '#4c3bc8'
+  const brandBlue = theme?.brandBlue || '#7185e8'
+  const danger = theme?.danger || '#dc2626'
+  const muted = theme?.textMuted || '#716d86'
+  const textSecondary = theme?.textSecondary || '#4b4960'
+
+  if (tone === 'undo') return mobile ? '#fecaca' : danger
+  if (tone === 'redo') return mobile ? '#bfdbfe' : brandBlue
+  if (tone === 'archive') return mobile ? '#c4b5fd' : brand
+  if (tone === 'trash') return mobile ? '#fecaca' : danger
+  if (tone === 'ai') return mobile ? '#c4b5fd' : brand
+  if (tone === 'add') return mobile ? '#c4b5fd' : brand
+  if (tone === 'search') return mobile ? '#bfdbfe' : brand
+  if (tone === 'copy') return mobile ? '#e2ddf5' : muted
   if (tone === 'select') {
-    return selected ? (mobile ? '#a78bfa' : '#4f46e5') : mobile ? '#60a5fa' : '#2563eb'
+    return selected ? (mobile ? '#c4b5fd' : brandStrong) : mobile ? '#bfdbfe' : brand
   }
 
-  return mobile ? '#fff' : '#2e2e2e'
+  return mobile ? '#fff' : textSecondary
 }
 
 const ToolbarButton = styled.button<{
@@ -676,15 +680,15 @@ const ToolbarButton = styled.button<{
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: ${({ $tone, $selected }) => getToolbarButtonColor($tone, $selected)};
+  color: ${({ theme, $tone, $selected }) => getToolbarButtonColor($tone, $selected, false, theme)};
   cursor: pointer;
 
   &:hover:not(:disabled) {
-    background: rgba(128, 128, 128, 0.15);
+    background: var(--mavis-brand-soft);
   }
 
   &:disabled {
-    color: #9ca3af;
+    color: ${({ theme }) => theme.disabled || '#9ca3af'};
     cursor: not-allowed;
     opacity: 1;
   }
@@ -701,14 +705,14 @@ const ToolbarButton = styled.button<{
     margin: 0;
     margin-right: ${({ $rightSpace }) => ($rightSpace ? '20px' : '0')};
     border-radius: 7px;
-    color: ${({ $tone, $selected }) => getToolbarButtonColor($tone, $selected, true)};
+    color: ${({ theme, $tone, $selected }) => getToolbarButtonColor($tone, $selected, true, theme)};
 
     &:hover:not(:disabled) {
       background: rgba(255, 255, 255, 0.15);
     }
 
     &:disabled {
-      color: #9ca3af;
+      color: ${({ theme }) => theme.disabled || '#9ca3af'};
       opacity: 1;
     }
   }
@@ -725,7 +729,7 @@ const ToolbarSeparator = styled.span`
   height: 20px;
   flex: 0 0 1px;
   margin: 0 5px;
-  background: rgba(80, 80, 80, 0.3);
+  background: var(--mavis-brand-border);
 
   @media (max-width: 768px) {
     width: 1px;
@@ -748,7 +752,8 @@ const EditLockButton = styled.button<{ $active: boolean }>`
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: ${({ $active }) => ($active ? '#4f46e5' : '#2e2e2e')};
+  color: ${({ theme, $active }) =>
+    $active ? theme.brand || '#5b4bd8' : theme.textSecondary || '#4b4960'};
   cursor: pointer;
 
   svg {
@@ -756,7 +761,7 @@ const EditLockButton = styled.button<{ $active: boolean }>`
   }
 
   &:hover {
-    background: rgba(128, 128, 128, 0.15);
+    background: var(--mavis-brand-soft);
   }
 
   @media (max-width: 768px) {
@@ -764,7 +769,7 @@ const EditLockButton = styled.button<{ $active: boolean }>`
     flex-basis: 16px;
     margin: 0;
     border-radius: 7px;
-    color: ${({ $active }) => ($active ? '#4f46e5' : '#fff')};
+    color: ${({ $active }) => ($active ? '#c4b5fd' : '#fff')};
 
     &:hover {
       background: rgba(255, 255, 255, 0.15);
@@ -820,11 +825,11 @@ const PanelToggle = styled.button`
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: #9ca3af;
+  color: ${({ theme }) => theme.disabled || '#9ca3af'};
   cursor: pointer;
 
   &:hover {
-    background: rgba(128, 128, 128, 0.15);
+    background: var(--mavis-surface-hover);
   }
 
   @media (max-width: 768px) {

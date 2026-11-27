@@ -89,6 +89,9 @@ describe('ExplorerSideBar fixed-tag menus', () => {
     const divider = screen.getByRole('separator')
     const unpinnedTag = screen.getByTitle('Unpinned')
 
+    expect(screen.getByText('Locations')).toBeTruthy()
+    expect(screen.getByText('Pinned Tags')).toBeTruthy()
+    expect(screen.getByText('Tags')).toBeTruthy()
     expect(pinnedTag.compareDocumentPosition(trashTag) & Node.DOCUMENT_POSITION_FOLLOWING).not.toBe(
       0
     )

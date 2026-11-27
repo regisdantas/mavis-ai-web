@@ -10,6 +10,7 @@ import { MdOutlineLayersClear, MdHistoryToggleOff, MdOutlineSummarize } from 're
 import { TbMessagesOff } from 'react-icons/tb'
 import { TbPrompt } from 'react-icons/tb'
 import { ChatMessage } from '../types/chat'
+import mavis from '../../../assets/mavis.png'
 
 const modelsAvailable = ['gpt-5-mini', 'gpt-6-luna', 'gpt-5.6-terra', 'gpt-5.6-sol']
 
@@ -140,6 +141,18 @@ export const Chat: React.FC<ChatProps> = ({
           aria-label="Chat messages"
           onScroll={handleChatHistoryScroll}
         >
+          {messages.length === 0 && !isLoading && (
+            <ChatWelcome>
+              <ChatWelcomeAvatar>
+                <ChatWelcomeImage src={mavis} alt="" />
+              </ChatWelcomeAvatar>
+              <ChatWelcomeTitle>Hi, I'm Mavis.</ChatWelcomeTitle>
+              <ChatWelcomeText>
+                Your files, ideas, and memories are ready when you need them. Ask me to help you
+                find a thread, make a plan, or think something through.
+              </ChatWelcomeText>
+            </ChatWelcome>
+          )}
           {messages.map((message) => (
             <MessageContainer
               key={message.id}
@@ -273,7 +286,7 @@ export const Chat: React.FC<ChatProps> = ({
               </IconButton>
               <IconButton title="Include chat history in prompts">
                 <MdHistoryToggleOff
-                  color={includeHistory ? '#2563eb' : '#555'}
+                  color={includeHistory ? 'var(--mavis-brand)' : 'var(--mavis-muted)'}
                   onClick={() => setIncludeHistory(!includeHistory)}
                 />
               </IconButton>
@@ -368,6 +381,52 @@ const MessageContainer = styled.div<{ role: string }>`
   align-items: ${({ role }) => (role === 'user' ? 'flex-end' : 'flex-start')};
 `
 
+const ChatWelcome = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  max-width: 380px;
+  margin: auto;
+  padding: 24px;
+  text-align: center;
+`
+
+const ChatWelcomeAvatar = styled.div`
+  width: 92px;
+  height: 92px;
+  margin-bottom: 16px;
+  overflow: hidden;
+  border: 1px solid var(--mavis-brand-border);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 25%, var(--mavis-surface), var(--mavis-brand-soft));
+  box-shadow: 0 8px 24px rgba(36, 32, 68, 0.12);
+`
+
+const ChatWelcomeImage = styled.img`
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 8%;
+`
+
+const ChatWelcomeTitle = styled.h2`
+  margin: 0 0 8px;
+  color: var(--mavis-brand-deep);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+`
+
+const ChatWelcomeText = styled.p`
+  max-width: 340px;
+  margin: 0;
+  color: var(--mavis-muted);
+  font-size: 13px;
+  line-height: 1.6;
+`
+
 const MessageTools = styled.div<{ role: string }>`
   display: flex;
   gap: 4px;
@@ -382,7 +441,7 @@ const MessageTools = styled.div<{ role: string }>`
 
 const MessageInfo = styled.div<{ role: string }>`
   font-size: 10px;
-  color: #555;
+  color: var(--mavis-muted);
   margin-bottom: 2px;
   align-self: ${({ role }) => (role === 'user' ? 'flex-end' : 'flex-start')};
   white-space: nowrap;
@@ -397,7 +456,7 @@ const TextareaWrapper = styled.div`
 
 const ChatInputHeader = styled.span`
   font-size: 12px;
-  color: #555;
+  color: var(--mavis-muted);
   margin-bottom: 4px;
   gap: 30px;
   display: flex;
@@ -408,7 +467,7 @@ const ChatInputHeader = styled.span`
 
 const ChatInfo = styled.span`
   font-size: 12px;
-  color: #555;
+  color: var(--mavis-muted);
 `
 
 const ChatActions = styled.div`
@@ -426,6 +485,7 @@ const ChatContainer = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
+  background: var(--mavis-page);
 `
 
 const ChatHistoryArea = styled.div`
@@ -433,6 +493,7 @@ const ChatHistoryArea = styled.div`
   min-height: 0;
   display: flex;
   overflow: hidden;
+  background: var(--mavis-surface-subtle);
 `
 
 const ChatHistory = styled.div`
@@ -445,23 +506,24 @@ const ChatHistory = styled.div`
   gap: 10px;
   overflow-y: scroll;
   scrollbar-width: thin;
-  scrollbar-color: #b0b0b5 #e0e0e5;
+  background: var(--mavis-surface-subtle);
+  scrollbar-color: var(--mavis-scrollbar) var(--mavis-surface-subtle);
   &::-webkit-scrollbar {
     width: 12px;
   }
 
   &::-webkit-scrollbar-track {
-    background: #e0e0e5;
+    background: var(--mavis-surface-subtle);
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #b0b0b5;
+    background: var(--mavis-scrollbar);
     border-radius: 6px;
-    border: 2px solid #e0e0e5;
+    border: 2px solid var(--mavis-surface-subtle);
   }
 
   &::-webkit-scrollbar-thumb:hover {
-    background: #909095;
+    background: var(--mavis-border-strong);
   }
 
   &,
@@ -489,8 +551,8 @@ const ChatMiniMapContainer = styled.div`
   gap: 3px;
   padding: 12px 3px;
   overflow-y: auto;
-  border-left: 1px solid #d0d0d0;
-  background: #d0d0d0;
+  border-left: 1px solid var(--mavis-brand-border);
+  background: var(--mavis-panel);
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
@@ -509,7 +571,7 @@ const ChatMiniMapMessage = styled.button<{ $role: ChatMessage['role'] }>`
   padding: 0;
   border: 0;
   border-radius: 3px;
-  background: ${({ $role }) => ($role === 'user' ? '#7c3aed' : '#c4b5fd')};
+  background: ${({ $role }) => ($role === 'user' ? '#5b4bd8' : '#c4b5fd')};
   opacity: 0.75;
 
   &:hover {
@@ -524,14 +586,14 @@ const ChatTableScrollWrapper = styled.div`
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scrollbar-width: thin;
-  scrollbar-color: #b0b0b5 transparent;
+  scrollbar-color: #c6c0e8 transparent;
 
   &::-webkit-scrollbar {
     height: 8px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #b0b0b5;
+    background: #c6c0e8;
     border-radius: 6px;
   }
 `
@@ -544,29 +606,29 @@ const ChatMessageBubble = styled.div<{ role: string }>`
   white-space: pre-wrap;
   word-break: break-word;
   align-self: ${({ role }) => (role === 'user' ? 'flex-end' : 'flex-start')};
-  background: ${({ role }) => (role === 'user' ? '#2563eb' : '#f5f5f5')};
-  color: ${({ role }) => (role === 'user' ? '#fff' : '#222')};
+  background: ${({ role }) => (role === 'user' ? 'var(--mavis-brand)' : 'var(--mavis-surface)')};
+  color: ${({ role }) => (role === 'user' ? '#fff' : 'var(--mavis-text)')};
   padding: 20px;
   margin: 0;
   font: 13px 'Myriad Pro', 'Lucida Grande', Lucida, Verdana, sans-serif;
 
   a:link {
-    color: #00f;
+    color: var(--mavis-markdown-link);
     text-decoration: none;
   }
 
   a:visited {
-    color: #00a;
+    color: var(--mavis-markdown-visited);
     text-decoration: none;
   }
 
   a:hover {
-    color: #f60;
+    color: var(--mavis-markdown-hover);
     text-decoration: underline;
   }
 
   a:active {
-    color: #f60;
+    color: var(--mavis-markdown-hover);
     text-decoration: underline;
   }
 
@@ -589,15 +651,15 @@ const ChatMessageBubble = styled.div<{ role: string }>`
   code {
     font-size: 14px;
     font-family: monaco, courier, consolas, monospace;
-    color: green;
+    color: var(--mavis-code-text);
     font-style: italic;
   }
 
   pre {
     margin-top: 5px;
     margin-bottom: 10px;
-    border: 1px solid #c7cfd5;
-    background: #f1f5f9;
+    border: 1px solid var(--mavis-border);
+    background: var(--mavis-code-block);
     margin: 20px 0;
     padding: 8px;
     text-align: left;
@@ -609,7 +671,7 @@ const ChatMessageBubble = styled.div<{ role: string }>`
   }
 
   hr {
-    color: #919699;
+    color: var(--mavis-divider);
     width: 100%;
   }
 
@@ -625,7 +687,7 @@ const ChatMessageBubble = styled.div<{ role: string }>`
 
   h1 {
     margin-bottom: 1em;
-    color: #000;
+    color: inherit;
     font-size: 22px;
   }
 
@@ -633,7 +695,7 @@ const ChatMessageBubble = styled.div<{ role: string }>`
     margin-top: 1em;
     margin-bottom: 1em;
     font-size: 18px;
-    color: #000;
+    color: inherit;
     padding-bottom: 2px;
   }
 
@@ -641,14 +703,14 @@ const ChatMessageBubble = styled.div<{ role: string }>`
     margin-top: 1em;
     margin-bottom: 1em;
     font-size: 13px;
-    color: #000;
+    color: inherit;
   }
 
   h4 {
     margin-top: 1em;
     margin-bottom: 1em;
     font-size: 11px;
-    color: #000;
+    color: inherit;
   }
 
   h5 {
@@ -656,7 +718,7 @@ const ChatMessageBubble = styled.div<{ role: string }>`
     margin-bottom: 1em;
     padding: 0;
     font-size: 11px;
-    color: #000;
+    color: inherit;
   }
 
   h6 {
@@ -664,7 +726,7 @@ const ChatMessageBubble = styled.div<{ role: string }>`
     margin-bottom: 1em;
     padding: 0;
     font-size: 11px;
-    color: #000;
+    color: inherit;
   }
 
   p {
@@ -716,8 +778,8 @@ const ChatMessageBubble = styled.div<{ role: string }>`
     width: 100%;
     min-width: 100%;
     table-layout: auto;
-    border-top: 1px solid #919699;
-    border-left: 1px solid #919699;
+    border-top: 1px solid var(--mavis-border-strong);
+    border-left: 1px solid var(--mavis-border-strong);
     border-spacing: 0;
     margin: 0;
     margin-bottom: 20px;
@@ -733,10 +795,11 @@ const ChatMessageBubble = styled.div<{ role: string }>`
 
   table th {
     padding: 4px 8px;
-    background: #e2e2e2;
+    background: var(--mavis-table-header);
+    color: var(--mavis-text);
     font-size: 12px;
-    border-bottom: 1px solid #919699;
-    border-right: 1px solid #919699;
+    border-bottom: 1px solid var(--mavis-border-strong);
+    border-right: 1px solid var(--mavis-border-strong);
 
     @media (max-width: 1260px) {
       font-size: 10px;
@@ -754,8 +817,8 @@ const ChatMessageBubble = styled.div<{ role: string }>`
     margin: 0;
     font-size: 12px;
     vertical-align: top;
-    border-bottom: 1px solid #919699;
-    border-right: 1px solid #919699;
+    border-bottom: 1px solid var(--mavis-border-strong);
+    border-right: 1px solid var(--mavis-border-strong);
   }
 
   table td p {
@@ -783,10 +846,10 @@ const ChatMessageBubble = styled.div<{ role: string }>`
     height: 20px;
     min-width: 40px;
     width: fit-content;
-    border: 1px solid #919699;
+    border: 1px solid var(--mavis-border-strong);
     border-radius: 3px;
-    background: #e2e2e2;
-    color: #000;
+    background: var(--mavis-surface-hover);
+    color: var(--mavis-text);
     font-size: 12px;
     cursor: pointer;
     padding: 0 6px;
@@ -810,7 +873,7 @@ const ChatMessageBubble = styled.div<{ role: string }>`
     border: none;
     width: fit-content;
     height: 30px;
-    color: gray !important;
+    color: var(--mavis-muted) !important;
   }
 
   textarea {
@@ -823,10 +886,10 @@ const ChatMessageBubble = styled.div<{ role: string }>`
 `
 
 const ChatInputArea = styled.div<{ expanded: boolean }>`
-  border-top: 1px solid #d0d0d0;
+  border-top: 1px solid var(--mavis-brand-border);
   padding: 10px;
   margin: 0;
-  background: #e0e0e5;
+  background: var(--mavis-panel);
   ${({ expanded }) =>
     expanded &&
     `
@@ -841,7 +904,7 @@ const ChatInputContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 2px;
-  background: #e0e0e5;
+  background: var(--mavis-panel);
 `
 
 const ChatTextarea = styled.textarea<{ expanded: boolean }>`
@@ -849,14 +912,16 @@ const ChatTextarea = styled.textarea<{ expanded: boolean }>`
   min-height: ${({ expanded }) => (expanded ? 'calc(100vh - 80px)' : '80px')};
   max-height: ${({ expanded }) => (expanded ? 'calc(100vh - 80px)' : '300px')};
   width: 100%;
-  border: 1px solid #ccc;
+  border: 1px solid var(--mavis-border);
   border-radius: 8px;
+  background: var(--mavis-input);
+  color: var(--mavis-text);
   padding: 10px;
   margin-bottom: 30px !important;
   font-size: 14px;
   &:focus {
     outline: none;
-    border-color: #2563eb;
+    border-color: var(--mavis-brand);
   }
 `
 const ModelPicker = styled.div`
@@ -890,14 +955,14 @@ export const FlatIconButton = styled.div`
   }
 
   &:hover {
-    background: rgba(128, 128, 128, 0.15);
+    background: var(--mavis-brand-soft);
   }
 
   input {
     background: transparent;
     border: none;
     outline: none;
-    color: #2e2e2e;
+    color: var(--mavis-text);
   }
 `
 
@@ -927,7 +992,8 @@ const ModelDropdown = styled.div`
 
   overflow-y: auto;
 
-  background: white;
+  background: var(--mavis-surface);
+  border: 1px solid var(--mavis-brand-border);
   border-radius: 14px;
   padding: 4px;
 
@@ -949,8 +1015,8 @@ const ModelOption = styled.span`
   border: none;
   border-radius: 10px;
 
-  background: #f5f6f8;
-  color: #444;
+  background: var(--mavis-surface-subtle);
+  color: var(--mavis-text-secondary);
 
   padding: 8px 10px;
 
@@ -968,11 +1034,11 @@ const ModelOption = styled.span`
   }
 
   &:hover {
-    background: #eceff3;
+    background: var(--mavis-surface-hover);
   }
 
   &.selected {
-    background: #4f46e5;
+    background: #5b4bd8;
     color: white;
   }
 `

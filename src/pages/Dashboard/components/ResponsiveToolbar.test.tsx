@@ -111,6 +111,69 @@ describe('responsive dashboard toolbar menus', () => {
     }
   })
 
+  it('places the chat minimize control before its title without the AI icon', () => {
+    const originalWidth = window.innerWidth
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1440 })
+
+    try {
+      render(
+        <ChatToolbar
+          onClearAll={jest.fn()}
+          panelWidth={320}
+          toolbarOffset={0}
+          minimized={false}
+          setMinimized={jest.fn()}
+          menuExpanded={false}
+          setMenuExpanded={jest.fn()}
+        />
+      )
+
+      const minimizeButton = screen.getByTitle('Minimize chat panel')
+      const chatTitle = screen.getByText('Chat')
+
+      expect(
+        minimizeButton.compareDocumentPosition(chatTitle) & Node.DOCUMENT_POSITION_FOLLOWING
+      ).not.toBe(0)
+      expect(chatTitle.querySelector('svg')).toBeNull()
+    } finally {
+      Object.defineProperty(window, 'innerWidth', {
+        configurable: true,
+        value: originalWidth,
+      })
+    }
+  })
+
+  it('uses the chat title font size for the notes explorer title', () => {
+    const originalWidth = window.innerWidth
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1440 })
+
+    try {
+      render(
+        <>
+          <NotesToolbar {...createNotesToolbarProps()} />
+          <ChatToolbar
+            onClearAll={jest.fn()}
+            panelWidth={320}
+            toolbarOffset={0}
+            minimized={false}
+            setMinimized={jest.fn()}
+            menuExpanded={false}
+            setMenuExpanded={jest.fn()}
+          />
+        </>
+      )
+
+      expect(window.getComputedStyle(screen.getByText('All')).fontSize).toBe(
+        window.getComputedStyle(screen.getByText('Chat')).fontSize
+      )
+    } finally {
+      Object.defineProperty(window, 'innerWidth', {
+        configurable: true,
+        value: originalWidth,
+      })
+    }
+  })
+
   it('shows lock and selection state with purple icons but no pressed fill', () => {
     render(<NotesToolbar {...createNotesToolbarProps({ selectedCount: 2, notesLocked: true })} />)
 
@@ -121,7 +184,7 @@ describe('responsive dashboard toolbar menus', () => {
     expect(selectionButton.getAttribute('aria-pressed')).toBe('true')
     expect(window.getComputedStyle(lockButton).backgroundColor).toBe('transparent')
     expect(window.getComputedStyle(selectionButton).backgroundColor).toBe('transparent')
-    expect(window.getComputedStyle(lockButton).color).toBe('rgb(79, 70, 229)')
+    expect(window.getComputedStyle(lockButton).color).toBe('rgb(91, 75, 216)')
   })
 
   it('keeps Add note enabled while note editing is locked', () => {
@@ -133,7 +196,7 @@ describe('responsive dashboard toolbar menus', () => {
     fireEvent.click(addButton)
 
     expect(onAddNote).toHaveBeenCalledTimes(1)
-    expect(window.getComputedStyle(addButton).color).toBe('rgb(74, 222, 128)')
+    expect(window.getComputedStyle(addButton).color).toBe('rgb(91, 75, 216)')
   })
 
   it('renders disabled note-toolbar actions in gray', () => {
@@ -195,14 +258,14 @@ describe('responsive dashboard toolbar menus', () => {
     expect(onArchiveSelected).toHaveBeenCalledTimes(1)
     expect(onDeleteSelected).toHaveBeenCalledTimes(1)
     expect(window.getComputedStyle(screen.getByRole('button', { name: 'Open search' })).color).toBe(
-      'rgb(37, 99, 235)'
+      'rgb(91, 75, 216)'
     )
     expect(
       window.getComputedStyle(screen.getByRole('button', { name: 'AI assistant' })).color
-    ).toBe('rgb(124, 58, 237)')
+    ).toBe('rgb(91, 75, 216)')
     expect(
       window.getComputedStyle(screen.getByRole('button', { name: 'Archive selected notes' })).color
-    ).toBe('rgb(22, 163, 74)')
+    ).toBe('rgb(91, 75, 216)')
     expect(
       window.getComputedStyle(screen.getByRole('button', { name: 'Delete selected notes' })).color
     ).toBe('rgb(220, 38, 38)')
@@ -210,10 +273,10 @@ describe('responsive dashboard toolbar menus', () => {
       window.getComputedStyle(
         screen.getByRole('button', { name: 'Copy selected or visible notes' })
       ).color
-    ).toBe('rgb(100, 116, 139)')
+    ).toBe('rgb(113, 109, 134)')
     expect(
       window.getComputedStyle(screen.getByRole('button', { name: 'Deselect all notes' })).color
-    ).toBe('rgb(79, 70, 229)')
+    ).toBe('rgb(76, 59, 200)')
     expect(
       window.getComputedStyle(screen.getByRole('button', { name: 'Minimize notes panel' })).color
     ).toBe('rgb(156, 163, 175)')
@@ -224,7 +287,7 @@ describe('responsive dashboard toolbar menus', () => {
     ).toBe('rgb(220, 38, 38)')
     expect(
       window.getComputedStyle(screen.getByRole('button', { name: 'Redo last note change' })).color
-    ).toBe('rgb(22, 163, 74)')
+    ).toBe('rgb(113, 133, 232)')
   })
 
   it.each([390, 1440])(

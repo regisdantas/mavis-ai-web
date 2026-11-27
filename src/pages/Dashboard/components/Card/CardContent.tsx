@@ -33,6 +33,7 @@ const ButtonCommand: React.FC<ButtonCommandProps> = ({
 )
 
 interface CardContentProps {
+  darkMode: boolean
   value: string
   searchContent: string
   fuzzySearchEnabled: boolean
@@ -54,6 +55,7 @@ interface CardContentProps {
 }
 
 const CardContent: React.FC<CardContentProps> = ({
+  darkMode,
   value,
   searchContent,
   fuzzySearchEnabled,
@@ -73,6 +75,7 @@ const CardContent: React.FC<CardContentProps> = ({
   if (editing) {
     return (
       <Editor
+        $darkMode={darkMode}
         ref={textareaRef}
         readOnly={readOnly}
         placeholder={`* ❓ What do you have for today?
@@ -112,6 +115,7 @@ const CardContent: React.FC<CardContentProps> = ({
 
   return (
     <MarkdownContainer
+      $darkMode={darkMode}
       ref={markdownRef}
       onClick={(event) => {
         if (readOnly) {
@@ -194,7 +198,7 @@ const CardContent: React.FC<CardContentProps> = ({
 
 export default CardContent
 
-const MarkdownContainer = styled.div`
+const MarkdownContainer = styled.div<{ $darkMode: boolean }>`
   && {
     width: 100%;
     max-width: 100%;
@@ -205,26 +209,26 @@ const MarkdownContainer = styled.div`
 
   padding: 20px;
   margin: 0;
-  color: #000;
+  color: ${({ $darkMode }) => ($darkMode ? '#fff' : '#000')};
   font: 13px 'Myriad Pro', 'Lucida Grande', Lucida, Verdana, sans-serif;
 
   a:link {
-    color: #00f;
+    color: var(--mavis-markdown-link);
     text-decoration: none;
   }
 
   a:visited {
-    color: #00a;
+    color: var(--mavis-markdown-visited);
     text-decoration: none;
   }
 
   a:hover {
-    color: #f60;
+    color: var(--mavis-markdown-hover);
     text-decoration: underline;
   }
 
   a:active {
-    color: #f60;
+    color: var(--mavis-markdown-hover);
     text-decoration: underline;
   }
 
@@ -247,15 +251,15 @@ const MarkdownContainer = styled.div`
   code {
     font-size: 14px;
     font-family: monaco, courier, consolas, monospace;
-    color: green;
+    color: var(--mavis-code-text);
     font-style: italic;
   }
 
   pre {
     margin-top: 5px;
     margin-bottom: 10px;
-    border: 1px solid #c7cfd5;
-    background: #f1f5f9;
+    border: 1px solid var(--mavis-border);
+    background: var(--mavis-code-block);
     margin: 20px 0;
     padding: 8px;
     text-align: left;
@@ -270,7 +274,7 @@ const MarkdownContainer = styled.div`
   hr {
     width: 100%;
     border: 0;
-    border-top: 1px dashed rgba(0, 0, 0, 0.2);
+    border-top: 1px dashed var(--mavis-border-strong);
     margin-top: 6px;
     margin-bottom: 10px;
   }
@@ -288,7 +292,7 @@ const MarkdownContainer = styled.div`
   h1 {
     margin-top: 1em;
     margin-bottom: 1em;
-    color: #000;
+    color: inherit;
     font-size: 22px;
   }
 
@@ -296,7 +300,7 @@ const MarkdownContainer = styled.div`
     margin-top: 1em;
     margin-bottom: 1em;
     font-size: 18px;
-    color: #000;
+    color: inherit;
     padding-bottom: 2px;
   }
 
@@ -304,14 +308,14 @@ const MarkdownContainer = styled.div`
     margin-top: 1em;
     margin-bottom: 1em;
     font-size: 13px;
-    color: #000;
+    color: inherit;
   }
 
   h4 {
     margin-top: 1em;
     margin-bottom: 1em;
     font-size: 11px;
-    color: #000;
+    color: inherit;
   }
 
   h5 {
@@ -319,7 +323,7 @@ const MarkdownContainer = styled.div`
     margin-bottom: 1em;
     padding: 0;
     font-size: 11px;
-    color: #000;
+    color: inherit;
   }
 
   h6 {
@@ -327,7 +331,7 @@ const MarkdownContainer = styled.div`
     margin-bottom: 1em;
     padding: 0;
     font-size: 11px;
-    color: #000;
+    color: inherit;
   }
 
   p {
@@ -381,8 +385,8 @@ const MarkdownContainer = styled.div`
     min-width: 100%;
     table-layout: auto;
 
-    border-top: 1px solid rgba(0, 0, 0, 0.2);
-    border-left: 1px solid rgba(0, 0, 0, 0.2);
+    border-top: 1px solid var(--mavis-border-strong);
+    border-left: 1px solid var(--mavis-border-strong);
     border-spacing: 0;
 
     margin: 0;
@@ -399,11 +403,12 @@ const MarkdownContainer = styled.div`
 
   table th {
     padding: 4px 8px;
-    background: #e2e2e2;
+    background: var(--mavis-table-header);
+    color: var(--mavis-text);
     font-size: 12px;
 
-    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-    border-right: 1px solid rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid var(--mavis-border-strong);
+    border-right: 1px solid var(--mavis-border-strong);
 
     @media (max-width: 1260px) {
       font-size: 10px;
@@ -423,8 +428,8 @@ const MarkdownContainer = styled.div`
     font-size: 12px;
     vertical-align: top;
 
-    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
-    border-right: 1px solid rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid var(--mavis-border-strong);
+    border-right: 1px solid var(--mavis-border-strong);
   }
 
   table td p {
@@ -453,11 +458,11 @@ const MarkdownContainer = styled.div`
     min-width: 40px;
     width: fit-content;
 
-    border: 1px solid #919699;
+    border: 1px solid var(--mavis-border-strong);
     border-radius: 3px;
 
-    background: #e2e2e2;
-    color: #000;
+    background: var(--mavis-surface-hover);
+    color: var(--mavis-text);
 
     font-size: 12px;
     cursor: pointer;
@@ -470,15 +475,15 @@ const MarkdownContainer = styled.div`
     appearance: none;
     width: 14px;
     height: 14px;
-    border: 1px solid #919699;
+    border: 1px solid var(--mavis-border-strong);
     border-radius: 2px;
     position: relative;
     cursor: pointer;
   }
 
   input[type='checkbox']:checked {
-    background-color: #22c55e;
-    border: 1px solid #919699;
+    background-color: var(--mavis-success);
+    border: 1px solid var(--mavis-border-strong);
   }
 
   input[type='checkbox']:checked::after {
@@ -505,7 +510,7 @@ const MarkdownContainer = styled.div`
     width: fit-content;
     height: 30px;
 
-    color: gray !important;
+    color: var(--mavis-muted) !important;
   }
 
   textarea {
@@ -532,14 +537,14 @@ const MarkdownScrollWrapper = styled.div`
   overflow-x: auto;
   overscroll-behavior-x: contain;
   scrollbar-width: thin;
-  scrollbar-color: #b0b0b5 transparent;
+  scrollbar-color: var(--mavis-scrollbar) transparent;
 
   &::-webkit-scrollbar {
     height: 8px;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #b0b0b5;
+    background: var(--mavis-scrollbar);
     border-radius: 6px;
   }
 `
@@ -557,7 +562,7 @@ const MarkdownInlineScrollWrapper = styled.span`
   }
 `
 
-const Editor = styled.textarea`
+const Editor = styled.textarea<{ $darkMode: boolean }>`
   touch-action: manipulation;
   -webkit-text-size-adjust: 100%;
 
@@ -573,6 +578,11 @@ const Editor = styled.textarea`
 
   border: none;
   background: transparent;
+  color: ${({ $darkMode }) => ($darkMode ? '#fff' : '#000')};
+
+  &::placeholder {
+    color: var(--mavis-muted);
+  }
 
   &:focus {
     border: none;

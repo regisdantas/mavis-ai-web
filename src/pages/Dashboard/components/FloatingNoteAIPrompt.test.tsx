@@ -24,7 +24,7 @@ describe('FloatingNoteAIPrompt', () => {
   it('sends on Enter on desktop and leaves Ctrl+Enter for a newline', () => {
     const originalWidth = window.innerWidth
     const onSend = jest.fn()
-    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1024 })
+    Object.defineProperty(window, 'innerWidth', { configurable: true, value: 1324 })
 
     try {
       renderPrompt({ onSend })
